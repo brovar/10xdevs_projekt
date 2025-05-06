@@ -1,0 +1,15 @@
+fastapi>=0.100.0
+uvicorn>=0.22.0
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.6
+passlib>=1.7.4
+bcrypt>=4.0.1
+pydantic>=2.0.0
+python-multipart>=0.0.6
+email-validator>=2.0.0
+fastapi-csrf-protect>=0.3.1
+asyncpg>=0.28.0
+pyjwt>=2.7.0
+fastapi_sessions>=0.3.2
+aiofiles>=0.7.0
+Pillow>=9.0.0 
