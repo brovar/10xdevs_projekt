@@ -21,7 +21,7 @@ async def get_offer_image(
     current_user = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db_session),
     logger: Logger = Depends(get_logger),
-    media_service: MediaService = Depends(lambda: MediaService(logger))
+    media_service: MediaService = Depends(get_media_service)
 ):
     """
     Get an image file associated with an offer.
