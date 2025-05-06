@@ -290,7 +290,7 @@ async def deactivate_offer(
     offer_id: UUID = Path(
         ..., 
         description="UUID of the offer to deactivate",
-        example="123e4567-e89b-12d3-a456-426614174000"
+        examples={"valid_uuid": {"value": "123e4567-e89b-12d3-a456-426614174000"}}
     ),
     current_user = Depends(require_seller),  # Require seller role
     db: AsyncSession = Depends(get_db_session),
@@ -422,7 +422,7 @@ async def mark_offer_as_sold(
     offer_id: UUID = Path(
         ..., 
         description="UUID of the offer to mark as sold",
-        example="123e4567-e89b-12d3-a456-426614174000"
+        examples={"valid_uuid": {"value": "123e4567-e89b-12d3-a456-426614174000"}}
     ),
     current_user = Depends(require_seller),
     offer_service: OfferService = Depends(get_offer_service),

@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import List, Optional, Union, Any
-from pydantic import BaseModel, EmailStr, Field, validator, HttpUrl, constr
+from pydantic import BaseModel, EmailStr, Field, validator, HttpUrl, constr, field_validator, ConfigDict
 from datetime import datetime
 from uuid import UUID
 import re
@@ -102,7 +102,7 @@ class RegisterUserRequest(BaseModel):
     password: str
     role: UserRole = Field(..., description="User role, can be Buyer or Seller")
     
-    @validator('password')
+    @field_validator('password')
     def password_strength(cls, v):
         if len(v) < 10:
             raise ValueError('Password must be at least 10 characters long')
@@ -114,7 +114,7 @@ class RegisterUserRequest(BaseModel):
             raise ValueError('Password must contain a digit or special character')
         return v
     
-    @validator('role')
+    @field_validator('role')
     def role_must_be_buyer_or_seller(cls, v):
         if v not in [UserRole.BUYER, UserRole.SELLER]:
             raise ValueError('Role must be Buyer or Seller for registration')
@@ -136,7 +136,7 @@ class LoginUserRequest(BaseModel):
     email: EmailStr
     password: str
 
-    @validator('password')
+    @field_validator('password')
     def password_not_empty(cls, v):
         if not v:
             raise ValueError('Password cannot be empty')
@@ -159,13 +159,13 @@ class UpdateUserRequest(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     
-    @validator('first_name')
+    @field_validator('first_name')
     def validate_first_name(cls, v):
         if v is not None and len(v) > 100:
             raise ValueError('Imię nie może przekraczać 100 znaków')
         return v
         
-    @validator('last_name')
+    @field_validator('last_name')
     def validate_last_name(cls, v):
         if v is not None and len(v) > 100:
             raise ValueError('Nazwisko nie może przekraczać 100 znaków')
@@ -175,7 +175,7 @@ class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
     
-    @validator('new_password')
+    @field_validator('new_password')
     def password_strength(cls, v):
         if len(v) < 10:
             raise ValueError('Password must be at least 10 characters long')
@@ -287,7 +287,7 @@ class CreateOfferRequest(BaseModel):
     quantity: int = Field(1, ge=0)
     category_id: int
     
-    @validator('price')
+    @field_validator('price')
     def validate_price(cls, v):
         if v <= 0:
             raise ValueError('Price must be greater than 0')
@@ -304,7 +304,7 @@ class OrderItemRequest(BaseModel):
 class CreateOrderRequest(BaseModel):
     items: List[OrderItemRequest]
     
-    @validator('items')
+    @field_validator('items')
     def validate_items(cls, v):
         if not v:
             raise ValueError('Order must contain at least one item')
@@ -450,7 +450,7 @@ class AdminOfferListQueryParams(BaseModel):
     page: int = Field(1, gt=0, description="Page number")
     limit: int = Field(100, gt=0, le=100, description="Items per page")
     
-    @validator('sort')
+    @field_validator('sort')
     def validate_sort(cls, v):
         allowed = ['price_asc', 'price_desc', 'created_at_desc', 'relevance']
         if v not in allowed:
@@ -512,10 +512,19 @@ class AdminLogListQueryParams(BaseModel):
     start_date: Optional[datetime] = Field(None, description="Filter by start date (ISO 8601 format)")
     end_date: Optional[datetime] = Field(None, description="Filter by end date (ISO 8601 format)")
 
-    @validator('end_date')
-    def validate_date_range(cls, v, values):
-        start = values.get('start_date')
-        if v and start and v < start:
+    @field_validator('end_date')
+    def validate_date_range(cls, v, info):
+        # For Pydantic V2 compatibility
+        if v is None:
+            return v
+            
+        # Get the start_date from ValidationInfo
+        start_date = None
+        if hasattr(info, 'data'):
+            # Pydantic V2 approach
+            start_date = info.data.get('start_date')
+        
+        if start_date and v < start_date:
             raise ValueError('end_date must be after start_date')
         return v
 
@@ -548,3 +557,26 @@ class ErrorResponse(BaseModel):
                 "message": "Invalid query parameter: role"
             }
         }
+
+# Search/List Params
+class OfferListQueryParams(BaseModel):
+    search: Optional[str] = Field(None, description="Search by title or description")
+    category_id: Optional[int] = Field(None, description="Filter by category ID")
+    page: int = Field(1, gt=0, description="Page number, starting from 1")
+    limit: int = Field(20, gt=0, le=100, description="Number of items per page (max 100)")
+    sort: str = Field("created_at_desc", description="Sorting criteria (price_asc, price_desc, created_at_desc, relevance)")
+    
+    model_config = ConfigDict(
+        json_schema_extra = {
+            "examples": {
+                "basic": {
+                    "summary": "Basic pagination without filters",
+                    "value": {"page": 1, "limit": 20, "sort": "created_at_desc"}
+                },
+                "search_and_filter": {
+                    "summary": "Search by keywords and filter by category",
+                    "value": {"search": "headphones", "category_id": 2, "sort": "price_desc", "page": 1, "limit": 50}
+                }
+            }
+        }
+    )
