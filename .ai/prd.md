@@ -167,6 +167,37 @@ Obecnie rekruterzy i zespoły techniczne zajmujące się bezpieczeństwem aplika
     -   Po pomyślnej zmianie hasło zostaje zaktualizowane w bazie danych.
     -   Logowane jest zdarzenie `PASSWORD_CHANGE`.
 
+-   ID: US-024
+-   Tytuł: Wylogowanie z systemu
+-   Opis: Jako zalogowany użytkownik (Kupujący, Sprzedający, Admin), chcę móc się wylogować z aplikacji, aby bezpiecznie zakończyć moją sesję.
+-   Kryteria akceptacji:
+    -   W interfejsie użytkownika dostępny jest przycisk lub link \\"Wyloguj\\".
+    -   Kliknięcie \\"Wyloguj\\" wysyła żądanie do endpointu `POST /auth/logout`.
+    -   Po pomyślnym wylogowaniu sesja użytkownika (ciasteczko) jest usuwana lub unieważniana.
+    -   Użytkownik jest przekierowywany na stronę główną (`/`) lub stronę logowania (`/login`).
+    -   Po wylogowaniu użytkownik traci dostęp do sekcji wymagających uwierzytelnienia.
+    -   Endpoint wylogowania jest chroniony przed atakami CSRF.
+
+-   ID: US-025
+-   Tytuł: Przeglądanie danych swojego konta
+-   Opis: Jako zalogowany użytkownik (Kupujący, Sprzedający, Admin), chcę móc zobaczyć informacje o moim koncie, aby zweryfikować swoje dane.
+-   Kryteria akceptacji:
+    -   W aplikacji dostępna jest sekcja \\"Moje Konto\\" (dostępna pod ścieżką `/account`).
+    -   Widok pobiera dane z endpointu `GET /account`.
+    -   Wyświetlane są informacje: adres email, rola (Buyer/Seller/Admin), status (Active/Inactive), imię i nazwisko (jeśli podane), data utworzenia konta.
+    -   Widoczne są opcje umożliwiające edycję profilu (np. zmiana hasła).
+
+-   ID: US-026
+-   Tytuł: Aktualizacja danych profilu (imię, nazwisko)
+-   Opis: Jako zalogowany użytkownik (Kupujący, Sprzedający), chcę móc zaktualizować swoje imię i nazwisko w ustawieniach profilu, aby moje dane były aktualne.
+-   Kryteria akceptacji:
+    -   W widoku \\"Moje Konto\\" (`/account`) znajduje się formularz umożliwiający edycję imienia i nazwiska.
+    -   Po wprowadzeniu zmian i zapisaniu, wysyłane jest żądanie `PATCH /account` z nowymi danymi.
+    -   Backend waliduje długość imienia i nazwiska (np. max 100 znaków).
+    -   Po pomyślnej aktualizacji, zmiany są zapisywane w bazie danych i widoczne w profilu użytkownika.
+    -   Wyświetlane jest powiadomienie o sukcesie aktualizacji.
+    -   Logowane jest zdarzenie `USER_PROFILE_UPDATE`.
+
 ### 5.2. Zarządzanie Ofertami (Sprzedający)
 -   ID: US-004
 -   Tytuł: Tworzenie nowej oferty
@@ -380,6 +411,28 @@ Obecnie rekruterzy i zespoły techniczne zajmujące się bezpieczeństwem aplika
     -   Logi są wyświetlane w tabeli z kolumnami: Data/godzina, Typ zdarzenia, IP klienta, Komunikat.
     -   Logi są paginowane (100 wpisów na stronę), posortowane malejąco wg daty.
     -   Dostępne są opcje filtrowania logów po zakresie dat, adresie IP i typie zdarzenia.
+
+-   ID: US-027
+-   Tytuł: Anulowanie zamówienia przez Administratora
+-   Opis: Jako Administrator, chcę móc anulować zamówienie użytkownika, aby zarządzać problematycznymi lub błędnymi transakcjami.
+-   Kryteria akceptacji:
+    -   W panelu administracyjnym, na liście zamówień lub w widoku szczegółów zamówienia, dostępna jest opcja \\"Anuluj zamówienie\\".
+    -   Opcja jest dostępna tylko dla zamówień w statusach umożliwiających anulowanie (np. `pending_payment`, `processing`, `shipped` - do ustalenia wg logiki biznesowej).
+    -   Przed anulowaniem wyświetlany jest dialog potwierdzenia.
+    -   Po potwierdzeniu, wysyłane jest żądanie `POST /admin/orders/{order_id}/cancel`.
+    -   Po pomyślnym anulowaniu, status zamówienia zmienia się na `cancelled`.
+    -   Zmiana statusu jest widoczna dla Administratora, Kupującego i Sprzedającego (w odpowiednich widokach).
+    -   Logowane jest zdarzenie `ORDER_CANCELLED`. W przypadku błędu logowane jest `ORDER_CANCEL_FAIL`.
+
+-   ID: US-028
+-   Tytuł: Przeglądanie szczegółów użytkownika przez Administratora
+-   Opis: Jako Administrator, chcę móc zobaczyć szczegółowe informacje o konkretnym użytkowniku, aby uzyskać więcej kontekstu na jego temat.
+-   Kryteria akceptacji:
+    -   Na liście użytkowników w panelu admina (`/admin`, zakładka Użytkownicy) istnieje możliwość kliknięcia na użytkownika, aby zobaczyć jego szczegóły.
+    -   Akcja pobiera dane z endpointu `GET /admin/users/{user_id}`.
+    -   Wyświetlany jest dedykowany widok lub modal ze szczegółami: ID, email, rola, status, imię, nazwisko, data utworzenia, data ostatniej modyfikacji.
+    -   Hasło ani jego hash nie są wyświetlane.
+    -   Logowane jest zdarzenie `ADMIN_GET_USER_DETAILS`.
 
 ## 6. Metryki sukcesu
 
