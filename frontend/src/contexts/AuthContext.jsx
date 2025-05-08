@@ -31,7 +31,9 @@ export const AuthProvider = ({ children }) => {
         // jest zapisany user, to jest on zalogowany
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
-          setUser(JSON.parse(storedUser));
+          const parsedUser = JSON.parse(storedUser);
+          console.log('Loaded user from localStorage:', parsedUser);
+          setUser(parsedUser);
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
@@ -51,7 +53,15 @@ export const AuthProvider = ({ children }) => {
     
     try {
       const response = await loginUser({ email, password });
-      const userData = response; // Zakładamy, że response zawiera dane użytkownika
+      console.log('Login response:', response);
+      
+      // Make sure user data has an email field
+      const userData = {
+        ...response,
+        email: response.email || email // Use the email from response if available, otherwise use the login email
+      };
+      
+      console.log('User data being saved:', userData);
       
       // Zapisujemy użytkownika w stanie i localStorage
       setUser(userData);
@@ -59,6 +69,7 @@ export const AuthProvider = ({ children }) => {
       
       return userData;
     } catch (error) {
+      console.error('Login error:', error);
       const errorMessage = error.response?.data?.message || 'Failed to login';
       setError(errorMessage);
       throw error;
@@ -127,6 +138,11 @@ export const AuthProvider = ({ children }) => {
       axios.interceptors.response.eject(interceptorId);
     };
   }, [user, clearSessionData]);
+
+  // Log when user state changes
+  useEffect(() => {
+    console.log('User state changed:', user);
+  }, [user]);
 
   // Wartość kontekstu
   const value = {

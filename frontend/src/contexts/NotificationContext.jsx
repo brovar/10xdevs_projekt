@@ -125,7 +125,7 @@ const ToastContainer = ({ notifications, removeNotification }) => {
   
   return (
     <div 
-      className="toast-container position-fixed top-0 end-0 p-3"
+      className="toast-container position-fixed top-0 start-50 translate-middle-x p-3"
       style={{ zIndex: 1050 }}
       aria-live="polite"
       aria-atomic="true"

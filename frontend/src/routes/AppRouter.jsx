@@ -7,7 +7,6 @@ import Footer from '../components/layout/Footer';
 // Lazy-loaded components
 const RegisterPage = lazy(() => import('../pages/auth/RegisterPage'));
 const LoginPage = lazy(() => import('../pages/auth/LoginPage'));
-const LogoutPage = lazy(() => import('../pages/auth/LogoutPage'));
 const HomePage = lazy(() => import('../pages/HomePage'));
 // Pozostałe strony będą dodawane tutaj
 
@@ -82,10 +81,6 @@ const router = createBrowserRouter([
             <LoginPage />
           </RequireAnon>
         )
-      },
-      {
-        path: 'logout',
-        element: <LogoutPage />
       },
       // Protected routes
       {

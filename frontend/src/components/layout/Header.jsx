@@ -1,161 +1,229 @@
-import React from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
+import { useNotifications } from '../../contexts/NotificationContext';
+import ConfirmLogoutModal from '../common/ConfirmLogoutModal';
 
 const Header = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const { totalItems } = useCart();
+  const { addSuccess, addError } = useNotifications();
+  const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  // Debug user object
+  useEffect(() => {
+    console.log('Auth state in Header:', { isAuthenticated, user });
+  }, [isAuthenticated, user]);
+
+  const handleLogoutClick = (e) => {
+    e.preventDefault();
+    setShowLogoutModal(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setShowLogoutModal(false);
+    setIsLoggingOut(true);
+
+    try {
+      await logout();
+      addSuccess('Wylogowano pomyślnie.');
+      navigate('/login');
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Wystąpił błąd podczas wylogowywania. Spróbuj ponownie później.';
+      addError(errorMessage);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutModal(false);
+  };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light">
-      <div className="container">
-        <Link className="navbar-brand" to="/">Steambay</Link>
-        <button 
-          className="navbar-toggler" 
-          type="button" 
-          data-bs-toggle="collapse" 
-          data-bs-target="#navbarNav" 
-          aria-controls="navbarNav" 
-          aria-expanded="false" 
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            <li className="nav-item">
-              <NavLink 
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                to="/"
-              >
-                Strona Główna
-              </NavLink>
-            </li>
-            
-            {isAuthenticated && user?.role === 'Buyer' && (
-              <>
-                <li className="nav-item">
-                  <NavLink 
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                    to="/account"
-                  >
-                    Moje Konto
-                  </NavLink>
-                </li>
-                <li className="nav-item">
-                  <NavLink 
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                    to="/orders"
-                  >
-                    Moje Zamówienia
-                  </NavLink>
-                </li>
-              </>
-            )}
-            
-            {isAuthenticated && user?.role === 'Seller' && (
-              <>
-                <li className="nav-item">
-                  <NavLink 
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                    to="/account"
-                  >
-                    Moje Konto
-                  </NavLink>
-                </li>
-                <li className="nav-item">
-                  <NavLink 
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                    to="/seller/offers"
-                  >
-                    Moje Oferty
-                  </NavLink>
-                </li>
-                <li className="nav-item">
-                  <NavLink 
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                    to="/seller/sales"
-                  >
-                    Historia Sprzedaży
-                  </NavLink>
-                </li>
-              </>
-            )}
-            
-            {isAuthenticated && user?.role === 'Admin' && (
-              <>
-                <li className="nav-item">
-                  <NavLink 
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                    to="/account"
-                  >
-                    Moje Konto
-                  </NavLink>
-                </li>
-                <li className="nav-item">
-                  <NavLink 
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                    to="/admin"
-                  >
-                    Panel Admina
-                  </NavLink>
-                </li>
-              </>
-            )}
-          </ul>
-          
-          <ul className="navbar-nav ms-auto">
-            {isAuthenticated ? (
-              <>
-                <li className="nav-item">
-                  <NavLink 
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                    to="/logout"
-                    aria-label="Wyloguj się z systemu"
-                  >
-                    Wyloguj się
-                  </NavLink>
-                </li>
-                {user?.role === 'Buyer' && (
+    <>
+      <nav className="navbar navbar-expand-lg navbar-light bg-light">
+        <div className="container">
+          <Link className="navbar-brand" to="/">Steambay</Link>
+          <button 
+            className="navbar-toggler" 
+            type="button" 
+            data-bs-toggle="collapse" 
+            data-bs-target="#navbarNav" 
+            aria-controls="navbarNav" 
+            aria-expanded="false" 
+            aria-label="Toggle navigation"
+          >
+            <span className="navbar-toggler-icon"></span>
+          </button>
+          <div className="collapse navbar-collapse" id="navbarNav">
+            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+              <li className="nav-item">
+                <NavLink 
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                  to="/"
+                >
+                  Strona Główna
+                </NavLink>
+              </li>
+              
+              {isAuthenticated && user?.role === 'Buyer' && (
+                <>
                   <li className="nav-item">
                     <NavLink 
                       className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                      to="/cart"
-                      aria-label="Koszyk zakupowy"
+                      to="/account"
                     >
-                      <i className="bi bi-cart" aria-hidden="true"></i>
-                      {totalItems > 0 && (
-                        <span className="badge bg-primary rounded-pill ms-1">{totalItems}</span>
-                      )}
+                      Moje Konto
                     </NavLink>
                   </li>
-                )}
-              </>
-            ) : (
-              <>
-                <li className="nav-item">
-                  <NavLink 
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                    to="/login"
-                  >
-                    Logowanie
-                  </NavLink>
-                </li>
-                <li className="nav-item">
-                  <NavLink 
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
-                    to="/register"
-                  >
-                    Rejestracja
-                  </NavLink>
-                </li>
-              </>
-            )}
-          </ul>
+                  <li className="nav-item">
+                    <NavLink 
+                      className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                      to="/orders"
+                    >
+                      Moje Zamówienia
+                    </NavLink>
+                  </li>
+                </>
+              )}
+              
+              {isAuthenticated && user?.role === 'Seller' && (
+                <>
+                  <li className="nav-item">
+                    <NavLink 
+                      className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                      to="/account"
+                    >
+                      Moje Konto
+                    </NavLink>
+                  </li>
+                  <li className="nav-item">
+                    <NavLink 
+                      className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                      to="/seller/offers"
+                    >
+                      Moje Oferty
+                    </NavLink>
+                  </li>
+                  <li className="nav-item">
+                    <NavLink 
+                      className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                      to="/seller/sales"
+                    >
+                      Historia Sprzedaży
+                    </NavLink>
+                  </li>
+                </>
+              )}
+              
+              {isAuthenticated && user?.role === 'Admin' && (
+                <>
+                  <li className="nav-item">
+                    <NavLink 
+                      className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                      to="/account"
+                    >
+                      Moje Konto
+                    </NavLink>
+                  </li>
+                  <li className="nav-item">
+                    <NavLink 
+                      className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                      to="/admin"
+                    >
+                      Panel Admina
+                    </NavLink>
+                  </li>
+                </>
+              )}
+            </ul>
+            
+            <ul className="navbar-nav ms-auto">
+              {isAuthenticated ? (
+                <>
+                  {user?.email ? (
+                    <li className="nav-item">
+                      <span className="nav-link">
+                        <i className="bi bi-person-circle me-1"></i>
+                        <strong>{user.email}</strong>
+                      </span>
+                    </li>
+                  ) : (
+                    <li className="nav-item">
+                      <span className="nav-link text-warning">
+                        <i className="bi bi-exclamation-triangle me-1"></i>
+                        Email not available
+                      </span>
+                    </li>
+                  )}
+                  <li className="nav-item">
+                    <a
+                      href="#"
+                      className="nav-link"
+                      onClick={handleLogoutClick}
+                      aria-label="Wyloguj się z systemu"
+                    >
+                      {isLoggingOut ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                          Wylogowywanie...
+                        </>
+                      ) : (
+                        "Wyloguj się"
+                      )}
+                    </a>
+                  </li>
+                  {user?.role === 'Buyer' && (
+                    <li className="nav-item">
+                      <NavLink 
+                        className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                        to="/cart"
+                        aria-label="Koszyk zakupowy"
+                      >
+                        <i className="bi bi-cart" aria-hidden="true"></i>
+                        {totalItems > 0 && (
+                          <span className="badge bg-primary rounded-pill ms-1">{totalItems}</span>
+                        )}
+                      </NavLink>
+                    </li>
+                  )}
+                </>
+              ) : (
+                <>
+                  <li className="nav-item">
+                    <NavLink 
+                      className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                      to="/login"
+                    >
+                      Logowanie
+                    </NavLink>
+                  </li>
+                  <li className="nav-item">
+                    <NavLink 
+                      className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                      to="/register"
+                    >
+                      Rejestracja
+                    </NavLink>
+                  </li>
+                </>
+              )}
+            </ul>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Logout confirmation modal */}
+      <ConfirmLogoutModal
+        isOpen={showLogoutModal}
+        onConfirm={handleConfirmLogout}
+        onCancel={handleCancelLogout}
+      />
+    </>
   );
 };
 
