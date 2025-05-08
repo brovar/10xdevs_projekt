@@ -13,9 +13,16 @@ const Header = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
-  // Debug user object
+  // Enhanced debug info
   useEffect(() => {
-    console.log('Auth state in Header:', { isAuthenticated, user });
+    console.log('Auth state in Header:', { 
+      isAuthenticated, 
+      user,
+      hasRole: !!user?.role,
+      role: user?.role,
+      isBuyer: user?.role === 'Buyer',
+      detailedUser: JSON.stringify(user)
+    });
   }, [isAuthenticated, user]);
 
   const handleLogoutClick = (e) => {

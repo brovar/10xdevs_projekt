@@ -33,7 +33,17 @@ export const AuthProvider = ({ children }) => {
           console.log('Auth status response:', response.data);
           if (response.data && response.data.is_authenticated) {
             console.log('User is authenticated according to backend');
-            const userData = response.data.user;
+            let userData = response.data.user;
+            
+            // Ensure the user data has a role
+            if (!userData.role) {
+              console.log('User data is missing role, adding default Buyer role');
+              userData = {
+                ...userData,
+                role: 'Buyer' // Default to Buyer if role is missing
+              };
+            }
+            
             setUser(userData);
             
             // Update localStorage to keep it in sync
@@ -48,9 +58,26 @@ export const AuthProvider = ({ children }) => {
         // Fallback to localStorage if API verification fails
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          console.log('Loaded user from localStorage:', parsedUser);
-          setUser(parsedUser);
+          try {
+            let parsedUser = JSON.parse(storedUser);
+            console.log('Loaded user from localStorage:', parsedUser);
+            
+            // Ensure the user from localStorage has a role
+            if (!parsedUser.role) {
+              console.log('User from localStorage is missing role, adding default Buyer role');
+              parsedUser = {
+                ...parsedUser,
+                role: 'Buyer' // Default to Buyer if role is missing
+              };
+              // Update localStorage with the fixed user data
+              localStorage.setItem('user', JSON.stringify(parsedUser));
+            }
+            
+            setUser(parsedUser);
+          } catch (parseError) {
+            console.error('Error parsing user from localStorage:', parseError);
+            localStorage.removeItem('user'); // Remove invalid data
+          }
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
@@ -72,10 +99,19 @@ export const AuthProvider = ({ children }) => {
       const response = await loginUser({ email, password });
       console.log('Login response:', response);
       
-      // Make sure user data has an email field
+      // Log detailed response for debugging
+      console.log('Login response details:', {
+        hasRole: !!response?.role,
+        role: response?.role,
+        email: response?.email,
+        fullResponse: JSON.stringify(response)
+      });
+      
+      // Make sure user data has required fields with fallbacks
       const userData = {
         ...response,
-        email: response.email || email // Use the email from response if available, otherwise use the login email
+        email: response.email || email, // Use the email from response if available, otherwise use the login email
+        role: response.role || (response.user?.role) || 'Buyer' // Ensure role is always set with fallback
       };
       
       console.log('User data being saved:', userData);
