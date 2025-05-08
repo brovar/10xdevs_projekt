@@ -1,6 +1,7 @@
 import re
 from fastapi import HTTPException
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, Optional, List
+from email_validator import validate_email, EmailNotValidError
 
 class ValidationError(Exception):
     """Exception raised for validation errors."""
@@ -19,103 +20,115 @@ class ValidationService:
     @staticmethod
     def normalize_email(email: str) -> str:
         """
-        Normalize an email address by converting to lowercase.
-        For educational purposes, we're not enforcing strict validation.
+        Normalize an email address to its canonical form.
+        This includes lowercase, and normalization of the domain part.
         
         Args:
-            email: The email address to normalize
+            email: The email to normalize
             
         Returns:
-            str: The normalized email address
-        """
-        if not email:
-            return email
+            Normalized email address
             
-        return email.strip().lower()
+        Raises:
+            ValidationError: If the email is invalid
+        """
+        try:
+            # For development purposes, skip domain validation
+            valid = validate_email(email, check_deliverability=False)
+            return valid.normalized
+        except EmailNotValidError as e:
+            raise ValidationError(
+                error_code="INVALID_EMAIL",
+                message=f"Nieprawidłowy adres email: {str(e)}"
+            )
     
     @staticmethod
     def validate_password(password: str) -> Tuple[bool, Dict[str, Any]]:
         """
-        Validate a password against a set of rules.
-        Applies basic strength rules but doesn't enforce all for educational purposes.
+        Validate a password against security criteria.
         
         Args:
             password: The password to validate
             
         Returns:
-            Tuple[bool, Dict]: (is_valid, validation_details)
-            
-        Validation details includes:
-        - has_lowercase: Whether password has lowercase letters
-        - has_uppercase: Whether password has uppercase letters
-        - has_digit: Whether password has digits
-        - has_special: Whether password has special characters
-        - is_long_enough: Whether password meets minimum length
-        - strength: Estimated password strength (weak, medium, strong)
+            Tuple of (is_valid, details) where details contains information about validation
         """
-        validation = {
-            "has_lowercase": bool(re.search(r'[a-z]', password)),
+        # Initialize validation details
+        details = {
+            "length": len(password) >= 10,
             "has_uppercase": bool(re.search(r'[A-Z]', password)),
-            "has_digit": bool(re.search(r'[0-9]', password)),
-            "has_special": bool(re.search(r'[!@#$%^&*(),.?":{}|<>]', password)),
-            "is_long_enough": len(password) >= 10,
-            "strength": "weak"
+            "has_lowercase": bool(re.search(r'[a-z]', password)),
+            "has_digit_or_special": bool(re.search(r'[0-9!@#$%^&*(),.?":{}|<>]', password)),
         }
         
-        # Determine password strength
-        strength_score = sum([
-            validation["has_lowercase"],
-            validation["has_uppercase"],
-            validation["has_digit"],
-            validation["has_special"],
-            1 if len(password) >= 12 else 0,
-            1 if len(password) >= 16 else 0
-        ])
+        # Calculate strength as percentage of criteria met
+        criteria_count = sum(1 for v in details.values() if v)
+        details["strength"] = int((criteria_count / 4) * 100)
         
-        if strength_score >= 5:
-            validation["strength"] = "strong"
-        elif strength_score >= 3:
-            validation["strength"] = "medium"
+        # Password is valid if at least 3 of 4 criteria are met
+        is_valid = criteria_count >= 3
         
-        # Password is valid if it meets the minimum requirements
-        # For educational purposes, we require at least 3 criteria
-        required_criteria_count = sum([
-            validation["has_lowercase"],
-            validation["has_uppercase"],
-            validation["has_digit"] or validation["has_special"],
-            validation["is_long_enough"]
-        ])
-        
-        is_valid = required_criteria_count >= 3
-        
-        return is_valid, validation
+        return is_valid, details
     
     @staticmethod
-    def get_password_error_message(validation: Dict[str, Any]) -> str:
+    def validate_user_role(role: str) -> bool:
         """
-        Generate a helpful error message based on password validation results.
+        Validate that a user role is one of the allowed values.
         
         Args:
-            validation: The validation details from validate_password
+            role: The role to validate
             
         Returns:
-            str: A helpful error message
+            True if the role is valid, False otherwise
+        """
+        from schemas import UserRole
+        
+        try:
+            # Log the received role for debugging
+            print(f"Validating role: {role} of type {type(role)}")
+            
+            # Check if the role is already a UserRole enum
+            if hasattr(role, 'value') and role in [UserRole.BUYER, UserRole.SELLER]:
+                return True
+                
+            # Check if the role is a valid string value
+            if isinstance(role, str):
+                return role in ["Buyer", "Seller"] or role in [UserRole.BUYER.value, UserRole.SELLER.value]
+                
+            return False
+        except Exception as e:
+            print(f"Error validating role: {str(e)}")
+            return False
+    
+    @staticmethod
+    def get_password_error_message(validation_details: Dict[str, Any]) -> str:
+        """
+        Get a human-readable error message based on password validation details.
+        
+        Args:
+            validation_details: The validation details returned by validate_password
+            
+        Returns:
+            A message describing what aspects of the password need to be fixed
         """
         messages = []
         
-        if not validation["is_long_enough"]:
+        if not validation_details["length"]:
             messages.append("co najmniej 10 znaków")
-            
-        if not validation["has_uppercase"]:
-            messages.append("wielką literę")
-            
-        if not validation["has_lowercase"]:
-            messages.append("małą literę")
-            
-        if not (validation["has_digit"] or validation["has_special"]):
-            messages.append("cyfrę lub znak specjalny")
-            
+        
+        if not validation_details["has_uppercase"]:
+            messages.append("wielką literę (A-Z)")
+        
+        if not validation_details["has_lowercase"]:
+            messages.append("małą literę (a-z)")
+        
+        if not validation_details["has_digit_or_special"]:
+            messages.append("cyfrę (0-9) lub znak specjalny")
+        
         if not messages:
-            return "Hasło nie spełnia wymagań bezpieczeństwa."
-            
-        return f"Hasło musi zawierać {', '.join(messages)}." 
+            return "Hasło jest za słabe."
+        
+        if len(messages) == 1:
+            return f"Hasło musi zawierać {messages[0]}."
+        
+        return f"Hasło musi zawierać: {', '.join(messages[:-1])} oraz {messages[-1]}." 

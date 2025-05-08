@@ -18,7 +18,14 @@ from services.user_service import UserService
 from services.auth_service import AuthService
 
 # Database connection setup
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost/steambay")
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL", 
+    "postgresql+asyncpg://postgres:postgres@postgres:5432/steambay"
+)
+# Fallback to localhost if using local development
+if "postgres:5432" in DATABASE_URL and os.environ.get("ENVIRONMENT") != "docker":
+    DATABASE_URL = DATABASE_URL.replace("postgres:5432", "localhost:5432")
+
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 

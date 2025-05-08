@@ -1,6 +1,6 @@
 import pytest
 from fastapi import FastAPI, Form, File, UploadFile, BackgroundTasks
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 from fastapi import status, HTTPException, Depends, Path, Request
 from typing import Dict, Any, Optional, List
 from uuid import uuid4, UUID

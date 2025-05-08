@@ -41,6 +41,18 @@ class AuthService:
             AuthServiceError: If registration fails
         """
         try:
+            # Log the registration data for debugging (excluding password)
+            self.logger.debug(f"Registration request: email={register_data.email}, role={register_data.role}")
+            
+            # Validate role explicitly
+            if not self.validation_service.validate_user_role(register_data.role):
+                self.logger.error(f"Invalid role: {register_data.role}")
+                raise AuthServiceError(
+                    error_code="INVALID_ROLE",
+                    message=f"Nieprawidłowa rola użytkownika: {register_data.role}. Dozwolone wartości to: Buyer, Seller.",
+                    status_code=400
+                )
+                
             # Normalize email
             normalized_email = self.validation_service.normalize_email(register_data.email)
             
@@ -90,7 +102,7 @@ class AuthService:
             log_entry = LogModel(
                 event_type=LogEventType.USER_REGISTER,
                 ip_address=request.client.host,
-                message=f"User registration: {normalized_email} with role {register_data.role.value}"
+                message=f"User registration: {normalized_email} with role {register_data.role}"
             )
             self.db_session.add(log_entry)
             
@@ -102,10 +114,11 @@ class AuthService:
                 log_entry.message += f", assigned ID: {new_user.id}"
                 await self.db_session.commit()
                 
+                self.logger.info(f"User registered successfully: id={new_user.id}, email={new_user.email}, role={new_user.role}")
                 return new_user
-            except IntegrityError:
+            except IntegrityError as e:
                 await self.db_session.rollback()
-                self.logger.error(f"Integrity error while registering user {normalized_email}")
+                self.logger.error(f"Integrity error while registering user {normalized_email}: {str(e)}")
                 raise AuthServiceError(
                     error_code="EMAIL_ALREADY_EXISTS",
                     message="Użytkownik o podanym adresie email już istnieje.",
@@ -200,7 +213,7 @@ class AuthService:
                 )
             
             # Check if user is active
-            if user.status != "Active":
+            if user.status != UserStatus.ACTIVE:
                 log_entry.message += f": user inactive (status={user.status})"
                 self.db_session.add(log_entry)
                 await self.db_session.commit()
@@ -212,6 +225,11 @@ class AuthService:
                 )
             
             try:
+                # Log user role for debugging
+                self.logger.info(f"User role: {user.role}, type: {type(user.role)}")
+                if hasattr(user.role, 'value'):
+                    self.logger.info(f"User role value: {user.role.value}, type: {type(user.role.value)}")
+                
                 # Update log message for successful login
                 log_entry.message += ": successful"
                 self.db_session.add(log_entry)
@@ -220,18 +238,23 @@ class AuthService:
                 await self.session_service.create_session(
                     response=response, 
                     user_id=user.id, 
-                    user_role=user.role.value
+                    user_role=user.role.value if hasattr(user.role, 'value') else str(user.role)
                 )
                 
                 await self.db_session.commit()
                 return True
             except Exception as e:
-                await self.db_session.rollback()
                 self.logger.error(f"Failed to process login: {str(e)}")
-                self.logger.debug(traceback.format_exc())
+                self.logger.error(f"Exception type: {type(e)}")
+                import traceback
+                self.logger.error(f"Traceback: {traceback.format_exc()}")
+                
+                # Rollback the transaction
+                await self.db_session.rollback()
+                
                 raise AuthServiceError(
-                    error_code="SESSION_CREATION_FAILED",
-                    message="Wystąpił błąd podczas tworzenia sesji. Spróbuj ponownie później.",
+                    error_code="LOGIN_FAILED", 
+                    message="Wystąpił nieoczekiwany błąd podczas logowania. Spróbuj ponownie później.",
                     status_code=500
                 )
         except AuthServiceError:

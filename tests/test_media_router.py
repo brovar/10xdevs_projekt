@@ -20,7 +20,7 @@ Test Structure:
 
 import pytest
 from fastapi import FastAPI, APIRouter, Depends, status, HTTPException, Path, Response
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 from fastapi.responses import FileResponse, JSONResponse
 from typing import Dict, Optional, Any, Union
 from uuid import uuid4, UUID

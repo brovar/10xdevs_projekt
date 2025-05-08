@@ -218,6 +218,48 @@
         -   `401 Unauthorized` (`NOT_AUTHENTICATED`)
         -   `500 Internal Server Error` (`FETCH_FAILED`)
 
+-   **List Seller's Own Offers**
+    -   **Method**: `GET`
+    -   **Path**: `/seller/offers`
+    -   **Description**: Retrieves a paginated list of offers owned by the currently authenticated Seller. This endpoint is specifically for sellers to manage their own offers. Requires Seller role.
+    -   **Query Parameters**:
+        -   `search` (string, optional): Search term for title and description within the seller's offers (case-insensitive, partial match).
+        -   `category_id` (integer, optional): Filter by category ID.
+        -   `status` (string, optional): Filter by offer status (e.g., `active`, `inactive`, `sold`, `moderated`, `archived`).
+        -   `sort` (string, optional): Sorting criteria (e.g., `price_asc`, `price_desc`, `created_at_desc`). Default `created_at_desc`.
+        -   `page` (integer, optional, default 1): Page number for pagination.
+        -   `limit` (integer, optional, default 100): Number of items per page. Max 100.
+    -   **Request Body**: None
+    -   **Response Body (Success)**:
+        ```json
+        {
+          "items": [
+            {
+              "id": "uuid-offer-id",
+              "seller_id": "uuid-current-seller-id", // Implicitly the authenticated seller's ID
+              "category_id": 1,
+              "title": "My Product",
+              "price": "49.99",
+              "image_filename": "my_image.png",
+              "quantity": 5,
+              "status": "inactive",
+              "created_at": "timestamp"
+            }
+            // ... other offers by this seller
+          ],
+          "total": 25,
+          "page": 1,
+          "limit": 100,
+          "pages": 1
+        }
+        ```
+    -   **Success Code**: `200 OK`
+    -   **Error Codes**:
+        -   `400 Bad Request` (`INVALID_QUERY_PARAM`)
+        -   `401 Unauthorized` (`NOT_AUTHENTICATED`)
+        -   `403 Forbidden` (`INSUFFICIENT_PERMISSIONS`) // Not a Seller
+        -   `500 Internal Server Error` (`FETCH_FAILED`)
+
 -   **Create Offer**
     -   **Method**: `POST`
     -   **Path**: `/offers`
@@ -662,5 +704,3 @@ Prefix: `/admin` (Requires Admin role for all endpoints below)
     -   **Search**: `GET /offers?search=...` uses case-insensitive partial matching on `title` and `description` fields (e.g., using `ILIKE` or `LOWER()` in SQL). Relevance sorting TBD (simple count or basic full-text search feature if DB supports).
     -   **Pagination**: Default limit 100, max 100 enforced on all list endpoints.
     -   **Mock Payment Integration**: `POST /orders` generates the payment URL. `GET /payments/callback` handles the result, updating related entities.
-
-</rewritten_file> 

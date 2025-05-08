@@ -1,5 +1,5 @@
 import pytest
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 from fastapi import status, HTTPException
 from typing import List
 from uuid import uuid4

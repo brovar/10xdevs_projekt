@@ -8,7 +8,7 @@ import uuid
 from typing import Optional
 from datetime import datetime
 
-from schemas import UserRole, UserStatus, LogEventType, OfferStatus, OrderStatus, TransactionStatus
+from src.schemas import UserRole, UserStatus, LogEventType, OfferStatus, OrderStatus, TransactionStatus
 
 Base = declarative_base()
 
@@ -88,11 +88,6 @@ class OrderItemModel(Base):
     quantity = Column(Integer, nullable=False)
     price_at_purchase = Column(Numeric(precision=10, scale=2), nullable=False)
     offer_title = Column(String(255), nullable=False)
-    
-    # Indeks dla szybszego wyszukiwania
-    __table_args__ = (
-        Index('ix_order_items_order_id', 'order_id'),
-    )
 
 class TransactionModel(Base):
     __tablename__ = "transactions"

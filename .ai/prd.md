@@ -210,6 +210,17 @@ Obecnie rekruterzy i zespoły techniczne zajmujące się bezpieczeństwem aplika
     -   Sprzedający widzi nowo dodaną ofertę na liście swoich ofert.
     -   Logowane jest zdarzenie `OFFER_CREATE`.
 
+-   ID: US-029
+-   Tytuł: Przeglądanie listy własnych ofert
+-   Opis: Jako Sprzedający, chcę móc wyświetlić listę wszystkich moich ofert (np. aktywnych, nieaktywnych), aby móc nimi zarządzać (np. edytować, zmieniać status, usuwać).
+-   Kryteria akceptacji:
+    -   Dostępna jest dedykowana sekcja/strona "Moje Oferty" (`/seller/offers`).
+    -   Wyświetlana jest lista ofert należących *tylko* do zalogowanego Sprzedającego.
+    -   Lista zawiera oferty w różnych statusach (co najmniej 'active', 'inactive').
+    -   Każda pozycja na liście zawiera kluczowe informacje: miniaturkę zdjęcia, tytuł, cenę, ilość, aktualny status.
+    -   Przy każdej ofercie widoczne są opcje zarządzania (np. przyciski "Edytuj", "Zmień status", "Usuń").
+    -   Lista jest paginowana.
+
 -   ID: US-005
 -   Tytuł: Edycja istniejącej oferty
 -   Opis: Jako Sprzedający, chcę móc edytować szczegóły moich ofert (tytuł, opis, cena, ilość, kategoria, zdjęcie), które mają status 'active' lub 'inactive', aby zaktualizować informacje o produkcie.

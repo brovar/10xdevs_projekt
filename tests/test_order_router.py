@@ -30,7 +30,7 @@ Test Structure:
 """
 
 import pytest
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 from fastapi import status, HTTPException, Depends, Path, APIRouter, Request
 from typing import Dict, Optional, List, Any, Callable
 from uuid import uuid4, UUID

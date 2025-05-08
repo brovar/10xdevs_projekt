@@ -19,7 +19,7 @@ Test Structure:
 """
 
 import pytest
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 from fastapi import status, HTTPException, Depends, Request
 from typing import Dict, Optional, List, Any
 from uuid import uuid4, UUID

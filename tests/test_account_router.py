@@ -1,5 +1,5 @@
 import pytest
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 from fastapi import status, HTTPException, Request
 from uuid import UUID
 from datetime import datetime

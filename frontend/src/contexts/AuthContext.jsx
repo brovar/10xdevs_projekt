@@ -1,0 +1,153 @@
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
+import axios from 'axios';
+import { loginUser, logoutUser } from '../services/authService';
+
+// Tworzenie kontekstu
+const AuthContext = createContext();
+
+// Hook użytkowy
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+// Dostawca kontekstu
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Sprawdzenie czy użytkownik jest zalogowany przy ładowaniu strony
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        // Tutaj sprawdzamy status autoryzacji, np. przez wywołanie 
+        // dedykowanego endpointu GET /auth/status lub podobnego
+        // Na potrzeby tej implementacji zakładamy że jeśli w localStorage
+        // jest zapisany user, to jest on zalogowany
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        setError('Failed to authenticate');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
+  // Funkcja logowania
+  const login = useCallback(async (email, password) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await loginUser({ email, password });
+      const userData = response; // Zakładamy, że response zawiera dane użytkownika
+      
+      // Zapisujemy użytkownika w stanie i localStorage
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      return userData;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Failed to login';
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Funkcja czyszczenia wszystkich stanów powiązanych z sesją
+  const clearSessionData = useCallback(() => {
+    // Czyszczenie localStorage
+    localStorage.removeItem('user');
+    
+    // Wywołane przez inne konteksty - obsługiwane przez event
+    const logoutEvent = new CustomEvent('user-logout');
+    window.dispatchEvent(logoutEvent);
+    
+    // Czyszczenie stanu auth
+    setUser(null);
+    setError(null);
+  }, []);
+
+  // Funkcja wylogowania
+  const logout = useCallback(async () => {
+    setIsLoading(true);
+    
+    try {
+      // Wywołanie API wylogowania
+      const response = await logoutUser();
+      
+      // Czyszczenie wszystkich danych sesji
+      clearSessionData();
+      
+      return response;
+    } catch (error) {
+      // Jeśli błąd to 401 (Unauthorized), oznacza to, że sesja już wygasła
+      // Mimo to czyścimy dane sesji lokalnie
+      if (error.response && error.response.status === 401) {
+        clearSessionData();
+      }
+      
+      console.error('Error during logout:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [clearSessionData]);
+
+  // Obsługa wygaśnięcia sesji - dodanie globalnego interceptora dla axios
+  useEffect(() => {
+    // Dodajemy interceptor do obsługi odpowiedzi
+    const interceptorId = axios.interceptors.response.use(
+      response => response, 
+      error => {
+        // Jeśli serwer zwraca 401 Unauthorized, a użytkownik jest zalogowany
+        // automatycznie wylogowujemy go (sesja wygasła)
+        if (error.response && error.response.status === 401 && user) {
+          clearSessionData();
+        }
+        return Promise.reject(error);
+      }
+    );
+    
+    // Usuwamy interceptor przy odmontowaniu
+    return () => {
+      axios.interceptors.response.eject(interceptorId);
+    };
+  }, [user, clearSessionData]);
+
+  // Wartość kontekstu
+  const value = {
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    error,
+    login,
+    logout,
+    clearSessionData
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired
+};
+
+export default AuthContext; 
