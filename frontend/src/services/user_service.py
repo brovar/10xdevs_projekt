@@ -127,6 +127,9 @@ class UserService:
             HTTPException: 404 if user doesn't exist, 500 for server errors
         """
         try:
+            # Convert UUID to string if needed - fix for asyncpg.pgproto.UUID issue
+            user_id_str = str(user_id)
+            
             # Query database for user
             result = await self.db_session.execute(
                 select(UserModel).where(UserModel.id == user_id)
@@ -135,7 +138,7 @@ class UserService:
             
             # Check if user exists
             if not user:
-                self.logger.warning(f"User with ID {user_id} not found in database")
+                self.logger.warning(f"User with ID {user_id_str} not found in database")
                 raise HTTPException(
                     status_code=404,
                     detail={
@@ -146,7 +149,7 @@ class UserService:
             
             # Convert to DTO and return
             return UserDTO(
-                id=user.id,
+                id=str(user.id),  # Ensure UUID is converted to string
                 email=user.email,
                 role=user.role,
                 status=user.status,
@@ -184,6 +187,9 @@ class UserService:
             HTTPException: 404 if user doesn't exist, 500 for server errors
         """
         try:
+            # Convert UUID to string if needed
+            user_id_str = str(user_id)
+            
             # Check if user exists
             result = await self.db_session.execute(
                 select(UserModel).where(UserModel.id == user_id)
@@ -191,7 +197,7 @@ class UserService:
             user = result.scalars().first()
             
             if not user:
-                self.logger.warning(f"User with ID {user_id} not found in database")
+                self.logger.warning(f"User with ID {user_id_str} not found in database")
                 raise HTTPException(
                     status_code=404,
                     detail={
@@ -221,7 +227,7 @@ class UserService:
             log_entry = LogModel(
                 event_type=LogEventType.USER_PROFILE_UPDATE,
                 user_id=user_id,
-                message=f"User {user_id} updated profile information"
+                message=f"User {user_id_str} updated profile information"
             )
             self.db_session.add(log_entry)
             
@@ -233,7 +239,7 @@ class UserService:
             
             # Return updated user
             return UserDTO(
-                id=user.id,
+                id=str(user.id),  # Ensure UUID is converted to string
                 email=user.email,
                 role=user.role,
                 status=user.status,

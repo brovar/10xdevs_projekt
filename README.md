@@ -9,6 +9,7 @@ SteamBay is an e-commerce platform for digital game sales, featuring a React fro
 - `docker-compose.yml` - Docker Compose configuration
 - `Dockerfile.backend` - Backend Dockerfile
 - `Dockerfile.frontend` - Frontend Dockerfile
+- `tests/` - Backend unit tests
 
 ## Features
 
@@ -84,3 +85,9 @@ The backend is built with FastAPI and follows RESTful API design principles. The
 ### Frontend
 
 The frontend is built with React and uses React Router for navigation. The API service integrations are in the `frontend/src/services/` directory.
+
+### Shared Architecture
+
+The application uses a shared service architecture where business logic services are located in `frontend/src/services/` but are used by both the frontend and backend components. When running tests, the Python path is configured to include both directories.
+
+For more details, see the [Services Module README](frontend/src/services/README.md).

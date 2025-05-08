@@ -8,7 +8,7 @@ import uuid
 from typing import Optional
 from datetime import datetime
 
-from src.schemas import UserRole, UserStatus, LogEventType, OfferStatus, OrderStatus, TransactionStatus
+from schemas import UserRole, UserStatus, LogEventType, OfferStatus, OrderStatus, TransactionStatus
 
 Base = declarative_base()
 

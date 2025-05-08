@@ -29,9 +29,10 @@ if "postgres:5432" in DATABASE_URL and os.environ.get("ENVIRONMENT") != "docker"
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-# Session management
+# Create a single session service instance with properly set parameters
 session_service = SessionService(
     cookie_name="steambay_session",
+    cookie_max_age=604800,  # 7 days
     secret_key=os.environ.get("SESSION_SECRET", "INSECURE_SECRET_KEY_CHANGE_IN_PRODUCTION")
 )
 
@@ -197,6 +198,14 @@ def get_media_service(
     from services.media_service import MediaService
     return MediaService(logger)
 
+def get_auth_service(
+    db_session: AsyncSession = Depends(get_db_session),
+    logger: Logger = Depends(get_logger),
+    session_service: SessionService = Depends(get_session_service)
+) -> AuthService:
+    """Dependency that provides an AuthService instance."""
+    return AuthService(db_session, logger, session_service)
+
 # Aliases for backward compatibility
 require_auth = require_authenticated
 def require_role(required_role: UserRole):
@@ -204,6 +213,29 @@ def require_role(required_role: UserRole):
     Alias factory for requiring a single role for backward compatibility.
     """
     return require_roles([required_role])
+
+async def get_current_user_optional(
+    request: Request,
+    session_service: SessionService = Depends(get_session_service)
+) -> Optional[Dict[str, any]]:
+    """
+    Dependency that gets the current user if authenticated, but doesn't raise an exception if not.
+    
+    Args:
+        request: FastAPI request object
+        session_service: Session service for checking authentication
+        
+    Returns:
+        Optional[dict]: User session data if authenticated, None otherwise
+    """
+    try:
+        session_data = await session_service.get_session(request)
+        return {
+            "user_id": session_data.user_id,
+            "user_role": session_data.user_role
+        }
+    except HTTPException:
+        return None
 
 # Removed the incorrect require_role definition as it was causing NameError
 # The require_roles factory function should be used instead

@@ -41,9 +41,9 @@ MOCK_FILE_PATH = "/tmp/test_image.png"
 # Add src directory to path if needed
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Import the required dependencies
-from src.schemas import UserRole
-from src.exceptions.offer_exceptions import OfferNotFoundException
+# Fixed imports to work with tests
+from schemas import UserRole
+from exceptions.offer_exceptions import OfferNotFoundException
 
 # Configure test logger
 test_logger = logging.getLogger("test_media_logger")

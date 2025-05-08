@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 
 class SessionData(BaseModel):
-    user_id: UUID
+    user_id: str  # Store UUID as string to avoid UUID conversion issues
     user_role: str
 
 
@@ -41,8 +41,9 @@ class SessionService:
             # Generate a session ID
             session_id = str(uuid4())
             
-            # Store session data in memory
-            session_data = SessionData(user_id=user_id, user_role=user_role)
+            # Store session data in memory - convert UUID to string
+            user_id_str = str(user_id)
+            session_data = SessionData(user_id=user_id_str, user_role=user_role)
             self.sessions[session_id] = session_data
             
             # Create a JWT token with the session ID

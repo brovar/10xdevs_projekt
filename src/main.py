@@ -1,3 +1,15 @@
+import os
+import sys
+import importlib
+
+# Add frontend/src to Python path for services module
+# This line is no longer needed as services have been moved to src/services
+# sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'frontend', 'src'))
+# Ensure project root directory is in Python path (for importing 'src')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Ensure src directory is in Python path for top-level imports
+sys.path.insert(0, os.path.dirname(__file__))
+
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -6,20 +18,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi_csrf_protect import CsrfProtect
 from fastapi_csrf_protect.exceptions import CsrfProtectError
 from fastapi.responses import JSONResponse
-import os
-import sys
-# Ensure src directory is in Python path for top-level imports
-sys.path.insert(0, os.path.dirname(__file__))
 
-from routers.auth_router import router as auth_router
-from routers.seller_router import router as seller_router
-from routers.buyer_router import router as buyer_router
-from routers.account_router import router as account_router
-from routers.category_router import router as category_router
-from routers.offer_router import router as offer_router
-from routers.order_router import router as order_router
-from routers.media_router import router as media_router
-from routers.admin_router import router as admin_router
 from security.csrf import CsrfSettings, handle_csrf_error
 
 # Create FastAPI app
@@ -166,6 +165,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "detail": str(exc)
         }
     )
+
+# Import all routers after the app configuration is complete to avoid circular imports
+from routers.auth_router import router as auth_router
+from routers.seller_router import router as seller_router
+from routers.buyer_router import router as buyer_router
+from routers.account_router import router as account_router
+from routers.category_router import router as category_router
+from routers.offer_router import router as offer_router
+from routers.order_router import router as order_router
+from routers.media_router import router as media_router
+from routers.admin_router import router as admin_router
 
 # Include routers
 app.include_router(auth_router)

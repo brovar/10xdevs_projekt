@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import axios from 'axios';
+import axios from '../services/api';
 import { loginUser, logoutUser } from '../services/authService';
 
 // Tworzenie kontekstu
@@ -25,10 +25,27 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        // Tutaj sprawdzamy status autoryzacji, np. przez wywołanie 
-        // dedykowanego endpointu GET /auth/status lub podobnego
-        // Na potrzeby tej implementacji zakładamy że jeśli w localStorage
-        // jest zapisany user, to jest on zalogowany
+        console.log('Checking auth status...');
+        
+        // Try to get user session from the backend first
+        try {
+          const response = await axios.get('/auth/status');
+          console.log('Auth status response:', response.data);
+          if (response.data && response.data.is_authenticated) {
+            console.log('User is authenticated according to backend');
+            const userData = response.data.user;
+            setUser(userData);
+            
+            // Update localStorage to keep it in sync
+            localStorage.setItem('user', JSON.stringify(userData));
+            setIsLoading(false);
+            return;
+          }
+        } catch (apiError) {
+          console.log('Could not verify auth with backend, falling back to localStorage:', apiError);
+        }
+        
+        // Fallback to localStorage if API verification fails
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
@@ -127,6 +144,7 @@ export const AuthProvider = ({ children }) => {
         // Jeśli serwer zwraca 401 Unauthorized, a użytkownik jest zalogowany
         // automatycznie wylogowujemy go (sesja wygasła)
         if (error.response && error.response.status === 401 && user) {
+          console.warn('Received 401 while user is logged in - clearing session');
           clearSessionData();
         }
         return Promise.reject(error);

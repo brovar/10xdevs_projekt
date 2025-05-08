@@ -7,7 +7,7 @@ from fastapi_csrf_protect import CsrfProtect
 from uuid import UUID
 import traceback
 
-from dependencies import get_db_session, get_logger, get_session_service, require_authenticated
+from dependencies import get_db_session, get_logger, get_session_service, require_authenticated, get_auth_service
 from services.auth_service import AuthService, AuthServiceError
 from services.session_service import SessionService, SessionData
 from schemas import LoginUserRequest, LoginUserResponse, LogoutUserResponse, RegisterUserRequest, RegisterUserResponse
@@ -43,9 +43,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def register_user(
     register_data: RegisterUserRequest,
     request: Request,
-    db_session: AsyncSession = Depends(get_db_session),
-    logger: Logger = Depends(get_logger),
-    session_service: SessionService = Depends(get_session_service)
+    auth_service: AuthService = Depends(get_auth_service),
+    logger: Logger = Depends(get_logger)
 ):
     """
     Register a new user.
@@ -88,8 +87,6 @@ async def register_user(
         # Log registration request details (without sensitive data)
         if logger:
             logger.info(f"Registration request: email={register_data.email}, role={register_data.role}")
-        
-        auth_service = AuthService(db_session, logger, session_service)
         
         # Register the user
         new_user = await auth_service.register_user(register_data, request)
@@ -141,9 +138,8 @@ async def login_user(
     login_data: LoginUserRequest,
     response: Response,
     request: Request,
-    db_session: AsyncSession = Depends(get_db_session),
+    auth_service: AuthService = Depends(get_auth_service),
     logger: Logger = Depends(get_logger),
-    session_service: SessionService = Depends(get_session_service),
     csrf_protect: CsrfProtect = Depends()
 ):
     """
@@ -163,8 +159,6 @@ async def login_user(
     - LOGIN_FAILED: Server error during login
     - SESSION_CREATION_FAILED: Error creating the user session
     """
-    auth_service = AuthService(db_session, logger, session_service)
-    
     try:
         # Use the auth service to handle login
         await auth_service.login_user(login_data, request, response)
@@ -203,9 +197,8 @@ async def logout_user(
     request: Request,
     response: Response,
     csrf_protect: CsrfProtect = Depends(),
-    db_session: AsyncSession = Depends(get_db_session),
-    logger: Logger = Depends(get_logger),
-    session_service: SessionService = Depends(get_session_service)
+    auth_service: AuthService = Depends(get_auth_service),
+    logger: Logger = Depends(get_logger)
 ):
     """
     End a user's session (logout).
@@ -230,8 +223,6 @@ async def logout_user(
     except Exception as csrf_error:
         if logger:
             logger.warning(f"CSRF validation skipped: {str(csrf_error)}")
-    
-    auth_service = AuthService(db_session, logger, session_service)
     
     try:
         # Log out user - handles both authenticated and unauthenticated users

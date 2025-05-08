@@ -2,13 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status, Path, Response, R
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
-from typing import Optional
+from typing import Optional, Dict
 from logging import Logger
 
-from dependencies import get_db_session, get_logger, get_media_service
-from models import OfferModel
+from dependencies import get_db_session, get_logger, get_media_service, get_current_user_optional
+from models import OfferModel, UserModel
 from services.media_service import MediaService
-from services.auth import get_current_user_optional
 from schemas import UserRole
 from exceptions.offer_exceptions import OfferNotFoundException
 
@@ -16,12 +15,13 @@ router = APIRouter(prefix="/media", tags=["media"])
 
 @router.get("/offers/{offer_id}/{filename}")
 async def get_offer_image(
+    request: Request,
     offer_id: UUID = Path(..., description="UUID of the offer"),
     filename: str = Path(..., description="Filename of the image"),
-    current_user = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db_session),
     logger: Logger = Depends(get_logger),
-    media_service: MediaService = Depends(get_media_service)
+    media_service: MediaService = Depends(get_media_service),
+    current_user: Optional[Dict[str, any]] = Depends(get_current_user_optional)
 ):
     """
     Get an image file associated with an offer.
@@ -39,8 +39,8 @@ async def get_offer_image(
             raise OfferNotFoundException(offer_id)
         
         # Extract user information if authenticated
-        current_user_id = current_user.id if current_user else None
-        current_user_role = current_user.role if current_user else None
+        current_user_id = current_user.get("user_id") if current_user else None
+        current_user_role = current_user.get("user_role") if current_user else None
         
         # Check access permission
         await media_service.check_offer_image_access(

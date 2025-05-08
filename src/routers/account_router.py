@@ -79,10 +79,25 @@ async def get_current_user(
     try:
         # Get user ID from session
         user_id = session_data["user_id"]
+        logger.info(f"Getting profile for user ID: {user_id} (type: {type(user_id)})")
         
-        # Call service to get user data
+        # Call service to get user data - convert to UUID only if it's a string
         user_service = UserService(db_session, logger)
-        user_data = await user_service.get_current_user(UUID(user_id))
+        if isinstance(user_id, str):
+            try:
+                user_data = await user_service.get_current_user(UUID(user_id))
+            except ValueError as e:
+                logger.error(f"Invalid UUID format in session: {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail={
+                        "error_code": "INVALID_SESSION_DATA",
+                        "message": "Sesja zawiera nieprawidłowe dane. Wyloguj się i zaloguj ponownie."
+                    }
+                )
+        else:
+            # Already a UUID object
+            user_data = await user_service.get_current_user(user_id)
         
         return user_data
     except HTTPException as e:
@@ -197,6 +212,7 @@ async def update_current_user_profile(
 
         # Get user ID from session
         user_id = session_data["user_id"]
+        logger.info(f"Updating profile for user ID: {user_id} (type: {type(user_id)})")
         
         # Validate that at least one field is provided
         if update_data.first_name is None and update_data.last_name is None:
@@ -208,9 +224,23 @@ async def update_current_user_profile(
                 }
             )
         
-        # Call service to update user profile
+        # Call service to update user profile - convert to UUID only if it's a string
         user_service = UserService(db_session, logger)
-        updated_user = await user_service.update_user_profile(UUID(user_id), update_data)
+        if isinstance(user_id, str):
+            try:
+                updated_user = await user_service.update_user_profile(UUID(user_id), update_data)
+            except ValueError as e:
+                logger.error(f"Invalid UUID format in session: {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail={
+                        "error_code": "INVALID_SESSION_DATA",
+                        "message": "Sesja zawiera nieprawidłowe dane. Wyloguj się i zaloguj ponownie."
+                    }
+                )
+        else:
+            # Already a UUID object
+            updated_user = await user_service.update_user_profile(user_id, update_data)
         
         return updated_user
     except HTTPException:
@@ -296,34 +326,31 @@ async def change_current_user_password(
     """
     Change current user's password.
     
-    This endpoint allows the currently authenticated user to change their password.
-    Both current and new password must be provided. The new password must meet
-    security policy requirements.
+    This endpoint allows authenticated users to change their password.
+    The user must provide their current password for verification
+    and a new password that meets the password policy requirements.
     
-    ## Request Body
-    - **current_password**: User's current password (required)
-    - **new_password**: User's new password (required)
+    Password policy:
+    - At least 10 characters
+    - Must contain at least one uppercase letter
+    - Must contain at least one lowercase letter
+    - Must contain at least one digit or special character
     
-    ## Password Requirements
-    The new password must meet these security requirements:
-    - At least 10 characters long
-    - Contains at least one uppercase letter (A-Z)
-    - Contains at least one lowercase letter (a-z)
-    - Contains at least one digit (0-9) or special character (!@#$%^&*(),.?":{}|<>)
+    Request body:
+    - current_password: User's current password for verification
+    - new_password: The new password that complies with the password policy
     
-    ## Returns
-    A success message when the password is successfully updated.
+    CSRF protection is required for this endpoint:
+    - The request must include a valid CSRF token in the X-CSRF-Token header
     
-    ## Error Codes
-    - **INVALID_INPUT**: Request validation failed
-    - **PASSWORD_POLICY_VIOLATED**: New password doesn't meet security requirements
-    - **NOT_AUTHENTICATED**: User is not logged in
-    - **INVALID_CURRENT_PASSWORD**: Current password is incorrect
-    - **INVALID_CSRF**: CSRF token is missing or invalid
-    - **PASSWORD_UPDATE_FAILED**: Server error during password update
-    
-    ## CSRF Protection
-    This endpoint requires a valid CSRF token in the X-CSRF-Token header
+    Error codes that may be returned:
+    - INVALID_INPUT: Request data is invalid or missing required fields
+    - PASSWORD_POLICY_VIOLATED: New password doesn't meet policy requirements
+    - NOT_AUTHENTICATED: User is not logged in
+    - INVALID_CURRENT_PASSWORD: Current password verification failed
+    - INVALID_CSRF: CSRF token missing or invalid
+    - USER_NOT_FOUND: User account doesn't exist in the database
+    - PASSWORD_UPDATE_FAILED: Server error occurred during password update
     """
     try:
         # Verify CSRF token first, handle errors or skip for stubs
@@ -336,15 +363,41 @@ async def change_current_user_password(
 
         # Get user ID from session
         user_id = session_data["user_id"]
+        logger.info(f"Changing password for user ID: {user_id} (type: {type(user_id)})")
         
         # Get client IP for logging
         client_ip = request.client.host
         
-        # Call service to change password
+        # Call service to change password - convert to UUID only if it's a string
         user_service = UserService(db_session, logger)
-        success = await user_service.change_password(UUID(user_id), password_data, client_ip)
+        if isinstance(user_id, str):
+            try:
+                success = await user_service.change_password(UUID(user_id), password_data, client_ip)
+            except ValueError as e:
+                logger.error(f"Invalid UUID format in session: {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail={
+                        "error_code": "INVALID_SESSION_DATA",
+                        "message": "Sesja zawiera nieprawidłowe dane. Wyloguj się i zaloguj ponownie."
+                    }
+                )
+        else:
+            # Already a UUID object
+            success = await user_service.change_password(user_id, password_data, client_ip)
         
-        return {"message": "Password updated successfully"}
+        if success:
+            return {"message": "Hasło zostało zmienione pomyślnie."}
+        else:
+            # This should not happen normally, because change_password should raise an exception on failure
+            logger.warning(f"Password change for user {user_id} returned false without raising an exception")
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "error_code": "PASSWORD_UPDATE_FAILED",
+                    "message": "Nie udało się zmienić hasła. Spróbuj ponownie później."
+                }
+            )
     except HTTPException:
         # Re-raise HTTP exceptions
         raise
@@ -354,6 +407,6 @@ async def change_current_user_password(
             status_code=500,
             detail={
                 "error_code": "PASSWORD_UPDATE_FAILED",
-                "message": "Wystąpił nieoczekiwany błąd podczas aktualizacji hasła."
+                "message": "Wystąpił błąd podczas zmiany hasła. Spróbuj ponownie później."
             }
         ) 

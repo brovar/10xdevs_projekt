@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/layout/Header';
@@ -8,6 +8,7 @@ import Footer from '../components/layout/Footer';
 const RegisterPage = lazy(() => import('../pages/auth/RegisterPage'));
 const LoginPage = lazy(() => import('../pages/auth/LoginPage'));
 const HomePage = lazy(() => import('../pages/HomePage'));
+const AccountPage = lazy(() => import('../pages/account/AccountPage'));
 // Pozostałe strony będą dodawane tutaj
 
 // Layout component
@@ -27,22 +28,54 @@ const AppLayout = () => {
 
 // Auth guard component
 const RequireAuth = ({ children, requiredRole = null }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('RequireAuth - Auth status:', { 
+      isAuthenticated, 
+      user, 
+      isLoading, 
+      role: user?.role,
+      requiredRole
+    });
+  }, [isAuthenticated, user, isLoading, requiredRole]);
+
+  // While still checking authentication status, show loading
+  if (isLoading) {
+    return (
+      <div className="container py-5 text-center">
+        <p>Weryfikacja sesji użytkownika...</p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
+    console.log('User is not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
   if (requiredRole && user?.role !== requiredRole) {
+    console.log(`User role ${user?.role} doesn't match required role ${requiredRole}, redirecting to home`);
     return <Navigate to="/" replace />;
   }
 
+  console.log('Authentication check passed, rendering protected content');
   return children;
 };
 
 // Prevents authenticated users from accessing login/register
 const RequireAnon = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // While still checking authentication status, show loading
+  if (isLoading) {
+    return (
+      <div className="container py-5 text-center">
+        <p>Weryfikacja sesji użytkownika...</p>
+      </div>
+    );
+  }
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -87,10 +120,7 @@ const router = createBrowserRouter([
         path: 'account',
         element: (
           <RequireAuth>
-            <div className="container py-5">
-              <h2>Moje Konto</h2>
-              <p>Ta strona zostanie zaimplementowana później.</p>
-            </div>
+            <AccountPage />
           </RequireAuth>
         )
       },

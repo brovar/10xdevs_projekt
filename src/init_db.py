@@ -14,8 +14,8 @@ from passlib.context import CryptContext
 # Add the src directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from src.models import Base, UserModel, CategoryModel, OfferModel, LogModel
-from src.schemas import UserRole, UserStatus, OfferStatus, LogEventType
+from models import Base, UserModel, CategoryModel, OfferModel, LogModel
+from schemas import UserRole, UserStatus, OfferStatus, LogEventType
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")

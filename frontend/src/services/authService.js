@@ -1,23 +1,37 @@
-import axios from 'axios';
-
-const API_URL = '';
+import axios from './api';
 
 export const registerUser = async (userData) => {
-  const response = await axios.post(`${API_URL}/auth/register`, userData);
-  return response.data;
+  try {
+    console.log('Registering user:', userData.email);
+    const response = await axios.post('/auth/register', userData);
+    console.log('Registration response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Registration error:', error.response?.data || error);
+    throw error;
+  }
 };
 
 export const loginUser = async (credentials) => {
-  const response = await axios.post(`${API_URL}/auth/login`, credentials);
-  return response.data;
+  try {
+    console.log('Logging in user:', credentials.email);
+    const response = await axios.post('/auth/login', credentials);
+    console.log('Login response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Login error:', error.response?.data || error);
+    throw error;
+  }
 };
 
 export const logoutUser = async () => {
   try {
-    const response = await axios.post(`${API_URL}/auth/logout`);
+    console.log('Logging out user');
+    const response = await axios.post('/auth/logout');
+    console.log('Logout response:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error('Logout error:', error.response?.data || error);
     throw error;
   }
 }; 
