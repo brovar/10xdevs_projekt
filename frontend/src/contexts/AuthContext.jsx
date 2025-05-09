@@ -97,30 +97,39 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     
     try {
+      // 1. Wykonaj zapytanie logowania
       const response = await loginUser({ email, password });
       console.log('Login response:', response);
       
-      // Log detailed response for debugging
-      console.log('Login response details:', {
-        hasRole: !!response?.role,
-        role: response?.role,
-        email: response?.email,
-        fullResponse: JSON.stringify(response)
-      });
+      // 2. Natychmiast pobierz pełne dane użytkownika z endpointu statusu
+      const statusResponse = await axios.get('/auth/status');
+      console.log('Auth status after login:', statusResponse.data);
       
-      // Normalize user data
-      const userData = normalizeUserData({
-        ...response,
-        email: response.email || email // Use the email from response if available, otherwise use the login email
-      });
-      
-      console.log('User data being saved:', userData);
-      
-      // Zapisujemy użytkownika w stanie i localStorage
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      return userData;
+      if (statusResponse.data && statusResponse.data.is_authenticated) {
+        // Użyj danych użytkownika z odpowiedzi statusu
+        const userData = normalizeUserData(statusResponse.data.user);
+        
+        console.log('User data being saved:', userData);
+        
+        // Zapisujemy użytkownika w stanie i localStorage
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        return userData;
+      } else {
+        // Fallback do poprzedniej logiki
+        const userData = normalizeUserData({
+          ...response,
+          email: response.email || email
+        });
+        
+        console.log('Fallback user data being saved:', userData);
+        
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        return userData;
+      }
     } catch (error) {
       console.error('Login error:', error);
       const errorMessage = error.response?.data?.message || 'Failed to login';

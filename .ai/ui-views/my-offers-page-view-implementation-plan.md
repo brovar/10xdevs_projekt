@@ -301,3 +301,117 @@ MyOffersPage (Container)
 10. **Obsługa błędów**: Implementacja wyświetlania komunikatów o błędach API i przypadków brzegowych.
 11. **Testowanie**: Przetestowanie wszystkich interakcji, filtrów, paginacji, obsługi błędów.
 12. **Refaktoryzacja i optymalizacja**: Przejrzenie kodu, ewentualne wydzielenie logiki do custom hooks (np. `useSellerOffers`). Zastosowanie `React.memo` gdzie to zasadne.
+
+## 12. Implementacja historyjek użytkownika
+
+### US-006: Zmiana statusu oferty (Aktywna/Nieaktywna)
+
+#### Opis historyjki
+Jako Sprzedający, chcę móc zmieniać status moich ofert między 'active' a 'inactive', aby kontrolować ich widoczność dla kupujących.
+
+#### Szczegóły implementacji
+1. **Interfejs użytkownika**:
+   - Przycisk "Zmień status" w komponencie `OfferListItem` dla każdej oferty.
+   - Komponent `ChangeStatusModal` z wyborem nowego statusu.
+   - Wyświetlenie obecnego statusu oferty jako Badge w komponencie `OfferListItem` (zielony dla 'active', szary dla 'inactive').
+
+2. **Komponent `ChangeStatusModal`**:
+   - Dynamicznie dostosowuje listę dostępnych statusów w zależności od obecnego statusu oferty.
+   - Dla ofert 'active': opcja zmiany na 'inactive'.
+   - Dla ofert 'inactive': opcja zmiany na 'active', 'sold'.
+   - Modal zawiera komunikat informujący o konsekwencjach zmiany statusu.
+
+3. **Funkcjonalność API**:
+   - Implementacja wywołania endpointu `PATCH /seller/offers/{offerId}/status` z payloadem `{ "new_status": "active/inactive" }`.
+   - Obsługa odpowiedzi i aktualizacja listy ofert po udanej zmianie statusu.
+   - Wyświetlenie komunikatu sukcesu po zmianie statusu (np. toast).
+
+4. **Obsługa dostępności**:
+   - Zastosowanie kontekstowych, jasnych etykiet np. "Dezaktywuj" (dla ofert 'active') lub "Aktywuj" (dla ofert 'inactive').
+   - Użycie ikon wspomagających rozpoznawanie akcji (np. ikona oka przekreślonego dla dezaktywacji).
+
+5. **Walidacja i kontrola dostępu**:
+   - Sprawdzenie czy użytkownik jest właścicielem oferty przed wysłaniem żądania zmiany statusu.
+   - Wyświetlenie komunikatu błędu, jeśli status nie może być zmieniony (np. gdy oferta ma już powiązane zamówienia).
+
+### US-007: Oznaczenie oferty jako 'sold'
+
+#### Opis historyjki
+Jako Sprzedający, chcę móc ręcznie oznaczyć ofertę jako 'sold', aby wycofać ją ze sprzedaży, nawet jeśli ilość nie jest zerowa.
+
+#### Szczegóły implementacji
+1. **Interfejs użytkownika**:
+   - Dodanie opcji "Oznacz jako sprzedane" w komponencie `ChangeStatusModal` dla ofert 'active' i 'inactive'.
+   - Wyświetlenie statusu 'sold' jako specjalny Badge w kolorze np. fioletowym/niebieskim w komponencie `OfferListItem`.
+
+2. **Komponent `ChangeStatusModal`**:
+   - Dodanie opcji 'sold' w dropdownie dla ofert o statusie 'active' lub 'inactive'.
+   - Dodanie komunikatu ostrzegawczego, że akcja jest nieodwracalna i spowoduje wyzerowanie ilości.
+   - Wymóg dodatkowego potwierdzenia przy zmianie statusu na 'sold'.
+
+3. **Funkcjonalność API**:
+   - Implementacja wywołania tego samego endpointu `PATCH /seller/offers/{offerId}/status` z payloadem `{ "new_status": "sold" }`.
+   - Backend automatycznie zeruje ilość oferty w odpowiedzi na zmianę statusu na 'sold'.
+   - Obsługa odpowiedzi i aktualizacja listy ofert po udanej zmianie statusu.
+
+4. **Obsługa walidacji i ograniczeń**:
+   - Wyraźne informowanie użytkownika, że status 'sold' jest nieodwracalny.
+   - Dodatkowe okno dialogowe z potwierdzeniem przed zmianą na 'sold'.
+   - Wyłączenie przycisków "Edytuj" dla ofert ze statusem 'sold'.
+
+5. **Optymalizacja UX**:
+   - Zastosowanie animacji przejścia przy zmianie statusu na 'sold' (np. wyblakniecie, przekreślenie).
+   - Automatyczne odświeżenie listy ofert po oznaczeniu jako 'sold'.
+
+### US-008: Usuwanie/Archiwizacja oferty
+
+#### Opis historyjki
+Jako Sprzedający, chcę móc usunąć ofertę, której już nie oferuję, aby utrzymać porządek na liście moich produktów.
+
+#### Szczegóły implementacji
+1. **Interfejs użytkownika**:
+   - Przycisk "Usuń" w komponencie `OfferListItem` dla każdej oferty.
+   - Komponent `ConfirmDeleteModal` do potwierdzenia operacji.
+   - Wyświetlenie statusu 'archived' jako Badge w kolorze szarym/ciemnym w komponencie `OfferListItem`.
+
+2. **Komponent `ConfirmDeleteModal`**:
+   - Wyświetlenie informacji o konsekwencjach usunięcia.
+   - Informacja, że oferty z powiązanymi zamówieniami będą archiwizowane, a nie usuwane.
+   - Przyciski "Anuluj" i "Usuń" (lub "Archiwizuj" w odpowiednim kontekście).
+
+3. **Funkcjonalność API**:
+   - Implementacja wywołania endpointu `DELETE /seller/offers/{offerId}`.
+   - Obsługa odpowiedzi i aktualizacja listy ofert po udanym usunięciu/archiwizacji.
+   - Backend decyduje czy oferta zostanie usunięta czy zarchiwizowana.
+
+4. **Obsługa dostępności i UX**:
+   - Przycisk "Usuń" wyróżniony kolorem czerwonym jako akcja destrukcyjna.
+   - Wyświetlenie komunikatu sukcesu po usunięciu/archiwizacji (np. toast).
+   - Automatyczne odświeżenie listy ofert po usunięciu/archiwizacji.
+
+5. **Logika biznesowa i prezentacja**:
+   - Zapewnienie, że archiwizowane oferty (które nie mogły być usunięte) są wyświetlane odpowiednio w interfejsie.
+   - Możliwość filtrowania listy ofert, aby wyświetlać lub ukrywać zarchiwizowane oferty.
+   - Wyłączenie przycisków akcji (edycja, zmiana statusu) dla ofert zarchiwizowanych.
+
+### Integracja funkcjonalności
+
+Wszystkie powyższe historyjki użytkownika (US-006, US-007, US-008) będą zintegrowane w ramach widoku `MyOffersPage`, wykorzystując wspólne komponenty, jak:
+
+1. **Zarządzanie stanem**:
+   - Rozszerzenie stanu komponentu `MyOffersPage` o zmienne związane z modałami i akcjami.
+   - Implementacja funkcji obsługujących zmianę statusu i usuwanie ofert.
+
+2. **API i aktualizacja UI**:
+   - Wspólne funkcje do odświeżania listy ofert po wykonaniu akcji.
+   - Optymistyczne aktualizacje UI (np. natychmiastowa zmiana widocznego statusu przed otrzymaniem odpowiedzi z API).
+
+3. **Komunikaty i obsługa błędów**:
+   - Spójny system komunikatów dla wszystkich akcji (sukces, błąd).
+   - Jednolite podejście do obsługi błędów API.
+
+4. **Dostępność i walidacja**:
+   - Konsekwentne stosowanie kolorów, ikon i etykiet dla wszystkich akcji.
+   - Spójna walidacja uprawnień użytkownika do wykonania akcji.
+
+Te funkcjonalności współpracują ze sobą, tworząc kompletny system zarządzania ofertami dla Sprzedającego, zgodny z wymaganiami biznesowymi.

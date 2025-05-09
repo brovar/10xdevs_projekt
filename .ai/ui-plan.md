@@ -200,7 +200,7 @@ Poniżej znajduje się lista kluczowych widoków aplikacji wraz z ich celami i e
         -   Bezpieczeństwo: Tylko właściciel oferty może nią zarządzać.
 
 -   **Nazwa widoku:** CreateOfferPage (Tworzenie Oferty)
-    -   **Ścieżka widoku:** `/seller/offers/new`
+    -   **Ścieżka widoku:** `/offers/new`
     -   **Główny cel:** Umożliwienie Sprzedającemu dodania nowej oferty.
     -   **Kluczowe informacje do wyświetlenia:**
         -   Formularz tworzenia oferty: Tytuł, Opis, Cena, Ilość (domyślnie 1), Kategoria (wybór z listy), Zdjęcie (pole na obrazek + przycisk "Upload", max 1024x768px PNG).
@@ -212,7 +212,7 @@ Poniżej znajduje się lista kluczowych widoków aplikacji wraz z ich celami i e
         -   Bezpieczeństwo: Walidacja typów plików i rozmiarów po stronie klienta (wstępna) i serwera.
 
 -   **Nazwa widoku:** EditOfferPage (Edycja Oferty)
-    -   **Ścieżka widoku:** `/seller/offers/:offerId/edit`
+    -   **Ścieżka widoku:** `/offers/:offerId/edit`
     -   **Główny cel:** Umożliwienie Sprzedającemu edycji istniejącej oferty (tylko status 'active' lub 'inactive').
     -   **Kluczowe informacje do wyświetlenia:** Formularz edycji oferty (jak w CreateOfferPage, wypełniony danymi oferty).
     -   **Kluczowe komponenty widoku:** `OfferForm` (zainicjalizowany danymi).

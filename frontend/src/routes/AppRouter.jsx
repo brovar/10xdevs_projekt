@@ -3,6 +3,9 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
+import ErrorBoundary from '../components/common/ErrorBoundary';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+import ErrorPage from '../pages/ErrorPage';
 
 // Lazy-loaded components
 const RegisterPage = lazy(() => import('../pages/auth/RegisterPage'));
@@ -11,6 +14,9 @@ const HomePage = lazy(() => import('../pages/HomePage'));
 const AccountPage = lazy(() => import('../pages/account/AccountPage'));
 const OrdersPage = lazy(() => import('../pages/account/OrdersPage'));
 const OrderDetailPage = lazy(() => import('../pages/orders/OrderDetailPage'));
+// Seller pages
+const MyOffersPage = lazy(() => import('../pages/seller/MyOffersPage'));
+const SellerSalesHistoryPage = lazy(() => import('../pages/seller/SellerSalesHistoryPage'));
 // Pozostałe strony będą dodawane tutaj
 
 // Layout component
@@ -153,15 +159,32 @@ const router = createBrowserRouter([
           </RequireAuth>
         )
       },
-      // 404 route
+      // Seller routes
+      {
+        path: 'seller/offers',
+        element: (
+          <RequireAuth requiredRole="Seller">
+            <Suspense fallback={<LoadingSpinner message="Ładowanie ofert..." />}>
+              <MyOffersPage />
+            </Suspense>
+          </RequireAuth>
+        ),
+        errorElement: <ErrorBoundary />
+      },
+      {
+        path: 'seller/sales',
+        element: (
+          <RequireAuth requiredRole="Seller">
+            <Suspense fallback={<LoadingSpinner message="Ładowanie historii sprzedaży..." />}>
+              <SellerSalesHistoryPage />
+            </Suspense>
+          </RequireAuth>
+        ),
+        errorElement: <ErrorBoundary />
+      },
       {
         path: '*',
-        element: (
-          <div className="container py-5 text-center">
-            <h2>404 - Strona nie znaleziona</h2>
-            <p>Przepraszamy, ale strona, której szukasz, nie istnieje.</p>
-          </div>
-        )
+        element: <ErrorPage />
       }
     ]
   }

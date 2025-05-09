@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import ConfirmLogoutModal from '../common/ConfirmLogoutModal';
+import axios from '../../services/api';
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -23,6 +24,30 @@ const Header = () => {
       isBuyer: user?.role === 'Buyer',
       detailedUser: JSON.stringify(user)
     });
+    
+    // Po zmianie stanu uwierzytelnienia, sprawdź aktualny status użytkownika
+    const checkCurrentUserStatus = async () => {
+      if (isAuthenticated && (!user?.role || user?.role === '')) {
+        try {
+          console.log('Refreshing user data due to missing role');
+          const response = await axios.get('/auth/status');
+          if (response.data && response.data.is_authenticated && response.data.user) {
+            const updatedUserData = response.data.user;
+            console.log('Updated user data from status check:', updatedUserData);
+              
+            // Aktualizuj localStorage
+            localStorage.setItem('user', JSON.stringify(updatedUserData));
+              
+            // Możemy wymusić odświeżenie strony, aby zapewnić aktualizację wszystkich komponentów
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error('Error refreshing user data:', error);
+        }
+      }
+    };
+    
+    checkCurrentUserStatus();
   }, [isAuthenticated, user]);
 
   const handleLogoutClick = (e) => {

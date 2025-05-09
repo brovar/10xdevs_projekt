@@ -133,23 +133,59 @@ async def create_test_data():
             "Fantasy Quest III", 
             "Racing Championship", 
             "Puzzle Master", 
-            "Legendary Heroes"
+            "Legendary Heroes",
+            "Medieval Kingdom Simulator",
+            "Cosmic Odyssey",
+            "Monster Hunter Extreme",
+            "City Builder Pro",
+            "Zombie Apocalypse",
+            "Pirate Adventure",
+            "Ninja Warrior",
+            "Stock Market Tycoon",
+            "Football Manager 2023",
+            "Battle Royale Ultimate"
+        ]
+        
+        status_variations = [
+            OfferStatus.ACTIVE,
+            OfferStatus.ACTIVE,
+            OfferStatus.ACTIVE,
+            OfferStatus.INACTIVE,
+            OfferStatus.INACTIVE,
+            OfferStatus.ACTIVE,
+            OfferStatus.ACTIVE,
+            OfferStatus.ACTIVE,
+            OfferStatus.INACTIVE,
+            OfferStatus.ACTIVE,
+            OfferStatus.SOLD,
+            OfferStatus.ACTIVE,
+            OfferStatus.MODERATED,
+            OfferStatus.ACTIVE,
+            OfferStatus.ARCHIVED,
         ]
         
         offers = []
         for i, title in enumerate(game_titles):
             category_id = (i % len(categories)) + 1
+            # Create a varied price range
+            price = Decimal(str(round(19.99 + (i * 3.5), 2)))
+            # Vary the quantity - sold items have 0
+            quantity = 0 if status_variations[i] == OfferStatus.SOLD else (i % 10) + 1
+            # Vary creation dates for realistic history
+            created_date = datetime.now(timezone.utc) - timedelta(days=i*3)
+            
             offers.append(
                 OfferModel(
                     id=uuid.uuid4(),
                     seller_id=seller.id,
                     category_id=category_id,
                     title=title,
-                    description=f"This is a sample description for {title}. Experience the ultimate digital gaming adventure!",
-                    price=29.99 + (i * 5),
-                    quantity=10,
-                    status=OfferStatus.ACTIVE,
-                    created_at=datetime.now(timezone.utc)
+                    description=f"This is a sample description for {title}. Experience the ultimate digital gaming adventure with hours of engaging content. Perfect for gamers of all levels and interests!",
+                    price=price,
+                    quantity=quantity,
+                    status=status_variations[i],
+                    created_at=created_date,
+                    updated_at=created_date + timedelta(days=1) if i % 3 == 0 else None
                 )
             )
         
