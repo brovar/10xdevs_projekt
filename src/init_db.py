@@ -1,8 +1,9 @@
 import asyncio
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
+from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -14,8 +15,8 @@ from passlib.context import CryptContext
 # Add the src directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from models import Base, UserModel, CategoryModel, OfferModel, LogModel
-from schemas import UserRole, UserStatus, OfferStatus, LogEventType
+from models import Base, UserModel, CategoryModel, OfferModel, LogModel, OrderModel, OrderItemModel
+from schemas import UserRole, UserStatus, OfferStatus, LogEventType, OrderStatus
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -153,9 +154,121 @@ async def create_test_data():
             )
         
         session.add_all(offers)
+        await session.flush()
         
-        # Create some logs for demonstration
-        logs = [
+        # Create sample orders for the buyer
+        logger.info("Creating sample orders for the buyer...")
+        
+        # Different timeframes for orders to simulate history
+        now = datetime.now(timezone.utc)
+        time_frames = [
+            now - timedelta(days=30),  # 1 month ago
+            now - timedelta(days=21),  # 3 weeks ago
+            now - timedelta(days=14),  # 2 weeks ago
+            now - timedelta(days=7),   # 1 week ago
+            now - timedelta(days=2),   # 2 days ago
+            now - timedelta(hours=6),  # 6 hours ago
+        ]
+        
+        # Different order statuses to show variety
+        order_statuses = [
+            OrderStatus.DELIVERED,   # Completed order from a month ago
+            OrderStatus.SHIPPED,     # Order in transit from 3 weeks ago
+            OrderStatus.PROCESSING,  # Recently processed order from 2 weeks ago
+            OrderStatus.CANCELLED,   # Cancelled order from 1 week ago
+            OrderStatus.FAILED,      # Failed payment from 2 days ago
+            OrderStatus.PENDING_PAYMENT,  # Recent order awaiting payment
+        ]
+        
+        # Create orders first
+        orders = []
+        order_totals = {}
+        order_details = []
+        
+        # Generate order IDs and create orders first
+        for i, (created_at, status) in enumerate(zip(time_frames, order_statuses)):
+            order_id = uuid.uuid4()
+            
+            # Select offers for this order (will calculate total amount later)
+            order_offers = offers[i % len(offers):(i % len(offers)) + 2]
+            
+            # Create the order
+            order = OrderModel(
+                id=order_id,
+                buyer_id=buyer.id,
+                status=status,
+                created_at=created_at,
+                updated_at=created_at + timedelta(hours=2) if status != OrderStatus.PENDING_PAYMENT else None
+            )
+            orders.append(order)
+            
+            # Store details for creating order items later
+            order_details.append({
+                "order_id": order_id,
+                "offers": order_offers
+            })
+        
+        # Add and flush orders first
+        session.add_all(orders)
+        await session.flush()
+        
+        # Now create order items based on the orders
+        order_items = []
+        for details in order_details:
+            order_id = details["order_id"]
+            order_offers = details["offers"]
+            total_amount = Decimal('0.00')
+            
+            for j, offer in enumerate(order_offers):
+                quantity = j + 1  # 1 or 2 items depending on position
+                item_price = Decimal(str(offer.price))
+                total_amount += item_price * quantity
+                
+                # Create order item
+                order_item = OrderItemModel(
+                    order_id=order_id,
+                    offer_id=offer.id,
+                    quantity=quantity,
+                    price_at_purchase=item_price,
+                    offer_title=offer.title
+                )
+                order_items.append(order_item)
+            
+            # Store the total amount for this order
+            order_totals[order_id] = total_amount
+        
+        # Add order items now that orders are created
+        session.add_all(order_items)
+        await session.flush()
+        
+        # Create logs
+        logs = []
+        
+        # Order-related logs
+        for i, order in enumerate(orders):
+            order_id = order.id
+            status = order.status
+            total_amount = order_totals[order_id]
+            
+            log_message = f"Order {order_id} created with status {status} for buyer {buyer.email} with total amount {total_amount}"
+            log_event_type = LogEventType.ORDER_PLACE_SUCCESS
+            
+            if status == OrderStatus.CANCELLED:
+                log_event_type = LogEventType.ORDER_CANCELLED
+            elif status == OrderStatus.FAILED:
+                log_event_type = LogEventType.ORDER_PLACE_FAIL
+            
+            log = LogModel(
+                event_type=log_event_type,
+                user_id=buyer.id,
+                ip_address="127.0.0.1",
+                message=log_message,
+                timestamp=time_frames[i]  # Use the same timestamp as the order
+            )
+            logs.append(log)
+        
+        # User creation logs
+        logs.extend([
             LogModel(
                 event_type=LogEventType.USER_REGISTER,
                 user_id=admin.id,
@@ -177,7 +290,7 @@ async def create_test_data():
                 message="Buyer account created",
                 timestamp=datetime.now(timezone.utc)
             ),
-        ]
+        ])
         
         session.add_all(logs)
         
@@ -187,6 +300,7 @@ async def create_test_data():
         logger.info("Test data created successfully.")
         logger.info(f"Created {len(offers)} sample offers.")
         logger.info(f"Created {len(categories)} categories.")
+        logger.info(f"Created {len(orders)} sample orders for buyer@steambay.com.")
         logger.info(f"Created test users: admin@steambay.com, seller@steambay.com, buyer@steambay.com (Password for all: matching role + 123!)")
 
 async def main():

@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Row, Col, Alert, Spinner, Table, Badge } from 'react-bootstrap';
+import { Container, Alert, Spinner } from 'react-bootstrap';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
+
+// Components
+import OrdersList from '../../components/orders/OrdersList';
+import Pagination from '../../components/common/Pagination';
+
+// Services & Utils
+import { fetchOrderHistory } from '../../services/orderService';
+import { mapOrderList, mapPaginationData } from '../../utils/orderMappers';
+
+const ITEMS_PER_PAGE = 10;
 
 /**
  * OrdersPage - User orders history page
@@ -9,45 +20,37 @@ import { useAuth } from '../../contexts/AuthContext';
  */
 const OrdersPage = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Get current page from URL or default to 1
+  const currentPageParam = searchParams.get('page');
+  const initialPage = currentPageParam ? parseInt(currentPageParam, 10) : 1;
+  
+  // State
   const [orders, setOrders] = useState([]);
+  const [paginationData, setPaginationData] = useState({
+    currentPage: initialPage,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: ITEMS_PER_PAGE
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // This is a placeholder. In a real implementation, this would call an API
-  const fetchOrders = useCallback(async () => {
+  // Fetch orders from API based on current page
+  const fetchOrders = useCallback(async (page = 1) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Simulating API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await fetchOrderHistory(page, ITEMS_PER_PAGE);
       
-      // Mock data for display purposes
-      const mockOrders = [
-        {
-          id: 'ORD-2023-001',
-          date: '2023-10-15',
-          total: 129.99,
-          status: 'completed',
-          items: 3
-        },
-        {
-          id: 'ORD-2023-002',
-          date: '2023-11-05',
-          total: 59.99,
-          status: 'processing',
-          items: 1
-        },
-        {
-          id: 'ORD-2023-003',
-          date: '2023-12-01',
-          total: 89.99,
-          status: 'pending',
-          items: 2
-        }
-      ];
+      // Map response data to view models
+      const mappedOrders = mapOrderList(response.items || []);
+      setOrders(mappedOrders);
       
-      setOrders(mockOrders);
+      // Set pagination data
+      setPaginationData(mapPaginationData(response));
     } catch (error) {
       console.error('Failed to fetch orders:', error);
       setError('Nie udało się załadować historii zamówień. Spróbuj odświeżyć stronę.');
@@ -56,93 +59,73 @@ const OrdersPage = () => {
     }
   }, []);
 
+  // Handle page change
+  const handlePageChange = useCallback((newPage) => {
+    // Update URL to reflect new page
+    setSearchParams({ page: newPage.toString() });
+  }, [setSearchParams]);
+
+  // Fetch orders when page changes
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    fetchOrders(paginationData.currentPage);
+  }, [paginationData.currentPage, fetchOrders]);
 
-  // Helper function to render status badge with appropriate color
-  const renderStatusBadge = (status) => {
-    let variant = 'secondary';
-    let label = status;
-
-    switch (status) {
-      case 'completed':
-        variant = 'success';
-        label = 'Zrealizowane';
-        break;
-      case 'processing':
-        variant = 'primary';
-        label = 'W realizacji';
-        break;
-      case 'pending':
-        variant = 'warning';
-        label = 'Oczekujące';
-        break;
-      case 'cancelled':
-        variant = 'danger';
-        label = 'Anulowane';
-        break;
-      default:
-        break;
+  // Update currentPage when URL changes
+  useEffect(() => {
+    const page = searchParams.get('page');
+    if (page) {
+      const pageNumber = parseInt(page, 10);
+      if (pageNumber !== paginationData.currentPage) {
+        setPaginationData(prev => ({ ...prev, currentPage: pageNumber }));
+      }
+    } else {
+      setPaginationData(prev => ({ ...prev, currentPage: 1 }));
     }
-
-    return <Badge bg={variant}>{label}</Badge>;
-  };
+  }, [searchParams, paginationData.currentPage]);
 
   return (
     <Container className="py-5">
       <h1 className="mb-4">Moje Zamówienia</h1>
       
-      {isLoading ? (
+      {/* Loading state */}
+      {isLoading && orders.length === 0 && (
         <div className="text-center py-5">
           <Spinner animation="border" role="status" variant="primary">
             <span className="visually-hidden">Ładowanie...</span>
           </Spinner>
           <p className="mt-3">Ładowanie historii zamówień...</p>
         </div>
-      ) : error ? (
+      )}
+      
+      {/* Error state */}
+      {error && (
         <Alert variant="danger" className="mb-4">
           {error}
         </Alert>
-      ) : orders.length === 0 ? (
+      )}
+      
+      {/* Empty state */}
+      {!isLoading && !error && orders.length === 0 && (
         <Alert variant="info">
           Nie masz jeszcze żadnych zamówień. Przejdź do sklepu, aby złożyć pierwsze zamówienie.
         </Alert>
-      ) : (
+      )}
+      
+      {/* Orders list */}
+      {!error && orders.length > 0 && (
         <>
           <p>Poniżej znajduje się lista Twoich zamówień.</p>
           
-          <Table responsive striped hover className="mt-4">
-            <thead>
-              <tr>
-                <th>Numer zamówienia</th>
-                <th>Data</th>
-                <th>Liczba produktów</th>
-                <th>Kwota</th>
-                <th>Status</th>
-                <th>Akcje</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map(order => (
-                <tr key={order.id}>
-                  <td>{order.id}</td>
-                  <td>{order.date}</td>
-                  <td>{order.items}</td>
-                  <td>{order.total.toFixed(2)} zł</td>
-                  <td>{renderStatusBadge(order.status)}</td>
-                  <td>
-                    <button 
-                      className="btn btn-sm btn-outline-primary"
-                      onClick={() => alert(`Szczegóły zamówienia ${order.id} zostaną wdrożone w przyszłej wersji.`)}
-                    >
-                      Szczegóły
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+          <OrdersList 
+            orders={orders} 
+            isLoading={isLoading}
+          />
+          
+          <Pagination 
+            currentPage={paginationData.currentPage} 
+            totalPages={paginationData.totalPages}
+            onPageChange={handlePageChange}
+          />
         </>
       )}
     </Container>

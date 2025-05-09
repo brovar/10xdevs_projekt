@@ -15,6 +15,24 @@ export const useAuth = () => {
   return context;
 };
 
+// Helper function to normalize user data and ensure consistent ID fields
+const normalizeUserData = (userData) => {
+  if (!userData) return null;
+  
+  // Ensure the user has a role
+  const role = userData.role || (userData.user?.role) || 'Buyer';
+  
+  // Ensure both id and user_id are present
+  const userId = userData.id || userData.user_id;
+  
+  return {
+    ...userData,
+    role,
+    id: userId,
+    user_id: userId
+  };
+};
+
 // Dostawca kontekstu
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -33,17 +51,7 @@ export const AuthProvider = ({ children }) => {
           console.log('Auth status response:', response.data);
           if (response.data && response.data.is_authenticated) {
             console.log('User is authenticated according to backend');
-            let userData = response.data.user;
-            
-            // Ensure the user data has a role
-            if (!userData.role) {
-              console.log('User data is missing role, adding default Buyer role');
-              userData = {
-                ...userData,
-                role: 'Buyer' // Default to Buyer if role is missing
-              };
-            }
-            
+            const userData = normalizeUserData(response.data.user);
             setUser(userData);
             
             // Update localStorage to keep it in sync
@@ -59,21 +67,14 @@ export const AuthProvider = ({ children }) => {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           try {
-            let parsedUser = JSON.parse(storedUser);
+            const parsedUser = JSON.parse(storedUser);
             console.log('Loaded user from localStorage:', parsedUser);
             
-            // Ensure the user from localStorage has a role
-            if (!parsedUser.role) {
-              console.log('User from localStorage is missing role, adding default Buyer role');
-              parsedUser = {
-                ...parsedUser,
-                role: 'Buyer' // Default to Buyer if role is missing
-              };
-              // Update localStorage with the fixed user data
-              localStorage.setItem('user', JSON.stringify(parsedUser));
-            }
+            const normalizedUser = normalizeUserData(parsedUser);
+            setUser(normalizedUser);
             
-            setUser(parsedUser);
+            // Update localStorage with the normalized user data
+            localStorage.setItem('user', JSON.stringify(normalizedUser));
           } catch (parseError) {
             console.error('Error parsing user from localStorage:', parseError);
             localStorage.removeItem('user'); // Remove invalid data
@@ -107,12 +108,11 @@ export const AuthProvider = ({ children }) => {
         fullResponse: JSON.stringify(response)
       });
       
-      // Make sure user data has required fields with fallbacks
-      const userData = {
+      // Normalize user data
+      const userData = normalizeUserData({
         ...response,
-        email: response.email || email, // Use the email from response if available, otherwise use the login email
-        role: response.role || (response.user?.role) || 'Buyer' // Ensure role is always set with fallback
-      };
+        email: response.email || email // Use the email from response if available, otherwise use the login email
+      });
       
       console.log('User data being saved:', userData);
       

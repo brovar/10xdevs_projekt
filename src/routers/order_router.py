@@ -233,7 +233,32 @@ async def get_order_details(
     try:
         # Access user info using dictionary keys
         user_id = current_user["user_id"]
-        user_role = current_user["user_role"]
+        user_role_str = current_user["user_role"]
+        
+        # Debug logging
+        logger.info(f"Order details request - User ID: {user_id}, Role: {user_role_str}, Order ID: {order_id}")
+        
+        # Convert user_role string to UserRole enum
+        try:
+            user_role = UserRole(user_role_str)
+        except ValueError:
+            # If conversion fails, log and use BUYER as fallback (safest default)
+            logger.warning(f"Invalid user role: {user_role_str}, falling back to Buyer")
+            user_role = UserRole.BUYER
+        
+        # Convert UUID string to UUID if needed
+        if isinstance(user_id, str):
+            try:
+                user_id = UUID(user_id)
+            except ValueError:
+                logger.error(f"Invalid user ID format: {user_id}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "error_code": "INVALID_USER_ID",
+                        "message": "Invalid user ID format"
+                    }
+                )
         
         # Get order details using injected service
         result = await order_service.get_order_details(

@@ -336,12 +336,16 @@ class OrderService:
             HTTPException: If order not found or user does not have permission
         """
         try:
+            # Log input parameters for debugging
+            self.logger.info(f"get_order_details called - order_id: {order_id}, user_id: {user_id}, user_role: {user_role}")
+            
             # First check if order exists
             order_query = select(OrderModel).where(OrderModel.id == order_id)
             order_result = await self.db_session.execute(order_query)
             order = order_result.scalar_one_or_none()
             
             if not order:
+                self.logger.warning(f"Order not found: {order_id}")
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail={
@@ -350,10 +354,21 @@ class OrderService:
                     }
                 )
             
+            # Log order details for debugging
+            self.logger.info(f"Order found: {order.id}, buyer_id: {order.buyer_id}")
+            
             # Authorization check based on user role
             if user_role == UserRole.BUYER:
                 # Buyer can only view their own orders
-                if order.buyer_id != user_id:
+                # Convert both to strings for reliable comparison
+                str_order_buyer_id = str(order.buyer_id)
+                str_user_id = str(user_id)
+                
+                self.logger.debug(f"Comparing buyer_id: '{str_order_buyer_id}' with user_id: '{str_user_id}'")
+                
+                if str_order_buyer_id != str_user_id:
+                    self.logger.warning(f"Access denied - buyer {str_user_id} is not owner of order {order_id}")
+                    self.logger.debug(f"Types: order.buyer_id: {type(order.buyer_id)}, user_id: {type(user_id)}")
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail={
@@ -361,6 +376,9 @@ class OrderService:
                             "message": "User does not have permission to view this order"
                         }
                     )
+                
+                self.logger.info(f"Buyer {str_user_id} access granted for order {order_id}")
+                
             elif user_role == UserRole.SELLER:
                 # Seller can only view orders that contain their offers
                 # Need to check if any of the order items belong to offers from this seller
@@ -384,6 +402,7 @@ class OrderService:
                 seller_items_count = seller_check_result.scalar()
                 
                 if seller_items_count == 0:
+                    self.logger.warning(f"Access denied - seller {user_id} has no items in order {order_id}")
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail={
@@ -391,7 +410,12 @@ class OrderService:
                             "message": "User does not have permission to view this order"
                         }
                     )
+                    
+                self.logger.info(f"Seller {user_id} access granted for order {order_id}")
+                
             # For ADMIN role, no additional permission check is needed
+            else:
+                self.logger.info(f"Admin access granted for user {user_id} to order {order_id}")
             
             # Fetch order items with their details
             items_query = (
@@ -440,7 +464,7 @@ class OrderService:
                     "error_code": "FETCH_FAILED",
                     "message": "Failed to fetch order details"
                 }
-            ) 
+            )
 
     async def get_seller_sales(
         self,

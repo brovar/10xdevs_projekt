@@ -7,7 +7,7 @@ from fastapi_csrf_protect import CsrfProtect
 from uuid import UUID
 import traceback
 
-from dependencies import get_db_session, get_logger, get_session_service, require_authenticated, get_auth_service
+from dependencies import get_db_session, get_logger, get_session_service, require_authenticated, get_auth_service, get_current_user_optional
 from services.auth_service import AuthService, AuthServiceError
 from services.session_service import SessionService, SessionData
 from schemas import LoginUserRequest, LoginUserResponse, LogoutUserResponse, RegisterUserRequest, RegisterUserResponse
@@ -241,5 +241,84 @@ async def logout_user(
             content={
                 "error_code": "LOGOUT_FAILED",
                 "message": "Wystąpił nieoczekiwany błąd podczas wylogowania. Spróbuj ponownie później."
+            }
+        )
+
+@router.get("/status", responses={
+    200: {"description": "Returns current authentication status and user info if authenticated"},
+    500: {"description": "Server error while checking status"}
+})
+async def auth_status(
+    request: Request,
+    session_service: SessionService = Depends(get_session_service),
+    db: AsyncSession = Depends(get_db_session),
+    logger: Logger = Depends(get_logger)
+):
+    """
+    Get the current authentication status and user information.
+    
+    This endpoint returns:
+    - is_authenticated: Whether the user is currently authenticated
+    - user: User information if authenticated (null otherwise)
+    
+    No authentication is required to call this endpoint.
+    """
+    try:
+        # Try to get session data
+        try:
+            session_data = await session_service.get_session(request)
+            is_authenticated = True
+            
+            # Query for user details
+            user_id = session_data.user_id
+            user_role = session_data.user_role
+            
+            logger.info(f"User authenticated: ID={user_id}, role={user_role}")
+            
+            # Get extended user info from database
+            user_result = await db.execute(
+                select(UserModel).where(UserModel.id == user_id)
+            )
+            user = user_result.scalar_one_or_none()
+            
+            if not user:
+                logger.warning(f"User ID {user_id} from session not found in database")
+                # Session exists but user doesn't - this is unusual
+                # Return minimal info from session only
+                user_info = {
+                    "id": user_id,
+                    "user_id": user_id,  # Add both formats for compatibility with frontend
+                    "role": user_role,
+                    "email": "unknown@user.com"  # Placeholder
+                }
+            else:
+                # Return full user info
+                user_info = {
+                    "id": str(user.id),
+                    "user_id": str(user.id),  # Add both formats for compatibility with frontend
+                    "email": user.email,
+                    "role": user.role,
+                    "status": user.status,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "created_at": user.created_at
+                }
+        except HTTPException:
+            # Not authenticated
+            is_authenticated = False
+            user_info = None
+            logger.info("No active session found")
+        
+        return {
+            "is_authenticated": is_authenticated,
+            "user": user_info
+        }
+    except Exception as e:
+        logger.error(f"Error checking auth status: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error_code": "STATUS_CHECK_FAILED",
+                "message": "Wystąpił błąd podczas sprawdzania statusu autentykacji."
             }
         ) 

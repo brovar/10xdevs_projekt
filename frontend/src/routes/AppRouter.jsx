@@ -10,6 +10,7 @@ const LoginPage = lazy(() => import('../pages/auth/LoginPage'));
 const HomePage = lazy(() => import('../pages/HomePage'));
 const AccountPage = lazy(() => import('../pages/account/AccountPage'));
 const OrdersPage = lazy(() => import('../pages/account/OrdersPage'));
+const OrderDetailPage = lazy(() => import('../pages/orders/OrderDetailPage'));
 // Pozostałe strony będą dodawane tutaj
 
 // Layout component
@@ -130,6 +131,14 @@ const router = createBrowserRouter([
         element: (
           <RequireAuth requiredRole="Buyer">
             <OrdersPage />
+          </RequireAuth>
+        )
+      },
+      {
+        path: 'orders/:orderId',
+        element: (
+          <RequireAuth requiredRole="Buyer">
+            <OrderDetailPage />
           </RequireAuth>
         )
       },
