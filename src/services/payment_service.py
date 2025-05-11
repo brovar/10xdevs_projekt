@@ -8,8 +8,8 @@ import logging
 from models import TransactionModel, OrderModel, OrderItemModel, OfferModel, LogModel
 from schemas import TransactionStatus, OrderStatus
 from schemas import LogEventType
-from services.order_service import ConflictError
-from services.log_service import LogService
+from .order_service import ConflictError
+from .log_service import LogService
 
 class PaymentResult:
     """Result of processing a payment callback."""

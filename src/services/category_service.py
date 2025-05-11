@@ -7,7 +7,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from models import CategoryModel, LogModel
-from schemas import CategoryDTO, LogEventType
+from src.schemas import CategoryDTO, LogEventType
 
 class CategoryService:
     def __init__(self, db_session: AsyncSession, logger: Logger):

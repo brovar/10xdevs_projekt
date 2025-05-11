@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status, UploadFile, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, insert, delete, func, case
+from sqlalchemy import update, insert, delete, func, case, or_
 from sqlalchemy.orm import selectinload, joinedload
 from logging import Logger
 from uuid import UUID
@@ -11,9 +11,9 @@ from datetime import datetime
 
 from models import OfferModel, CategoryModel, LogModel, UserModel
 from schemas import OfferStatus, LogEventType, OfferSummaryDTO, OfferDetailDTO, SellerInfoDTO, CategoryDTO, UserRole, OfferListResponse
-from services.file_service import FileService
-from services.log_service import LogService
-from exceptions.offer_exceptions import (
+from .file_service import FileService
+from .log_service import LogService
+from src.exceptions.offer_exceptions import (
     OfferNotFoundException, 
     NotOfferOwnerException, 
     InvalidStatusTransitionException, 
@@ -371,7 +371,7 @@ class OfferService:
         search: Optional[str] = None,
         category_id: Optional[int] = None,
         seller_id: Optional[UUID] = None,
-        status: Optional[OfferStatus] = None,
+        status_filter: Optional[OfferStatus] = None,
         sort: str = "created_at_desc",
         page: int = 1,
         limit: int = 100
@@ -398,8 +398,8 @@ class OfferService:
                 filters.append(OfferModel.category_id == category_id)
             if seller_id is not None:
                 filters.append(OfferModel.seller_id == seller_id)
-            if status is not None:
-                filters.append(OfferModel.status == status)
+            if status_filter is not None:
+                filters.append(OfferModel.status == status_filter)
 
             # Apply filters
             query = base_query.where(*filters) if filters else base_query
@@ -429,7 +429,8 @@ class OfferService:
 
             # Fetch paginated data
             result = await self.db_session.execute(query.offset(offset).limit(limit))
-            offers = result.scalars().all()
+            scalar_result = await result.scalars()
+            offers = scalar_result.all()
 
             # Map to DTOs
             items = [OfferSummaryDTO(
@@ -447,7 +448,7 @@ class OfferService:
             # Build and return paginated response
             paginated = build_paginated_response(items, total, page, limit)
             # Convert to OfferListResponse
-            return OfferListResponse(**paginated.dict())
+            return OfferListResponse(**paginated.model_dump())
         except Exception as e:
             self.logger.error(f"Error fetching all offers: {str(e)}")
             raise HTTPException(

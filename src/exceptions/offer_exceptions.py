@@ -41,4 +41,6 @@ class OfferModificationFailedException(OfferBaseException):
         message = f"Failed to {operation} offer"
         if details:
             message += f": {details}"
+        self.operation = operation
+        self.details = details
         super().__init__(message) 

@@ -12,7 +12,7 @@ from sqlalchemy.sql import Select
 from models import OfferModel, UserModel, OrderModel, OrderItemModel, TransactionModel, LogModel
 from schemas import OrderStatus, TransactionStatus, LogEventType, CreateOrderRequest, OrderItemRequest, UserRole, OrderSummaryDTO, OrderListResponse, OrderDetailDTO, OrderItemDTO
 from config import PAYMENT_GATEWAY_URL
-from services.log_service import LogService
+from .log_service import LogService
 
 async def log_event(
     db_session: AsyncSession, 

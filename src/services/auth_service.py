@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from logging import Logger
 from models import LogModel, UserModel
 from schemas import LogEventType, LoginUserRequest, RegisterUserRequest, UserStatus
-from services.session_service import SessionService
-from services.validation_service import ValidationService, ValidationError
+from .session_service import SessionService
+from .validation_service import ValidationService, ValidationError
 from utils.password_utils import verify_password, get_password_hash
 from sqlalchemy import select, update, insert, delete
 from sqlalchemy.exc import IntegrityError
