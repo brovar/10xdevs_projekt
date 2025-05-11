@@ -1,7 +1,7 @@
 import logging
 import os
 from logging import Logger
-from typing import AsyncGenerator, Callable, Dict, List, Optional
+from typing import AsyncGenerator, Callable, Dict, List, Optional, TYPE_CHECKING
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer
@@ -14,6 +14,11 @@ from services.log_service import LogService
 from services.order_service import OrderService
 from services.session_service import SessionService
 from services.user_service import UserService
+
+if TYPE_CHECKING:
+    from services.payment_service import PaymentService
+    from services.offer_service import OfferService
+    from services.media_service import MediaService
 
 # Database connection setup
 DATABASE_URL = os.environ.get(

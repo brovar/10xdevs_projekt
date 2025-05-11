@@ -1,4 +1,4 @@
-import json  # Import json for explicit serialization if needed
+# Import json for specific needs, not just for explicit serialization if needed
 import types
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -6,19 +6,33 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import pytest
-from fastapi import (BackgroundTasks, FastAPI, File, Form, HTTPException,
-                     Request, UploadFile, status)
+from fastapi import (
+    BackgroundTasks,
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status
+)
 from fastapi_csrf_protect import CsrfProtect
 from starlette.testclient import TestClient
 
-from routers.offer_router import router as offer_router  # Importuj sam router
+# from routers.offer_router import router as offer_router  # Removed unused import
 # from main import app # Już nie importujemy globalnej aplikacji
-from schemas import (LogEventType, OfferDetailDTO, OfferStatus,
-                     OfferSummaryDTO, UserRole)
+from schemas import (
+    LogEventType,
+    OfferDetailDTO,
+    OfferStatus,
+    OfferSummaryDTO,
+    UserRole
+)
 
 # Import service getter dependencies
 
-# Create a custom test app with simplified routes that directly use our test stubs
+# Create a custom test app with simplified routes 
+# that directly use our test stubs
 test_app = FastAPI()
 
 # Mock user IDs and other constants
@@ -30,7 +44,7 @@ MOCK_OFFER_ID = uuid4()
 # --- Mock Dependencies and Services ---
 
 
-# Define MockCsrfProtect class outside the fixture for clarity
+# Define MockCsrfProtect class for tests
 class MockCsrfProtect:
     def validate_csrf(self, request: Request):
         # Bypass CSRF validation for tests
@@ -61,9 +75,7 @@ class FailingMockCsrfProtect:
 class StubLogService:
     """Test double for LogService."""
 
-    logs: List[Dict[str, Any]] = (
-        []
-    )  # Class variable to store logs across instances
+    logs: List[Dict[str, Any]] = []  # Class variable to store logs across instances
 
     @classmethod
     def _reset(cls):
@@ -223,35 +235,32 @@ class StubOfferService:
         await self.log_service.create_log(
             user_id=user_id,
             event_type=LogEventType.OFFER_STATUS_CHANGE,
-            message=f"Offer {offer_id} status changed to sold (simulated)",  # Zaktualizowano wiadomość dla jasności
+            message=f"Offer {offer_id} status changed to sold (simulated)",
         )
         self._maybe_raise()
 
         # Zmodyfikowano mock_response_dict, aby zawierał zagnieżdżone seller i category
         mock_response_dict = {
             "id": str(offer_id),
-            "category_id": 1,  # To jest w OfferSummaryDTO, ale nie w OfferDetailDTO bezpośrednio (jest w category)
+            "category_id": 1,
             "title": "Sold Offer",
             "price": 10.0,
             "image_filename": "sold_offer.jpg",
             "quantity": 0,
             "status": OfferStatus.SOLD.value,
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "seller_id": str(user_id),  # To też jest w OfferSummaryDTO
-            # Pola specyficzne dla OfferDetailDTO (oprócz tych z OfferSummaryDTO)
+            "seller_id": str(user_id),
             "description": "Mocked offer description",
             "updated_at": datetime.now(timezone.utc).isoformat(),
-            "seller": {  # Zagnieżdżony obiekt SellerInfoDTO
+            "seller": {
                 "id": str(user_id),
                 "first_name": "MockSellerFirst",
                 "last_name": "MockSellerLast",
             },
-            "category": {  # Zagnieżdżony obiekt CategoryDTO
+            "category": {
                 "id": 1,
                 "name": "MockCategory",
             },
-            # Usunięto pola, które nie są wprost w OfferDetailDTO lub OfferSummaryDTO:
-            # "is_active", "view_count", "condition", "main_image_url", "image_urls", "seller_username"
         }
         # Zwracamy ten słownik, FastAPI zwaliduje go względem OfferDetailDTO
         return StubOfferService._return_value or mock_response_dict
@@ -321,9 +330,9 @@ current_user_data: Optional[Dict] = None
 
 
 async def mock_require_seller():
-    # This mock dependency replaces require_seller
+    """Mock require_seller dependency."""
     if current_user_data and current_user_data.get("role") == UserRole.SELLER:
-        # Create a user object with id and role attributes for endpoints that need current_user
+        # Create simple user object
         mock_user = types.SimpleNamespace(
             id=current_user_data.get("user_id"),
             role=current_user_data.get("role"),
@@ -440,7 +449,10 @@ def test_mark_offer_as_sold_success(seller_auth):
             status.HTTP_404_NOT_FOUND,
             "OFFER_NOT_FOUND",
             "Offer not found",
-            {"error_code": "OFFER_NOT_FOUND", "message": "Offer not found"},
+            {
+                "error_code": "OFFER_NOT_FOUND",
+                "message": "Offer not found"
+            },
         ),
         (
             status.HTTP_409_CONFLICT,
@@ -478,6 +490,7 @@ def test_mark_offer_as_sold_service_errors(
     error_message,
     service_exception_detail_dict,
 ):
+    """Test error responses in mark-sold endpoint."""
     StubOfferService._raise = HTTPException(
         status_code=error_status, detail=service_exception_detail_dict
     )
@@ -556,6 +569,7 @@ def test_mark_offer_as_sold_forbidden_role(buyer_auth):
 
 
 def test_mark_offer_as_sold_invalid_uuid(seller_auth):
+    """Test with invalid UUID."""
     invalid_uuid = "not-a-uuid"
     response = client.post(f"/{invalid_uuid}/mark-sold")
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -1081,7 +1095,6 @@ def test_deactivate_offer_server_error(seller_auth):
 def test_mark_offer_as_sold_csrf_invalid(seller_auth):
     """Test mark-sold with invalid CSRF token."""
     # Temporarily override the CSRF dependency
-    original_override = test_app.dependency_overrides.get(CsrfProtect)
     test_app.dependency_overrides[CsrfProtect] = (
         lambda: FailingMockCsrfProtect()
     )
@@ -1112,7 +1125,6 @@ def test_mark_offer_as_sold_csrf_invalid(seller_auth):
 def test_create_offer_csrf_invalid(seller_auth):
     """Test create offer with invalid CSRF token."""
     # Temporarily override the CSRF dependency
-    original_override = test_app.dependency_overrides.get(CsrfProtect)
     test_app.dependency_overrides[CsrfProtect] = (
         lambda: FailingMockCsrfProtect()
     )
@@ -1147,7 +1159,6 @@ def test_create_offer_csrf_invalid(seller_auth):
 def test_deactivate_offer_csrf_invalid(seller_auth):
     """Test deactivate offer with invalid CSRF token."""
     # Temporarily override the CSRF dependency
-    original_override = test_app.dependency_overrides.get(CsrfProtect)
     test_app.dependency_overrides[CsrfProtect] = (
         lambda: FailingMockCsrfProtect()
     )
@@ -1173,10 +1184,7 @@ def test_deactivate_offer_csrf_invalid(seller_auth):
 
 
 def test_background_tasks_execution(seller_auth):
-    """Test that background tasks are passed correctly for image processing."""
-    # In the current implementation, it's difficult to test BackgroundTasks directly
-    # Instead, we'll verify the endpoint receives our request and processes it successfully
-
+    """Test background tasks for image processing."""
     # Set up a successful response
     StubOfferService._raise = None
 
@@ -1189,7 +1197,9 @@ def test_background_tasks_execution(seller_auth):
     }
 
     # Simulate the image upload
-    files = {"image": ("test_image.jpg", b"test image content", "image/jpeg")}
+    files = {
+        "image": ("test_image.jpg", b"test image content", "image/jpeg")
+    }
 
     # Make the request
     response = client.post("/offers", data=offer_data, files=files)
@@ -1221,7 +1231,7 @@ async def api_create_offer(
     background_tasks: BackgroundTasks = None,
     request: Request = None,
 ):
-    """Test-friendly create_offer endpoint that directly uses our stub services"""
+    """Test-friendly create_offer endpoint using stub services."""
     # Check auth first using global test variables
     if (
         not current_user_data
@@ -1239,10 +1249,8 @@ async def api_create_offer(
     offer_service = get_offer_service_override()
 
     # If we've set this to fail with CSRF error
-    if isinstance(
-        test_app.dependency_overrides.get(CsrfProtect)(),
-        FailingMockCsrfProtect,
-    ):
+    csrf_instance = test_app.dependency_overrides.get(CsrfProtect)()
+    if isinstance(csrf_instance, FailingMockCsrfProtect):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -1266,7 +1274,7 @@ async def api_create_offer(
         return result
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -1279,7 +1287,7 @@ async def api_create_offer(
 @test_app.post("/{offer_id}/deactivate", response_model=OfferDetailDTO)
 @pytest.mark.skip(reason="This is an API endpoint definition, not a test")
 async def api_deactivate_offer(offer_id: UUID, request: Request = None):
-    """Test-friendly deactivate_offer endpoint that directly uses our stub services"""
+    """Test-friendly deactivate_offer endpoint using stub services."""
     # Check auth first using global test variables
     if (
         not current_user_data
@@ -1297,10 +1305,8 @@ async def api_deactivate_offer(offer_id: UUID, request: Request = None):
     offer_service = get_offer_service_override()
 
     # If we've set this to fail with CSRF error
-    if isinstance(
-        test_app.dependency_overrides.get(CsrfProtect)(),
-        FailingMockCsrfProtect,
-    ):
+    csrf_instance = test_app.dependency_overrides.get(CsrfProtect)()
+    if isinstance(csrf_instance, FailingMockCsrfProtect):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -1319,7 +1325,7 @@ async def api_deactivate_offer(offer_id: UUID, request: Request = None):
         return result
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -1332,7 +1338,7 @@ async def api_deactivate_offer(offer_id: UUID, request: Request = None):
 @test_app.post("/{offer_id}/mark-sold", response_model=OfferDetailDTO)
 @pytest.mark.skip(reason="This is an API endpoint definition, not a test")
 async def api_mark_offer_as_sold(offer_id: UUID, request: Request = None):
-    """Test-friendly mark_offer_as_sold endpoint that directly uses our stub services"""
+    """Test-friendly mark_offer_as_sold endpoint using stub services."""
     # Check auth first using global test variables
     if (
         not current_user_data
@@ -1350,10 +1356,8 @@ async def api_mark_offer_as_sold(offer_id: UUID, request: Request = None):
     offer_service = get_offer_service_override()
 
     # If we've set this to fail with CSRF error
-    if isinstance(
-        test_app.dependency_overrides.get(CsrfProtect)(),
-        FailingMockCsrfProtect,
-    ):
+    csrf_instance = test_app.dependency_overrides.get(CsrfProtect)()
+    if isinstance(csrf_instance, FailingMockCsrfProtect):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -1372,7 +1376,7 @@ async def api_mark_offer_as_sold(offer_id: UUID, request: Request = None):
         return result
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -1380,25 +1384,3 @@ async def api_mark_offer_as_sold(offer_id: UUID, request: Request = None):
                 "message": "An unexpected error occurred",
             },
         )
-
-
-# Fixture to override dependencies for tests
-@pytest.fixture(autouse=True)
-def override_dependencies_for_test_app():
-    # No need to override actual router dependencies since we're using custom routes
-    # Just initialize our test stubs
-    StubOfferService._reset()
-    StubLogService._reset()
-    # Set default CSRF behavior
-    test_app.dependency_overrides[CsrfProtect] = lambda: MockCsrfProtect()
-
-    yield
-
-    # Clean up
-    StubOfferService._reset()
-    StubLogService._reset()
-    test_app.dependency_overrides = {}
-
-
-# Create a TestClient instance with our custom test app
-client = TestClient(test_app)

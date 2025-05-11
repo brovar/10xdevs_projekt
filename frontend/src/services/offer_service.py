@@ -5,7 +5,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import BackgroundTasks, HTTPException, UploadFile, status
-from sqlalchemy import case, func
+from sqlalchemy import case, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
