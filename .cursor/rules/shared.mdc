@@ -5,7 +5,7 @@ alwaysApply: false
 ---
 ## SHARED
 
-### Generak guidelines
+### General guidelines
 
 #### PROJECT STRUCTURE
 Backend files are located in ./src

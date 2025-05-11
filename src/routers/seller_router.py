@@ -136,6 +136,8 @@ async def list_seller_sales(
     user_data: Dict = Depends(require_seller),
     page: int = Query(1, ge=1, description="Page number to retrieve"),
     limit: int = Query(100, ge=1, le=100, description="Number of items per page (max 100)"),
+    sort: str = Query("created_at_desc", description="Sort order (created_at_desc, created_at_asc, updated_at_desc, updated_at_asc, total_amount_desc, total_amount_asc, status_desc, status_asc)"),
+    order_service: OrderService = Depends(get_order_service),
     db_session: AsyncSession = Depends(get_db_session),
     logger: Logger = Depends(get_logger)
 ):
@@ -145,11 +147,11 @@ async def list_seller_sales(
     """
     try:
         seller_id = user_data["user_id"]
-        order_service = OrderService(db_session, logger)
         result = await order_service.get_seller_sales(
             seller_id=seller_id,
             page=page,
-            limit=limit
+            limit=limit,
+            sort=sort
         )
         return result
     except Exception as e:

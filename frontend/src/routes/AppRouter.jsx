@@ -16,7 +16,8 @@ const OrdersPage = lazy(() => import('../pages/account/OrdersPage'));
 const OrderDetailPage = lazy(() => import('../pages/orders/OrderDetailPage'));
 // Seller pages
 const MyOffersPage = lazy(() => import('../pages/seller/MyOffersPage'));
-const SellerSalesHistoryPage = lazy(() => import('../pages/seller/SellerSalesHistoryPage'));
+// Poprawny import dla historii sprzedaży, używając pełnej implementacji, która już istnieje
+const SalesHistoryPage = lazy(() => import('../pages/seller/SellerSalesHistoryPage'));
 // Pozostałe strony będą dodawane tutaj
 
 // Layout component
@@ -176,7 +177,7 @@ const router = createBrowserRouter([
         element: (
           <RequireAuth requiredRole="Seller">
             <Suspense fallback={<LoadingSpinner message="Ładowanie historii sprzedaży..." />}>
-              <SellerSalesHistoryPage />
+              <SalesHistoryPage />
             </Suspense>
           </RequireAuth>
         ),

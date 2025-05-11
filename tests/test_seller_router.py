@@ -184,8 +184,8 @@ class StubOrderService:
         if StubOrderService._raise:
             raise StubOrderService._raise
 
-    async def get_seller_sales(self, seller_id: UUID, page, limit):
-        self._record_call('get_seller_sales', seller_id=seller_id, page=page, limit=limit)
+    async def get_seller_sales(self, seller_id: UUID, page, limit, sort="created_at_desc"):
+        self._record_call('get_seller_sales', seller_id=seller_id, page=page, limit=limit, sort=sort)
         self._maybe_raise()
         
         # Default mock response
@@ -517,6 +517,15 @@ def test_list_seller_sales_pagination():
     assert "total" in data
     assert "page" in data
     assert "limit" in data
+    
+    # Test with custom sort parameter
+    sort = "created_at_asc"
+    response = client.get(f"/seller/account/sales?sort={sort}")
+    
+    # Expect 200 OK
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert "items" in data
 
 def test_list_seller_sales_invalid_pagination():
     """Test invalid pagination parameters in seller sales history."""
@@ -639,3 +648,34 @@ def test_list_seller_sales_service_timeout():
     assert "total" in data
     assert "page" in data
     assert "limit" in data 
+
+def test_list_seller_sales_sort_options():
+    """Test different sort options in seller sales history."""
+    # Test each sort option
+    sort_options = [
+        "created_at_desc",
+        "created_at_asc",
+        "updated_at_desc",
+        "updated_at_asc",
+        "total_amount_desc",
+        "total_amount_asc",
+        "status_desc",
+        "status_asc"
+    ]
+    
+    for sort in sort_options:
+        response = client.get(f"/seller/account/sales?sort={sort}")
+        
+        # Expect 200 OK for all valid sort options
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "items" in data
+        assert "total" in data
+        assert "page" in data
+        assert "limit" in data
+        
+    # Test with invalid sort option (should default to created_at_desc)
+    response = client.get("/seller/account/sales?sort=invalid_sort")
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert "items" in data 

@@ -1,49 +1,33 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Badge } from 'react-bootstrap';
 
 /**
- * Map of order statuses to display text and style classes
+ * StatusBadge component for displaying order status with appropriate styling
+ * @param {Object} props - Component props
+ * @param {string} props.text - Text to display in the badge
+ * @param {string} props.className - CSS class for styling the badge
+ * @returns {JSX.Element} - Rendered component
  */
-export const orderStatusMap = {
-  pending_payment: { text: 'Oczekuje na płatność', variant: 'warning' },
-  processing: { text: 'Przetwarzane', variant: 'info' },
-  shipped: { text: 'Wysłane', variant: 'primary' },
-  delivered: { text: 'Dostarczone', variant: 'success' },
-  cancelled: { text: 'Anulowane', variant: 'danger' },
-  failed: { text: 'Nieudane', variant: 'secondary' },
-  // For the existing OrdersPage mock data
-  completed: { text: 'Zrealizowane', variant: 'success' },
-  pending: { text: 'Oczekujące', variant: 'warning' },
-};
-
-/**
- * StatusBadge component displays a status with appropriate styling
- * 
- * @param {Object} props
- * @param {string} props.status - Status key (from backend)
- * @param {string} [props.className] - Additional CSS classes
- */
-const StatusBadge = ({ status, className = '' }) => {
-  const statusConfig = orderStatusMap[status] || { 
-    text: status, 
-    variant: 'secondary'
-  };
-
+const StatusBadge = React.memo(({ text, className }) => {
   return (
-    <Badge 
-      bg={statusConfig.variant} 
-      className={className}
-      aria-label={`Status: ${statusConfig.text}`}
+    <span 
+      className={`badge ${className}`}
+      aria-label={`Status: ${text}`}
     >
-      {statusConfig.text}
-    </Badge>
+      {text}
+    </span>
   );
-};
+});
 
 StatusBadge.propTypes = {
-  status: PropTypes.string.isRequired,
+  text: PropTypes.string.isRequired,
   className: PropTypes.string
 };
+
+StatusBadge.defaultProps = {
+  className: 'bg-secondary'
+};
+
+StatusBadge.displayName = 'StatusBadge';
 
 export default StatusBadge; 

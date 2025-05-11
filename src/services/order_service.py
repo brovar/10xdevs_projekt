@@ -470,10 +470,12 @@ class OrderService:
         self,
         seller_id: UUID,
         page: int = 1,
-        limit: int = 100
+        limit: int = 100,
+        sort: str = "created_at_desc"
     ) -> OrderListResponse:
         """
         Get a paginated list of orders containing offers from the specified seller.
+        Supports sorting by created_at, updated_at, total_amount, and status in ascending or descending order.
         """
         try:
             # Validate page and limit
@@ -497,6 +499,26 @@ class OrderService:
             count_result = await self.db_session.execute(count_query)
             total_count = count_result.scalar() or 0
 
+            # Apply sorting based on the sort parameter
+            if sort == "created_at_asc":
+                order_by_clause = OrderModel.created_at.asc()
+            elif sort == "created_at_desc":
+                order_by_clause = OrderModel.created_at.desc()
+            elif sort == "updated_at_asc":
+                order_by_clause = OrderModel.updated_at.asc()
+            elif sort == "updated_at_desc":
+                order_by_clause = OrderModel.updated_at.desc()
+            elif sort == "total_amount_asc":
+                order_by_clause = func.sum(OrderItemModel.price_at_purchase * OrderItemModel.quantity).asc()
+            elif sort == "total_amount_desc":
+                order_by_clause = func.sum(OrderItemModel.price_at_purchase * OrderItemModel.quantity).desc()
+            elif sort == "status_asc":
+                order_by_clause = OrderModel.status.asc()
+            elif sort == "status_desc":
+                order_by_clause = OrderModel.status.desc()
+            else:  # Default to created_at_desc
+                order_by_clause = OrderModel.created_at.desc()
+            
             # Query orders with total amount
             query = (
                 select(
@@ -511,7 +533,7 @@ class OrderService:
                 .join(OfferModel, OrderItemModel.offer_id == OfferModel.id)
                 .where(OfferModel.seller_id == seller_id)
                 .group_by(OrderModel.id, OrderModel.status, OrderModel.created_at, OrderModel.updated_at)
-                .order_by(OrderModel.created_at.desc())
+                .order_by(order_by_clause)
                 .offset(offset)
                 .limit(limit)
             )
