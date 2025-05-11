@@ -63,8 +63,11 @@ payment_router.logger = logger
 
 # Mock CSRF Protection
 class MockCsrfProtect:
-    async def validate_csrf_in_cookies(self, request: Request):
-        pass
+    def validate_csrf(self, request: Request):
+        pass  # No-op for tests
+    
+    def set_csrf_cookie(self, response):
+        pass  # No-op for tests
 
 # Stub PaymentService
 class StubPaymentService:

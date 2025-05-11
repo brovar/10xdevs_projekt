@@ -18,6 +18,7 @@ const OrderDetailPage = lazy(() => import('../pages/orders/OrderDetailPage'));
 const MyOffersPage = lazy(() => import('../pages/seller/MyOffersPage'));
 // Poprawny import dla historii sprzedaży, używając pełnej implementacji, która już istnieje
 const SalesHistoryPage = lazy(() => import('../pages/seller/SellerSalesHistoryPage'));
+const CreateOfferPage = lazy(() => import('../pages/seller/CreateOfferPage'));
 // Pozostałe strony będą dodawane tutaj
 
 // Layout component
@@ -167,6 +168,17 @@ const router = createBrowserRouter([
           <RequireAuth requiredRole="Seller">
             <Suspense fallback={<LoadingSpinner message="Ładowanie ofert..." />}>
               <MyOffersPage />
+            </Suspense>
+          </RequireAuth>
+        ),
+        errorElement: <ErrorBoundary />
+      },
+      {
+        path: 'seller/offers/create',
+        element: (
+          <RequireAuth requiredRole="Seller">
+            <Suspense fallback={<LoadingSpinner message="Ładowanie formularza..." />}>
+              <CreateOfferPage />
             </Suspense>
           </RequireAuth>
         ),

@@ -68,12 +68,11 @@ from exceptions.base import ConflictError
 
 # Define MockCsrfProtect class outside the fixture for clarity
 class MockCsrfProtect:
-    async def validate_csrf_in_cookies(self, request: Request):
-        # print(f"--- DEBUG (override class): MockCsrfProtect.validate_csrf_in_cookies CALLED for request: {request.url} ---")
-        pass # Do nothing, bypass check
-    # Add other methods if needed by other endpoints
-    # async def validate_csrf(self, request: Request, **kwargs): pass
-    # def set_csrf_cookie(self, response): pass
+    def validate_csrf(self, request: Request):
+        pass  # No-op for tests
+    
+    def set_csrf_cookie(self, response):
+        pass  # No-op for tests
 
 # Stub core dependencies
 # app.dependency_overrides[dependencies.get_db_session] = lambda: None # PROBLEM: Service uses db_session.add()

@@ -73,10 +73,13 @@ def _authenticated_admin():
         'role': UserRole.ADMIN
     }
 
-# Mock CSRF Protection class
+# CSRF Mock
 class MockCsrfProtect:
-    async def validate_csrf_in_cookies(self, request: Request):
-        pass
+    def validate_csrf(self, request: Request):
+        pass # Do nothing, bypass CSRF validation
+    
+    def set_csrf_cookie(self, response):
+        pass # No-op for tests
 
 # Create a more comprehensive mock result class
 class MockResult:

@@ -34,17 +34,25 @@ MOCK_OFFER_ID = uuid4()
 
 # Define MockCsrfProtect class outside the fixture for clarity
 class MockCsrfProtect:
-    async def validate_csrf_in_cookies(self, request: Request):
+    def validate_csrf(self, request: Request):
         # Bypass CSRF validation for tests
+        pass
+    
+    def set_csrf_cookie(self, response):
+        # Add this method to avoid AttributeError
         pass
 
 # Define a failing CSRF protector for tests that need to test CSRF failures
 class FailingMockCsrfProtect:
-    async def validate_csrf_in_cookies(self, request: Request):
+    def validate_csrf(self, request: Request):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={"error_code": "INVALID_CSRF", "message": "CSRF token missing or invalid"}
         )
+    
+    def set_csrf_cookie(self, response):
+        # Add this method to avoid AttributeError
+        pass
 
 # Stub LogService
 class StubLogService:

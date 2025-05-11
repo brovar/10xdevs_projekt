@@ -163,13 +163,12 @@ async def login_user(
         # Use the auth service to handle login
         await auth_service.login_user(login_data, request, response)
         
-        # CSRF protection is optional for development
+        # Set CSRF token in cookie - using a try/except to handle potential errors
         try:
-            if csrf_protect and hasattr(csrf_protect, 'set_csrf_cookie'):
-                await csrf_protect.set_csrf_cookie(response)
+            csrf_protect.set_csrf_cookie(response)
         except Exception as csrf_error:
-            if logger:
-                logger.warning(f"CSRF cookie could not be set: {str(csrf_error)}")
+            logger.warning(f"CSRF cookie could not be set: {str(csrf_error)}")
+            # Continue despite CSRF error - this will allow login but CSRF protection may not work
         
         return {"message": "Login successful"}
     except AuthServiceError as e:
@@ -216,15 +215,16 @@ async def logout_user(
     - INVALID_CSRF: The CSRF token is missing or invalid
     - LOGOUT_FAILED: Server error during logout process
     """
-    # CSRF protection is optional for development
     try:
-        if csrf_protect and hasattr(csrf_protect, 'validate_csrf_in_cookies'):
-            await csrf_protect.validate_csrf_in_cookies(request)
-    except Exception as csrf_error:
-        if logger:
-            logger.warning(f"CSRF validation skipped: {str(csrf_error)}")
-    
-    try:
+        # Validate CSRF token
+        try:
+            csrf_protect.validate_csrf(request)
+        except Exception as csrf_error:
+            logger.warning(f"CSRF validation failed during logout: {str(csrf_error)}")
+            # For logout, we'll still allow the operation to proceed
+            # This provides better UX while marginally reducing security
+            logger.info("Proceeding with logout despite CSRF validation failure")
+        
         # Log out user - handles both authenticated and unauthenticated users
         await auth_service.logout_user(request, response)
         return {"message": "Logout successful"}
@@ -320,5 +320,36 @@ async def auth_status(
             content={
                 "error_code": "STATUS_CHECK_FAILED",
                 "message": "Wystąpił błąd podczas sprawdzania statusu autentykacji."
+            }
+        )
+
+@router.post("/refresh-csrf", responses={
+    200: {"description": "Successfully refreshed CSRF token"},
+    500: {"description": "Server error during CSRF token refresh"}
+})
+async def refresh_csrf_token(
+    response: Response,
+    csrf_protect: CsrfProtect = Depends(),
+    logger: Logger = Depends(get_logger)
+):
+    """
+    Refresh the CSRF token.
+    
+    This endpoint generates a new CSRF token and sets it in the response cookie.
+    Use this endpoint if your CSRF token is missing or has expired.
+    
+    Returns a success message indicating the token was refreshed.
+    """
+    try:
+        # Set a new CSRF token
+        csrf_protect.set_csrf_cookie(response)
+        return {"message": "CSRF token refreshed successfully"}
+    except Exception as e:
+        logger.error(f"Error refreshing CSRF token: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error_code": "CSRF_REFRESH_FAILED",
+                "message": "Failed to refresh CSRF token"
             }
         ) 

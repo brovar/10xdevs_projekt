@@ -183,8 +183,19 @@ async def block_user(
     """
     Block a user by setting their status to 'Inactive'. Requires Admin role.
     """
-    # Validate CSRF token
-    await csrf_protect.validate_csrf_in_cookies(request)
+    # Verify CSRF token
+    try:
+        csrf_protect.validate_csrf(request)
+    except Exception as csrf_error:
+        logger.error(f"CSRF validation failed: {str(csrf_error)}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error_code": "INVALID_CSRF",
+                "message": "CSRF token missing or invalid"
+            }
+        )
+    
     # Log block attempt
     await log_service.create_log(
         event_type=LogEventType.USER_BLOCK_ATTEMPT,
@@ -280,8 +291,19 @@ async def unblock_user(
     """
     Unblock a user by setting their status to 'Active'. Requires Admin role.
     """
-    # Validate CSRF token
-    await csrf_protect.validate_csrf_in_cookies(request)
+    # Verify CSRF token
+    try:
+        csrf_protect.validate_csrf(request)
+    except Exception as csrf_error:
+        logger.error(f"CSRF validation failed: {str(csrf_error)}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error_code": "INVALID_CSRF",
+                "message": "CSRF token missing or invalid"
+            }
+        )
+    
     # Log unblock attempt
     await log_service.create_log(
         event_type=LogEventType.USER_UNBLOCK_ATTEMPT,

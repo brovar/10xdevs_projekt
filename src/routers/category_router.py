@@ -75,13 +75,13 @@ async def list_categories(
         categories = await category_service.get_all_categories()
         
         # Initialize log service
-        log_service = LogService(db_session, logger)
+        log_service = LogService(db_session)
         
         # Log the action
-        await log_service.log_event(
-            user_id=UUID(user_id) if user_id else None,
-            event_type="CATEGORY_LIST_VIEWED",
-            message=f"User {user_email} viewed categories list"
+        await log_service.create_log(
+            event_type=LogEventType.CATEGORY_LIST_VIEWED,
+            message=f"User {user_email} viewed categories list",
+            user_id=UUID(user_id) if user_id else None
         )
         
         # Return categories list response
@@ -91,14 +91,14 @@ async def list_categories(
         raise
     except Exception as e:
         # Initialize log service
-        log_service = LogService(db_session, logger)
+        log_service = LogService(db_session)
         
         # Log error with user id if available from session_data
         user_id_for_log = session_data.get("user_id") if session_data else None
-        await log_service.log_error(
-            user_id=UUID(user_id_for_log) if user_id_for_log else None,
-            error_message=str(e),
-            endpoint="/categories"
+        await log_service.create_log(
+            event_type=LogEventType.CATEGORY_LIST_VIEWED,
+            message=f"Error fetching categories: {str(e)}",
+            user_id=UUID(user_id_for_log) if user_id_for_log else None
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

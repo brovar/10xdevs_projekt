@@ -39,9 +39,9 @@ def dummy_session_service():
 
 class NoopCsrfProtect:
     """Mock CSRF protector that allows calls but does nothing."""
-    async def validate_csrf_in_cookies(self, request):
+    def validate_csrf(self, request):
         pass
-    async def set_csrf_cookie(self, response):
+    def set_csrf_cookie(self, response):
         pass
 
 # --- Stub AuthService Variants ---
@@ -355,13 +355,12 @@ def test_logout_unexpected_error(test_app):
 def test_logout_csrf_error(test_app):
     """Test logout when CSRF validation fails."""
     # Configure a csrf protector that really raises an exception
-    # The issue here was that our NoopCsrfProtect wasn't actually raising an error
     class CsrfFailureProtect:
-        async def validate_csrf_in_cookies(self, request):
+        def validate_csrf(self, request):
             # Always raise the CSRF error in this test
-            raise CsrfProtectError(403, 'bad token test')
+            raise CsrfProtectError(status_code=403, message="Invalid CSRF token")
         
-        async def set_csrf_cookie(self, response):
+        def set_csrf_cookie(self, response):
             pass
     
     # Override with our failing implementation

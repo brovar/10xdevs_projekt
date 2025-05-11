@@ -44,30 +44,38 @@ class StubCategoryService:
 
 # Stub LogService
 class StubLogService:
-    log_event_called = False
-    log_error_called = False
-    log_event_data = None
-    log_error_data = None
+    create_log_called = False
+    create_log_data = None
     
     def __init__(self, db_session=None, logger=None):
         pass
 
+    async def create_log(self, event_type, message, user_id=None, ip_address=None):
+        StubLogService.create_log_called = True
+        StubLogService.create_log_data = {
+            'user_id': user_id, 
+            'event_type': event_type, 
+            'message': message,
+            'ip_address': ip_address
+        }
+    
+    # Stare metody dla zachowania kompatybilności
     async def log_event(self, user_id, event_type, message):
-        StubLogService.log_event_called = True
-        StubLogService.log_event_data = {'user_id': user_id, 'event_type': event_type, 'message': message}
+        return await self.create_log(event_type=event_type, message=message, user_id=user_id)
     
     async def log_error(self, error_message, endpoint, user_id=None):
-        StubLogService.log_error_called = True
-        StubLogService.log_error_data = {'error_message': error_message, 'endpoint': endpoint, 'user_id': user_id}
+        return await self.create_log(
+            event_type="ERROR", 
+            message=f"Error at {endpoint}: {error_message}", 
+            user_id=user_id
+        )
 
 @pytest.fixture(autouse=True)
 def override_services(monkeypatch):
     # Reset stub states
     StubCategoryService.called = False
-    StubLogService.log_event_called = False
-    StubLogService.log_error_called = False
-    StubLogService.log_event_data = None
-    StubLogService.log_error_data = None
+    StubLogService.create_log_called = False
+    StubLogService.create_log_data = None
     
     # Apply overrides
     monkeypatch.setattr(category_router, 'CategoryService', StubCategoryService)
@@ -86,10 +94,10 @@ def test_list_categories_success():
     
     # Verify service and logging calls
     assert StubCategoryService.called is True
-    assert StubLogService.log_event_called is True
-    assert str(StubLogService.log_event_data['user_id']) == str(MOCK_USER_ID) # Compare as strings
-    assert StubLogService.log_event_data['event_type'] == "CATEGORY_LIST_VIEWED"
-    assert StubLogService.log_error_called is False
+    assert StubLogService.create_log_called is True
+    assert str(StubLogService.create_log_data['user_id']) == str(MOCK_USER_ID) # Compare as strings
+    assert StubLogService.create_log_data['event_type'] == "CATEGORY_LIST_VIEWED"
+    assert "viewed categories list" in StubLogService.create_log_data['message']
 
 # 2. Unauthenticated scenario
 def test_list_categories_unauthenticated(monkeypatch):
@@ -118,8 +126,8 @@ def test_list_categories_service_error(monkeypatch):
     assert body.get('detail', {}).get('message') == 'Failed to retrieve category data'
     
     # Verify error logging
-    assert StubLogService.log_error_called is True
-    assert str(StubLogService.log_error_data['user_id']) == str(MOCK_USER_ID) # Compare as strings
-    assert StubLogService.log_error_data['endpoint'] == '/categories'
-    assert "Database connection failed" in StubLogService.log_error_data['error_message']
-    assert StubLogService.log_event_called is False 
+    assert StubLogService.create_log_called is True
+    assert str(StubLogService.create_log_data['user_id']) == str(MOCK_USER_ID) # Compare as strings
+    assert StubLogService.create_log_data['event_type'] == "CATEGORY_LIST_VIEWED"
+    assert "Error fetching categories" in StubLogService.create_log_data['message']
+    assert "Database connection failed" in StubLogService.create_log_data['message'] 

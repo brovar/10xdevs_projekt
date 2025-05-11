@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Alert, Spinner, Row, Col, Card, Badge } from 'react-bootstrap';
+import { Container, Alert, Spinner, Row, Col, Card, Badge, Button } from 'react-bootstrap';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useNavigate } from 'react-router-dom';
 import axios from '../../services/api';
 
 const MyOffersPage = () => {
@@ -10,6 +11,7 @@ const MyOffersPage = () => {
   const [error, setError] = useState(null);
   const { user } = useAuth();
   const { addError } = useNotifications();
+  const navigate = useNavigate();
 
   // Funkcja do pobierania ofert
   const fetchOffers = useCallback(async () => {
@@ -26,6 +28,11 @@ const MyOffersPage = () => {
       setIsLoading(false);
     }
   }, [addError]);
+
+  // Funkcja do przekierowania do strony tworzenia oferty
+  const handleCreateOffer = () => {
+    navigate('/seller/offers/create');
+  };
 
   useEffect(() => {
     fetchOffers();
@@ -68,7 +75,18 @@ const MyOffersPage = () => {
 
   return (
     <Container className="py-4">
-      <h1>Moje Oferty</h1>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1>Moje Oferty</h1>
+        <Button 
+          variant="primary" 
+          onClick={handleCreateOffer}
+          className="d-flex align-items-center"
+        >
+          <i className="bi bi-plus-circle me-2"></i>
+          Dodaj nową ofertę
+        </Button>
+      </div>
+      
       {error && (
         <Alert variant="danger">{error}</Alert>
       )}

@@ -67,7 +67,17 @@ async def create_order(
     """
     try:
         # Verify CSRF token
-        await csrf_protect.validate_csrf_in_cookies(request)
+        try:
+            csrf_protect.validate_csrf(request)
+        except Exception as csrf_error:
+            logger.error(f"CSRF validation failed: {str(csrf_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error_code": "INVALID_CSRF",
+                    "message": "CSRF token missing or invalid"
+                }
+            )
         
         # Get client IP address for logging
         client_ip = request.client.host if request.client else None

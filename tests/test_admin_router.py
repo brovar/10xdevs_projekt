@@ -103,9 +103,12 @@ def _authenticated_admin():
         updated_at=datetime.now(timezone.utc)
     )
 
-# Mock CSRF Protection class
+# Mock CSRF classes
 class MockCsrfProtect:
-    async def validate_csrf_in_cookies(self, request: Request):
+    def validate_csrf(self, request: Request):
+        pass
+    
+    def set_csrf_cookie(self, response: Response):
         pass
 
 # Create a class to simulate database query results
@@ -1473,13 +1476,13 @@ def test_logout_csrf_error(monkeypatch):
     """Test logout when CSRF validation fails."""
     # Modify CSRF validator to fail
     class FailingMockCsrfProtect:
-        async def validate_csrf_in_cookies(self, request: Request):
+        def validate_csrf(self, request: Request):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={"error_code": "INVALID_CSRF", "message": "CSRF token missing or invalid"}
             )
         
-        async def set_csrf_cookie(self, response: Response):
+        def set_csrf_cookie(self, response: Response):
             pass # Default: Do nothing
     
     # Override CSRF dependency
@@ -1612,13 +1615,13 @@ def test_admin_csrf_comprehensive():
     """Test CSRF validation on all POST endpoints."""
     # Modify CSRF validator to fail
     class FailingMockCsrfProtect:
-        async def validate_csrf_in_cookies(self, request: Request):
+        def validate_csrf(self, request: Request):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={"error_code": "INVALID_CSRF", "message": "CSRF token missing or invalid"}
             )
         
-        async def set_csrf_cookie(self, response: Response):
+        def set_csrf_cookie(self, response: Response):
             pass # Default: Do nothing
     
     # Override CSRF dependency

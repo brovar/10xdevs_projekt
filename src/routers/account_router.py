@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi_csrf_protect import CsrfProtect
 from fastapi_csrf_protect.exceptions import CsrfProtectError
 from fastapi.responses import JSONResponse
+from fastapi import status
 
 from dependencies import get_db_session, get_logger, require_authenticated
 from services.user_service import UserService
@@ -202,13 +203,18 @@ async def update_current_user_profile(
     - PROFILE_UPDATE_FAILED: Server error occurred during profile update
     """
     try:
-        # Verify CSRF token first, handle errors or skip for stubs
+        # Verify CSRF token
         try:
-            await csrf_protect.validate_csrf_in_cookies(request)
-        except CsrfProtectError as e:
-            return JSONResponse(status_code=e.status_code, content={"error_code": "INVALID_CSRF", "message": e.message})
-        except AttributeError:
-            pass # Skip for stubs
+            csrf_protect.validate_csrf(request)
+        except Exception as csrf_error:
+            logger.error(f"CSRF validation failed: {str(csrf_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error_code": "INVALID_CSRF",
+                    "message": "CSRF token missing or invalid"
+                }
+            )
 
         # Get user ID from session
         user_id = session_data["user_id"]
@@ -353,13 +359,18 @@ async def change_current_user_password(
     - PASSWORD_UPDATE_FAILED: Server error occurred during password update
     """
     try:
-        # Verify CSRF token first, handle errors or skip for stubs
+        # Verify CSRF token
         try:
-            await csrf_protect.validate_csrf_in_cookies(request)
-        except CsrfProtectError as e:
-            return JSONResponse(status_code=e.status_code, content={"error_code": "INVALID_CSRF", "message": e.message})
-        except AttributeError:
-            pass # Skip for stubs
+            csrf_protect.validate_csrf(request)
+        except Exception as csrf_error:
+            logger.error(f"CSRF validation failed: {str(csrf_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error_code": "INVALID_CSRF",
+                    "message": "CSRF token missing or invalid"
+                }
+            )
 
         # Get user ID from session
         user_id = session_data["user_id"]

@@ -176,7 +176,17 @@ async def create_offer(
     """
     try:
         # Verify CSRF token
-        await csrf_protect.validate_csrf_in_cookies(request)
+        try:
+            csrf_protect.validate_csrf(request)
+        except Exception as csrf_error:
+            logger.error(f"CSRF validation failed: {str(csrf_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error_code": "INVALID_CSRF",
+                    "message": "CSRF token missing or invalid"
+                }
+            )
         
         # Get user ID from session data
         seller_id = session_data["user_id"]
@@ -287,6 +297,7 @@ async def create_offer(
     }
 )
 async def deactivate_offer(
+    request: Request,
     offer_id: UUID = Path(
         ..., 
         description="UUID of the offer to deactivate",
@@ -296,7 +307,6 @@ async def deactivate_offer(
     db: AsyncSession = Depends(get_db_session),
     logger: Logger = Depends(get_logger_dependency),
     csrf_protect: CsrfProtect = Depends(),
-    request: Request = None,
 ):
     """
     Deactivate an offer by changing its status from 'active' to 'inactive'.
@@ -308,7 +318,17 @@ async def deactivate_offer(
     """
     try:
         # Verify CSRF token
-        await csrf_protect.validate_csrf_in_cookies(request)
+        try:
+            csrf_protect.validate_csrf(request)
+        except Exception as csrf_error:
+            logger.error(f"CSRF validation failed: {str(csrf_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error_code": "INVALID_CSRF",
+                    "message": "CSRF token missing or invalid"
+                }
+            )
         
         # Create service and call method
         offer_service = OfferService(db, logger)
@@ -439,7 +459,17 @@ async def mark_offer_as_sold(
     """
     try:
         # Verify CSRF token
-        await csrf_protect.validate_csrf_in_cookies(request)
+        try:
+            csrf_protect.validate_csrf(request)
+        except Exception as csrf_error:
+            logger.error(f"CSRF validation failed: {str(csrf_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error_code": "INVALID_CSRF",
+                    "message": "CSRF token missing or invalid"
+                }
+            )
         
         # Create service and call method
         result = await offer_service.mark_offer_as_sold(

@@ -32,9 +32,9 @@ app.dependency_overrides[dependencies.require_authenticated] = _authenticated_se
 
 # Default CSRF stub that does nothing (module-level override)
 class NoopCsrfProtect:
-    async def validate_csrf_in_cookies(self, request):
+    def validate_csrf(self, request):
         pass
-    async def set_csrf_cookie(self, response): # Added for completeness if needed
+    def set_csrf_cookie(self, response): # Added for completeness if needed
         pass
 app.dependency_overrides[account_router.CsrfProtect] = lambda: NoopCsrfProtect()
 
@@ -270,19 +270,18 @@ def test_update_profile_unauthenticated(monkeypatch):
 def test_update_profile_csrf_error(monkeypatch):
     # Define and apply a CSRF stub that raises an error for this test
     class BadCsrf:
-        async def validate_csrf_in_cookies(self, request):
-            raise CsrfProtectError(status.HTTP_403_FORBIDDEN, 'bad token')
-        # Add set_csrf_cookie if the Noop version has it, to avoid AttributeErrors if called
-        async def set_csrf_cookie(self, response):
+        def validate_csrf(self, request):
+            raise CsrfProtectError(status_code=403, message="CSRF token missing or invalid")
+        def set_csrf_cookie(self, response):
             pass
     monkeypatch.setitem(app.dependency_overrides, account_router.CsrfProtect, lambda: BadCsrf())
 
     response = client.patch('/account', json={'first_name':'X'})
     assert response.status_code == status.HTTP_403_FORBIDDEN
     body = response.json()
-    # The endpoint catches CsrfProtectError and returns a specific JSON structure
-    assert body.get('error_code') == 'INVALID_CSRF'
-    assert body.get('message') == 'bad token'
+    # The endpoint catches CsrfProtectError and returns a specific JSON structure with detail
+    assert body.get('detail', {}).get('error_code') == 'INVALID_CSRF'
+    assert body.get('detail', {}).get('message') == 'CSRF token missing or invalid'
 
 def test_update_profile_not_found(monkeypatch):
     # Configure the stub method to raise an error for this test
@@ -371,19 +370,18 @@ def test_change_password_unauthenticated(monkeypatch):
 def test_change_password_csrf_error(monkeypatch):
     # Define and apply a CSRF stub that raises an error for this test
     class BadCsrf:
-        async def validate_csrf_in_cookies(self, request):
-            raise CsrfProtectError(status.HTTP_403_FORBIDDEN, 'bad csrf token')
-        # Add set_csrf_cookie if the Noop version has it
-        async def set_csrf_cookie(self, response):
+        def validate_csrf(self, request):
+            raise CsrfProtectError(status_code=403, message="CSRF token missing or invalid")
+        def set_csrf_cookie(self, response):
             pass
     monkeypatch.setitem(app.dependency_overrides, account_router.CsrfProtect, lambda: BadCsrf())
 
     response = client.put('/account/password', json=valid_password_payload)
     assert response.status_code == status.HTTP_403_FORBIDDEN
     body = response.json()
-    # The endpoint catches CsrfProtectError and returns a specific JSON structure
-    assert body.get('error_code') == 'INVALID_CSRF'
-    assert body.get('message') == 'bad csrf token'
+    # The endpoint catches CsrfProtectError and returns detail structure
+    assert body.get('detail', {}).get('error_code') == 'INVALID_CSRF'
+    assert body.get('detail', {}).get('message') == 'CSRF token missing or invalid'
 
 def test_change_password_invalid_current(monkeypatch):
     # Configure the stub method to raise the specific error

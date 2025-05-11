@@ -12,6 +12,7 @@ from datetime import datetime
 from models import OfferModel, CategoryModel, LogModel, UserModel
 from schemas import OfferStatus, LogEventType, OfferSummaryDTO, OfferDetailDTO, SellerInfoDTO, CategoryDTO, UserRole, OfferListResponse
 from services.file_service import FileService
+from services.log_service import LogService
 from exceptions.offer_exceptions import (
     OfferNotFoundException, 
     NotOfferOwnerException, 
@@ -22,30 +23,12 @@ from exceptions.offer_exceptions import (
 )
 from utils.pagination_utils import build_paginated_response
 
-# Funkcja pomocnicza do logowania zdarzeń
-async def log_event(db_session: AsyncSession, event_type: LogEventType, user_id: UUID, message: str) -> None:
-    """
-    Helper function to log events in the system
-    
-    Args:
-        db_session: Database session
-        event_type: Type of the event from LogEventType enum
-        user_id: ID of the user who triggered the event
-        message: Event description message
-    """
-    log_entry = LogModel(
-        event_type=event_type,
-        user_id=user_id,
-        message=message
-    )
-    db_session.add(log_entry)
-    await db_session.commit()
-
 class OfferService:
     def __init__(self, db_session: AsyncSession, logger: Logger):
         self.db_session = db_session
         self.logger = logger
         self.file_service = FileService(logger)
+        self.log_service = LogService(db_session)
     
     async def create_offer(
         self,
@@ -132,13 +115,12 @@ class OfferService:
             
             self.db_session.add(new_offer)
             
-            # Log event
-            log_entry = LogModel(
+            # Log event using LogService
+            await self.log_service.create_log(
                 event_type=LogEventType.OFFER_CREATE,
                 user_id=seller_id,
                 message=f"User {seller_id} created a new offer: {title}"
             )
-            self.db_session.add(log_entry)
             
             await self.db_session.commit()
             await self.db_session.refresh(new_offer)
@@ -232,11 +214,10 @@ class OfferService:
             await self.db_session.refresh(offer)
             
             # Log the status change event
-            await log_event(
-                self.db_session,
-                LogEventType.OFFER_STATUS_CHANGE,
-                user_id,
-                f"Offer {offer_id} deactivated"
+            await self.log_service.create_log(
+                event_type=LogEventType.OFFER_STATUS_CHANGE,
+                user_id=user_id,
+                message=f"Offer {offer_id} deactivated"
             )
             
             # Fetch seller and category for full response
@@ -360,11 +341,10 @@ class OfferService:
             await self.db_session.refresh(offer)
             
             # Log the status change event
-            await log_event(
-                self.db_session,
-                LogEventType.OFFER_STATUS_CHANGE,
-                user_id,
-                f"Offer {offer_id} marked as sold"
+            await self.log_service.create_log(
+                event_type=LogEventType.OFFER_STATUS_CHANGE,
+                user_id=user_id,
+                message=f"Offer {offer_id} marked as sold"
             )
             
             # Fetch seller and category for full response
