@@ -325,16 +325,31 @@ async def get_order_details(
     }
 )
 async def ship_order(
+    request: Request,
     order_id: UUID = Path(..., description="UUID of the order to ship"),
     user_data = Depends(require_roles([UserRole.SELLER])),
     order_service: OrderService = Depends(get_order_service),
     log_service: LogService = Depends(get_log_service),
-    logger: Logger = Depends(get_logger)
+    logger: Logger = Depends(get_logger),
+    csrf_protect: CsrfProtect = Depends()
 ) -> OrderDetailDTO:
     """
     Mark an order as shipped. Seller must own at least one item in the order.
     """
     try:
+        # Verify CSRF token
+        try:
+            csrf_protect.validate_csrf(request)
+        except Exception as csrf_error:
+            logger.error(f"CSRF validation failed for shipping order {order_id}: {str(csrf_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error_code": "INVALID_CSRF",
+                    "message": "CSRF token missing or invalid"
+                }
+            )
+
         seller_id = user_data["user_id"]
         updated_order = await order_service.ship_order(
             order_id=order_id,
@@ -396,6 +411,8 @@ async def ship_order(
             status_code=status.HTTP_409_CONFLICT,
             detail={"error_code": "INVALID_ORDER_STATUS", "message": str(e)}
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Unexpected error shipping order {order_id}: {e}", exc_info=True)
         # Log failure event
@@ -429,16 +446,31 @@ async def ship_order(
     }
 )
 async def deliver_order(
+    request: Request,
     order_id: UUID = Path(..., description="UUID of the order to deliver"),
     user_data = Depends(require_roles([UserRole.SELLER])),
     order_service: OrderService = Depends(get_order_service),
     log_service: LogService = Depends(get_log_service),
-    logger: Logger = Depends(get_logger)
+    logger: Logger = Depends(get_logger),
+    csrf_protect: CsrfProtect = Depends()
 ) -> OrderDetailDTO:
     """
     Mark an order as delivered. Seller must own at least one item in the order.
     """
     try:
+        # Verify CSRF token
+        try:
+            csrf_protect.validate_csrf(request)
+        except Exception as csrf_error:
+            logger.error(f"CSRF validation failed for delivering order {order_id}: {str(csrf_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error_code": "INVALID_CSRF",
+                    "message": "CSRF token missing or invalid"
+                }
+            )
+        
         seller_id = user_data["user_id"]
         updated_order = await order_service.deliver_order(
             order_id=order_id,
@@ -500,6 +532,8 @@ async def deliver_order(
             status_code=status.HTTP_409_CONFLICT,
             detail={"error_code": "INVALID_ORDER_STATUS", "message": str(e)}
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Unexpected error delivering order {order_id}: {e}", exc_info=True)
         # Log failure event

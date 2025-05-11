@@ -96,7 +96,7 @@ async def list_categories(
         # Log error with user id if available from session_data
         user_id_for_log = session_data.get("user_id") if session_data else None
         await log_service.create_log(
-            event_type=LogEventType.CATEGORY_LIST_VIEWED,
+            event_type=LogEventType.ADMIN_ACTION_FAIL,
             message=f"Error fetching categories: {str(e)}",
             user_id=UUID(user_id_for_log) if user_id_for_log else None
         )

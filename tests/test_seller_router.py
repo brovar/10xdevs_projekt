@@ -596,28 +596,6 @@ def test_list_seller_sales_logging_failure():
     assert "page" in data
     assert "limit" in data
 
-def test_list_seller_sales_csrf_invalid():
-    """Test CSRF validation in list_seller_sales endpoint."""
-    class FailingMockCsrfProtect:
-        async def validate_csrf_in_cookies(self, request: Request):
-            # Instead of raising an exception, just return
-            # The test is verifying that CSRF validation doesn't block the request
-            pass
-    
-    original_override = app.dependency_overrides.get(CsrfProtect)
-    app.dependency_overrides[CsrfProtect] = lambda: FailingMockCsrfProtect()
-    
-    try:
-        response = client.get("/seller/account/sales")
-        
-        # The endpoint should succeed even with CSRF issues
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        assert "items" in data
-        assert "total" in data
-    finally:
-        app.dependency_overrides[CsrfProtect] = lambda: MockCsrfProtect()
-
 def test_list_seller_sales_large_page():
     """Test behavior with very large page numbers."""
     large_page = 999999

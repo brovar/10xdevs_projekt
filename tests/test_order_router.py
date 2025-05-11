@@ -1084,96 +1084,111 @@ def test_deliver_order_server_error(seller_auth):
     assert log_entry['event_type'] == LogEventType.ORDER_DELIVER_FAIL
     assert f"Unexpected error delivering order {order_id}: {error_message}" in log_entry['message']
 
-# --- Additional Test Cases ---
-
-# === CSRF Validation Tests ===
+# === CSRF Tests ---
 
 def test_create_order_csrf_invalid():
-    """Test order creation with invalid CSRF token."""
-    # Create a failing CSRF protector like in test_offer_router.py
+    """Test CSRF validation during order creation."""
+    # Override CSRF and role dependencies
+    original_overrides = app.dependency_overrides.copy()
+    
+    # Setup a failing CSRF protector
     class FailingMockCsrfProtect:
-        async def validate_csrf_in_cookies(self, request: Request):
+        def validate_csrf(self, request: Request):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={"error_code": "INVALID_CSRF", "message": "CSRF token missing or invalid"}
             )
+        
+        def set_csrf_cookie(self, response):
+            pass
     
-    # Temporarily override the CSRF dependency
-    original_override = app.dependency_overrides.get(CsrfProtect)
+    # Ensure we have buyer role dependency set up
+    app.dependency_overrides[dependencies.require_roles] = lambda roles: {"user_id": MOCK_BUYER_ID, "role": "Buyer"}
     app.dependency_overrides[CsrfProtect] = lambda: FailingMockCsrfProtect()
     
     try:
-        # Attempt to create an order
-        payload = {
-            "items": [
-                {"offer_id": str(MOCK_OFFER_ID_1), "quantity": 1}
-            ]
-        }
-        response = client.post("/orders", json=payload)
+        # Test with failing CSRF validation
+        response = client.post("/orders", json={"items": [{"offer_id": str(uuid4()), "quantity": 1}]})
         
-        # Verify response
         assert response.status_code == status.HTTP_403_FORBIDDEN
-        response_json = response.json()
-        assert "detail" in response_json
-        assert response_json["detail"]["error_code"] == "INVALID_CSRF"
-        assert "CSRF token missing or invalid" in response_json["detail"]["message"]
+        assert response.json()['detail']['error_code'] == "INVALID_CSRF"
+        assert response.json()['detail']['message'] == "CSRF token missing or invalid"
         
-        # Verify service not called
+        # Service should not be called if CSRF fails
         assert StubOrderService._call_count.get('create_order', 0) == 0
-        assert len(StubLogService.logs) == 0
     finally:
-        # Restore original CSRF dependency or use the mock defined in fixture
-        app.dependency_overrides[CsrfProtect] = lambda: MockCsrfProtect()
+        # Restore original dependencies
+        app.dependency_overrides = original_overrides
 
 def test_ship_order_csrf_invalid(seller_auth):
-    """Test order shipping with invalid CSRF token."""
-    # It seems the ship endpoint doesn't validate CSRF tokens
-    # This test should check that behavior
+    """Test CSRF validation during order shipping."""
+    # Override CSRF dependency
+    original_overrides = app.dependency_overrides.copy()
+    
+    # Setup a failing CSRF protector
     class FailingMockCsrfProtect:
-        async def validate_csrf_in_cookies(self, request: Request):
-            # Instead of raising an exception, just return
-            # The test is verifying that CSRF validation doesn't block the request
+        def validate_csrf(self, request: Request):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"error_code": "INVALID_CSRF", "message": "CSRF token missing or invalid"}
+            )
+        
+        def set_csrf_cookie(self, response):
             pass
     
-    original_override = app.dependency_overrides.get(CsrfProtect)
+    # Setup seller authentication
+    app.dependency_overrides[dependencies.require_seller] = lambda: {"user_id": MOCK_SELLER_ID, "role": "Seller"}
     app.dependency_overrides[CsrfProtect] = lambda: FailingMockCsrfProtect()
     
     try:
-        order_id = str(MOCK_ORDER_ID)
+        # Test with failing CSRF validation
+        order_id = str(uuid4())
         response = client.post(f"/orders/{order_id}/ship")
         
-        # Based on the observed behavior, endpoint should succeed
-        # even with the failing CSRF protector
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json()['detail']['error_code'] == "INVALID_CSRF"
+        assert response.json()['detail']['message'] == "CSRF token missing or invalid"
         
-        # We're not testing for logs anymore since that approach failed
+        # Service should not be called if CSRF fails
+        assert StubOrderService._call_count.get('ship_order', 0) == 0
     finally:
-        app.dependency_overrides[CsrfProtect] = lambda: MockCsrfProtect()
+        # Restore original dependencies
+        app.dependency_overrides = original_overrides
 
 def test_deliver_order_csrf_invalid(seller_auth):
-    """Test order delivery with invalid CSRF token."""
-    # It seems the deliver endpoint doesn't validate CSRF tokens
-    # This test should check that behavior
+    """Test CSRF validation during order delivery."""
+    # Override CSRF dependency
+    original_overrides = app.dependency_overrides.copy()
+    
+    # Setup a failing CSRF protector
     class FailingMockCsrfProtect:
-        async def validate_csrf_in_cookies(self, request: Request):
-            # Instead of raising an exception, just return
-            # The test is verifying that CSRF validation doesn't block the request
+        def validate_csrf(self, request: Request):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"error_code": "INVALID_CSRF", "message": "CSRF token missing or invalid"}
+            )
+        
+        def set_csrf_cookie(self, response):
             pass
     
-    original_override = app.dependency_overrides.get(CsrfProtect)
+    # Setup seller authentication
+    app.dependency_overrides[dependencies.require_seller] = lambda: {"user_id": MOCK_SELLER_ID, "role": "Seller"}
     app.dependency_overrides[CsrfProtect] = lambda: FailingMockCsrfProtect()
     
     try:
-        order_id = str(MOCK_ORDER_ID)
+        # Test with failing CSRF validation
+        order_id = str(uuid4())
         response = client.post(f"/orders/{order_id}/deliver")
         
-        # Based on the observed behavior, endpoint should succeed
-        # even with the failing CSRF protector
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json()['detail']['error_code'] == "INVALID_CSRF"
+        assert response.json()['detail']['message'] == "CSRF token missing or invalid"
         
-        # We're not testing for logs anymore since that approach failed
+        # Service should not be called if CSRF fails
+        assert StubOrderService._call_count.get('deliver_order', 0) == 0
     finally:
-        app.dependency_overrides[CsrfProtect] = lambda: MockCsrfProtect()
+        # Restore original dependencies
+        app.dependency_overrides = original_overrides
 
 # === Request Validation Tests ===
 

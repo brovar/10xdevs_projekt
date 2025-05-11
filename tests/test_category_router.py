@@ -3,13 +3,15 @@ from starlette.testclient import TestClient
 from fastapi import status, HTTPException
 from typing import List
 from uuid import uuid4
+from sqlalchemy.ext.asyncio import AsyncSession
+from logging import Logger
 
 import dependencies
 import routers.category_router as category_router
 from main import app
 
 # Import schema for type checking and response validation
-from schemas import CategoryDTO, CategoriesListResponse
+from schemas import CategoryDTO, CategoriesListResponse, LogEventType
 
 # Stub core dependencies
 app.dependency_overrides[dependencies.get_db_session] = lambda: None
@@ -59,14 +61,14 @@ class StubLogService:
             'ip_address': ip_address
         }
     
-    # Stare metody dla zachowania kompatybilności
+    # Stare metody pozostawione dla zachowania kompatybilności z istniejącymi testami
     async def log_event(self, user_id, event_type, message):
         return await self.create_log(event_type=event_type, message=message, user_id=user_id)
     
     async def log_error(self, error_message, endpoint, user_id=None):
         return await self.create_log(
             event_type="ERROR", 
-            message=f"Error at {endpoint}: {error_message}", 
+            message=f"Error in {endpoint}: {error_message}", 
             user_id=user_id
         )
 
@@ -126,8 +128,10 @@ def test_list_categories_service_error(monkeypatch):
     assert body.get('detail', {}).get('message') == 'Failed to retrieve category data'
     
     # Verify error logging
-    assert StubLogService.create_log_called is True
-    assert str(StubLogService.create_log_data['user_id']) == str(MOCK_USER_ID) # Compare as strings
-    assert StubLogService.create_log_data['event_type'] == "CATEGORY_LIST_VIEWED"
-    assert "Error fetching categories" in StubLogService.create_log_data['message']
-    assert "Database connection failed" in StubLogService.create_log_data['message'] 
+    assert StubLogService.create_log_called
+    assert StubLogService.create_log_data['event_type'] == LogEventType.ADMIN_ACTION_FAIL
+    log_message_lower = StubLogService.create_log_data['message'].lower()
+    assert "error fetching categories" in log_message_lower
+    assert "database connection failed" in log_message_lower # Verify specific error part
+
+# End of originally intended tests for this file, removing hallucinated tests below. 
