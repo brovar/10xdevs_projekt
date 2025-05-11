@@ -1,9 +1,9 @@
 # Plan implementacji widoku SalesHistoryPage (Historia Sprzedaży)
 
 ## 1. Przegląd
-Widok "Historia Sprzedaży" (`SalesHistoryPage`) jest przeznaczony dla zalogowanych użytkowników z rolą Sprzedającego (Seller). Umożliwia przeglądanie paginowanej listy zamówień, które zawierają produkty wystawione przez danego sprzedawcę. Widok ma na celu prezentację kluczowych informacji o zamówieniach i, zgodnie z wymaganiami, powinien umożliwiać zmianę statusu zamówienia przez sprzedawcę. Plan ten uwzględnia aktualnie dostępny endpoint `GET /account/sales`, który zwraca ograniczone informacje o zamówieniach.
+Widok "Historia Sprzedaży" (`SalesHistoryPage`) jest przeznaczony dla zalogowanych użytkowników z rolą Sprzedającego (Seller). Umożliwia przeglądanie paginowanej listy zamówień, które zawierają produkty wystawione przez danego sprzedawcę. Widok ma na celu prezentację kluczowych informacji o zamówieniach i, zgodnie z wymaganiami, powinien umożliwiać zmianę statusu zamówienia przez sprzedawcę. Plan ten uwzględnia aktualnie dostępny endpoint `GET /seller/account/sales`, który zwraca ograniczone informacje o zamówieniach.
 
-**Ograniczenie:** Dostępny endpoint `GET /account/sales` zwraca jedynie `OrderSummaryDTO`, które nie zawiera informacji o konkretnych produktach w zamówieniu ani o kupującym. W związku z tym, wyświetlenie tych danych (wymaganych przez opis widoku i US-009) oraz sortowanie po nich **nie jest obecnie możliwe** bez modyfikacji backendu. Plan zakłada tymczasowe pominięcie tych informacji w interfejsie. Funkcjonalność zmiany statusu zamówienia również **nie może zostać w pełni zaimplementowana** bez dedykowanego endpointu API.
+**Ograniczenie:** Dostępny endpoint `GET /seller/account/sales` zwraca jedynie `OrderSummaryDTO`, które nie zawiera informacji o konkretnych produktach w zamówieniu ani o kupującym. W związku z tym, wyświetlenie tych danych (wymaganych przez opis widoku i US-009) oraz sortowanie po nich **nie jest obecnie możliwe** bez modyfikacji backendu. Plan zakłada tymczasowe pominięcie tych informacji w interfejsie. Funkcjonalność zmiany statusu zamówienia również **nie może zostać w pełni zaimplementowana** bez dedykowanego endpointu API.
 
 ## 2. Routing widoku
 -   **Ścieżka:** `/seller/sales`
@@ -97,7 +97,7 @@ SalesHistoryPage (src/pages/sales/SalesHistoryPage.js)
 
 ## 5. Typy
 
-### `OrderSummaryDTO` (z `schemas.OrderSummaryDTO`, odpowiedź API `GET /account/sales`)
+### `OrderSummaryDTO` (z `schemas.OrderSummaryDTO`, odpowiedź API `GET /seller/account/sales`)
 ```typescript
 // Jak w poprzednich planach
 interface OrderSummaryDTO {
@@ -109,7 +109,7 @@ interface OrderSummaryDTO {
 }
 ```
 
-### `OrderListResponseDTO` (z `schemas.OrderListResponse`, odpowiedź API `GET /account/sales`)
+### `OrderListResponseDTO` (z `schemas.OrderListResponse`, odpowiedź API `GET /seller/account/sales`)
 ```typescript
 // Jak w poprzednich planach
 interface OrderListResponseDTO {
@@ -214,7 +214,7 @@ Custom hook `useSalesHistory` jest dobrym kandydatem.
 
 Serwis `src/services/salesService.js` (lub rozszerzenie `orderService.js`).
 
-### `GET /account/sales`
+### `GET /seller/account/sales`
 -   **Cel:** Pobranie paginowanej listy zamówień sprzedawcy.
 -   **Akcja:** Wywoływane przy montowaniu `SalesHistoryPage` i zmianie strony/sortowania.
 -   **Parametry Query:** `page`, `limit`, `sort` (ograniczony do np. `created_at_desc`, `created_at_asc`).
@@ -245,7 +245,7 @@ Serwis `src/services/salesService.js` (lub rozszerzenie `orderService.js`).
 -   **Zmiana statusu:** `OrderStatusDropdown` powinien oferować tylko dozwolone przejścia (`processing` -> `shipped`, `shipped` -> `delivered`).
 
 ## 10. Obsługa błędów
--   **Błędy API (`GET /account/sales`):**
+-   **Błędy API (`GET /seller/account/sales`):**
     -   `401`, `403`: Obsługa globalna/przekierowanie.
     -   `500`: Wyświetlenie komunikatu "Nie udało się załadować historii sprzedaży."
 -   **Błędy API (zmiana statusu - hipotetyczne):**
@@ -297,5 +297,3 @@ Serwis `src/services/salesService.js` (lub rozszerzenie `orderService.js`).
     -   Wyświetlanie stanów ładowania/błędów/braku danych.
     -   **(Manualne/Częściowe)** Wyświetlanie `OrderStatusDropdown` dla odpowiednich statusów i jego deaktywacja podczas "zmiany" (brak realnej zmiany bez API).
     -   Ochrona trasy dla roli `Seller`.
-
-</rewritten_file> 

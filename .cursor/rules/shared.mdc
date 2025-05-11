@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+## SHARED
+
+### Generak guidelines
+
+#### PROJECT STRUCTURE
+Backend files are located in ./src
+Frontend files are located in ./frontend/src
