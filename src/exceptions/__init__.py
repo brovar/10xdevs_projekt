@@ -1,1 +1,1 @@
-# Mark exceptions directory as a package 
+# Mark exceptions directory as a package

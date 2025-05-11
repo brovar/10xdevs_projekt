@@ -1,34 +1,35 @@
+from datetime import datetime
+from typing import List, Optional, Tuple
+from uuid import UUID
+
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from logging import Logger
-from typing import Optional, Tuple, List
-from uuid import UUID
-from datetime import datetime
-from sqlalchemy import func
 
 from models import LogModel
-from schemas import LogEventType, LogDTO
+from schemas import LogDTO, LogEventType
+
 
 class LogService:
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
-    
+
     async def create_log(
         self,
         event_type: LogEventType,
         message: str,
         user_id: Optional[UUID] = None,
-        ip_address: Optional[str] = None
+        ip_address: Optional[str] = None,
     ) -> LogModel:
         """
         Create a new log entry in the database
-        
+
         Args:
             event_type: Type of event from LogEventType enum
             message: Log message
             user_id: Optional UUID of the user
             ip_address: Optional IP address
-            
+
         Returns:
             Created Log record
         """
@@ -37,12 +38,12 @@ class LogService:
             user_id=user_id,
             ip_address=ip_address,
             message=message,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.utcnow(),
         )
         self.db_session.add(log)
-        
+
         # Don't commit here, let the caller handle transaction
-        return log 
+        return log
 
     async def get_logs(
         self,
@@ -52,7 +53,7 @@ class LogService:
         user_id: Optional[UUID] = None,
         ip_address: Optional[str] = None,
         start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        end_date: Optional[datetime] = None,
     ) -> Tuple[List[LogDTO], int, int]:
         """
         Retrieve a paginated list of logs with optional filters.
@@ -106,8 +107,8 @@ class LogService:
                 user_id=ln.user_id,
                 ip_address=ln.ip_address,
                 message=ln.message,
-                timestamp=ln.timestamp
+                timestamp=ln.timestamp,
             )
             for ln in logs
         ]
-        return items, total, pages 
+        return items, total, pages

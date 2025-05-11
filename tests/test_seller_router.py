@@ -22,26 +22,23 @@ Test Structure:
 - Uses pytest fixtures for setup and mocking authenticated users
 """
 
-import pytest
-from starlette.testclient import TestClient
-from fastapi import status, HTTPException, Depends, Path, APIRouter, Request
-from typing import Dict, Optional, List, Any, Callable
-from uuid import uuid4, UUID
 import logging
-from datetime import datetime, UTC
-from decimal import Decimal
-from fastapi_csrf_protect import CsrfProtect
 import types
+from datetime import UTC, datetime
+from decimal import Decimal
+from typing import Any, Dict, List
 from unittest.mock import AsyncMock
+from uuid import UUID, uuid4
+
+import pytest
+from fastapi import HTTPException, Request, status
+from fastapi_csrf_protect import CsrfProtect
+from starlette.testclient import TestClient
 
 import dependencies
 import routers.seller_router as seller_router
 from main import app
-from schemas import (
-    UserRole, LogEventType, OrderStatus, OrderListResponse, 
-    ErrorResponse, OfferStatus
-)
-from exceptions.base import ConflictError
+from schemas import OfferStatus, OrderListResponse, OrderStatus, UserRole
 
 # Mock user IDs and other constants
 MOCK_BUYER_ID = uuid4()
@@ -51,35 +48,40 @@ MOCK_ORDER_ID = uuid4()
 MOCK_OFFER_ID_1 = uuid4()
 MOCK_OFFER_ID_2 = uuid4()
 
+
 # Default authenticated user stubs
 def _authenticated_buyer():
     return {
-        'user_id': str(MOCK_BUYER_ID),
-        'email': "buyer@example.com",
-        'role': UserRole.BUYER
+        "user_id": str(MOCK_BUYER_ID),
+        "email": "buyer@example.com",
+        "role": UserRole.BUYER,
     }
+
 
 def _authenticated_seller():
     return {
-        'user_id': str(MOCK_SELLER_ID),
-        'email': "seller@example.com",
-        'role': UserRole.SELLER
+        "user_id": str(MOCK_SELLER_ID),
+        "email": "seller@example.com",
+        "role": UserRole.SELLER,
     }
+
 
 def _authenticated_admin():
     return {
-        'user_id': str(MOCK_ADMIN_ID),
-        'email': "admin@example.com",
-        'role': UserRole.ADMIN
+        "user_id": str(MOCK_ADMIN_ID),
+        "email": "admin@example.com",
+        "role": UserRole.ADMIN,
     }
+
 
 # CSRF Mock
 class MockCsrfProtect:
     def validate_csrf(self, request: Request):
-        pass # Do nothing, bypass CSRF validation
-    
+        pass  # Do nothing, bypass CSRF validation
+
     def set_csrf_cookie(self, response):
-        pass # No-op for tests
+        pass  # No-op for tests
+
 
 # Create a more comprehensive mock result class
 class MockResult:
@@ -102,12 +104,15 @@ class MockResult:
         """Return first item or None"""
         return self.items[0] if self.items else None
 
+
 # Mock DB session
 def mock_db_session_add(*args, **kwargs):
     pass
 
+
 async def mock_db_session_commit(*args, **kwargs):
     pass
+
 
 async def mock_db_session_get(*args, **kwargs):
     mock_offer = types.SimpleNamespace(
@@ -117,23 +122,28 @@ async def mock_db_session_get(*args, **kwargs):
         status=OfferStatus.ACTIVE,
         seller_id=MOCK_SELLER_ID,
         title="Mock Offer Title",
-        description="Mock offer description"
+        description="Mock offer description",
     )
     return mock_offer
+
 
 async def mock_db_session_rollback(*args, **kwargs):
     pass
 
+
 async def mock_db_session_flush(*args, **kwargs):
     pass
 
+
 async def mock_db_session_refresh(*args, **kwargs):
     pass
+
 
 # Create a proper mock execute method that returns a MockResult instance
 async def mock_db_session_execute(*args, **kwargs):
     # You can customize this to return different mock data based on the query
     return MockResult()
+
 
 mock_session = types.SimpleNamespace(
     add=mock_db_session_add,
@@ -142,20 +152,26 @@ mock_session = types.SimpleNamespace(
     get=mock_db_session_get,
     rollback=mock_db_session_rollback,
     flush=mock_db_session_flush,
-    execute=AsyncMock(return_value=MockResult())  # Use AsyncMock to properly handle async calls
+    execute=AsyncMock(
+        return_value=MockResult()
+    ),  # Use AsyncMock to properly handle async calls
 )
 
 # Override dependencies
 app.dependency_overrides[dependencies.get_db_session] = lambda: mock_session
-app.dependency_overrides[dependencies.get_logger] = lambda: logging.getLogger('test_seller')
+app.dependency_overrides[dependencies.get_logger] = lambda: logging.getLogger(
+    "test_seller"
+)
 
 # Set logger to router
-logger = logging.getLogger('test_seller')
+logger = logging.getLogger("test_seller")
 seller_router.logger = logger
+
 
 # Stub OrderService
 class StubOrderService:
     """Test double for OrderService."""
+
     _raise = None
     _return_value = None
     _call_args = {}
@@ -178,19 +194,29 @@ class StubOrderService:
         cls._call_count = {}
 
     def _record_call(self, method_name, **kwargs):
-        if 'seller_id' in kwargs:
-            kwargs['seller_uuid'] = kwargs['seller_id']
+        if "seller_id" in kwargs:
+            kwargs["seller_uuid"] = kwargs["seller_id"]
         StubOrderService._call_args[method_name] = kwargs
-        StubOrderService._call_count[method_name] = StubOrderService._call_count.get(method_name, 0) + 1
+        StubOrderService._call_count[method_name] = (
+            StubOrderService._call_count.get(method_name, 0) + 1
+        )
 
     def _maybe_raise(self):
         if StubOrderService._raise:
             raise StubOrderService._raise
 
-    async def get_seller_sales(self, seller_id: UUID, page, limit, sort="created_at_desc"):
-        self._record_call('get_seller_sales', seller_id=seller_id, page=page, limit=limit, sort=sort)
+    async def get_seller_sales(
+        self, seller_id: UUID, page, limit, sort="created_at_desc"
+    ):
+        self._record_call(
+            "get_seller_sales",
+            seller_id=seller_id,
+            page=page,
+            limit=limit,
+            sort=sort,
+        )
         self._maybe_raise()
-        
+
         # Default mock response
         mock_orders = [
             {
@@ -198,7 +224,7 @@ class StubOrderService:
                 "status": OrderStatus.DELIVERED,
                 "total_amount": Decimal("150.00"),
                 "created_at": datetime.now(UTC),
-                "updated_at": datetime.now(UTC)
+                "updated_at": datetime.now(UTC),
             }
         ]
         return StubOrderService._return_value or OrderListResponse(
@@ -206,12 +232,14 @@ class StubOrderService:
             total=len(mock_orders),
             page=page,
             limit=limit,
-            pages=1 
+            pages=1,
         )
+
 
 # Stub LogService
 class StubLogService:
     """Test double for LogService."""
+
     logs: List[Dict[str, Any]] = []
     _raise = None
 
@@ -226,14 +254,15 @@ class StubLogService:
     async def create_log(self, user_id, event_type, message, ip_address=None):
         if StubLogService._raise:
             raise StubLogService._raise
-            
+
         log_data = {
-            'user_id': user_id,
-            'event_type': event_type,
-            'message': message,
-            'ip_address': ip_address
+            "user_id": user_id,
+            "event_type": event_type,
+            "message": message,
+            "ip_address": ip_address,
         }
         StubLogService.logs.append(log_data)
+
 
 # Use the actual router from the application
 app.include_router(seller_router.router)
@@ -244,6 +273,7 @@ client = TestClient(app)
 # Create stub instances
 stub_order_service = StubOrderService()
 stub_log_service = StubLogService()
+
 
 @pytest.fixture(autouse=True)
 def override_dependencies(monkeypatch):
@@ -256,26 +286,33 @@ def override_dependencies(monkeypatch):
     stub_log_service._reset()
 
     # --- Mock User Management (local state within fixture) ---
-    current_user_data = _authenticated_seller()  # Default to seller for these tests
+    current_user_data = (
+        _authenticated_seller()
+    )  # Default to seller for these tests
 
     # --- Define Mock for require_authenticated Dependency ---
     async def mock_require_authenticated():
         if not current_user_data:
             raise HTTPException(
                 status.HTTP_401_UNAUTHORIZED,
-                 detail={"error_code": "NOT_AUTHENTICATED", "message": "Użytkownik nie jest zalogowany."}
+                detail={
+                    "error_code": "NOT_AUTHENTICATED",
+                    "message": "Użytkownik nie jest zalogowany.",
+                },
             )
 
         # Return a dictionary, as originally expected by require_roles
         user_dict = {
-            "user_id": UUID(current_user_data['user_id']),
-            "user_role": current_user_data['role'],
-            "email": current_user_data['email']
+            "user_id": UUID(current_user_data["user_id"]),
+            "user_role": current_user_data["role"],
+            "email": current_user_data["email"],
         }
         return user_dict
 
     # --- Override require_authenticated Dependency ---
-    app.dependency_overrides[dependencies.require_authenticated] = mock_require_authenticated
+    app.dependency_overrides[dependencies.require_authenticated] = (
+        mock_require_authenticated
+    )
     if dependencies.require_roles in app.dependency_overrides:
         del app.dependency_overrides[dependencies.require_roles]
 
@@ -283,10 +320,14 @@ def override_dependencies(monkeypatch):
     app.dependency_overrides[CsrfProtect] = lambda: MockCsrfProtect()
 
     # --- Override Service Dependencies ---
-    app.dependency_overrides[dependencies.get_order_service] = lambda: stub_order_service
-    app.dependency_overrides[dependencies.get_log_service] = lambda: stub_log_service
+    app.dependency_overrides[dependencies.get_order_service] = (
+        lambda: stub_order_service
+    )
+    app.dependency_overrides[dependencies.get_log_service] = (
+        lambda: stub_log_service
+    )
 
-    # --- Helper to change user for tests --- 
+    # --- Helper to change user for tests ---
     def set_mock_user(user_func):
         nonlocal current_user_data
         current_user_data = user_func() if user_func else None
@@ -294,30 +335,36 @@ def override_dependencies(monkeypatch):
     # Attach helper to the fixture function object for tests to use
     override_dependencies.set_mock_user = set_mock_user
 
-    yield 
+    yield
 
     # Cleanup
     app.dependency_overrides = original_overrides
     if dependencies.get_db_session not in app.dependency_overrides:
         app.dependency_overrides[dependencies.get_db_session] = lambda: None
     if dependencies.get_logger not in app.dependency_overrides:
-        app.dependency_overrides[dependencies.get_logger] = lambda: logging.getLogger('test_seller')
+        app.dependency_overrides[dependencies.get_logger] = (
+            lambda: logging.getLogger("test_seller")
+        )
 
 
 # Fixtures using the set_mock_user helper
 @pytest.fixture
 def buyer_auth():
-     override_dependencies.set_mock_user(_authenticated_buyer)
+    override_dependencies.set_mock_user(_authenticated_buyer)
+
 
 @pytest.fixture
 def admin_auth():
-     override_dependencies.set_mock_user(_authenticated_admin)
-     
+    override_dependencies.set_mock_user(_authenticated_admin)
+
+
 @pytest.fixture
 def no_auth():
-     override_dependencies.set_mock_user(None)
+    override_dependencies.set_mock_user(None)
+
 
 # === Test GET /seller/status ===
+
 
 def test_get_seller_status_success():
     """Test successful retrieval of seller status for a seller user."""
@@ -333,13 +380,15 @@ def test_get_seller_status_success():
     assert "permissions" in data
     assert "metrics" in data
 
+
 def test_get_seller_status_unauthorized(no_auth):
     """Test unauthorized access to seller status."""
     response = client.get("/seller/status")
 
     # Expect 401 UNAUTHORIZED
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json()['detail']['error_code'] == "NOT_AUTHENTICATED"
+    assert response.json()["detail"]["error_code"] == "NOT_AUTHENTICATED"
+
 
 def test_get_seller_status_admin_access(admin_auth):
     """Test admin can access seller status endpoint."""
@@ -352,27 +401,32 @@ def test_get_seller_status_admin_access(admin_auth):
     assert data["seller_id"] == str(MOCK_ADMIN_ID)
     assert data["role"] == UserRole.ADMIN
 
+
 def test_get_seller_status_buyer_forbidden(buyer_auth):
     """Test buyers are forbidden from accessing seller status."""
     response = client.get("/seller/status")
 
     # Expect 403 FORBIDDEN (buyers shouldn't have access)
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json()['detail']['error_code'] == "INSUFFICIENT_PERMISSIONS"
+    assert (
+        response.json()["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
+    )
+
 
 def test_get_seller_status_db_error():
     """Test handling of database errors when getting seller status."""
     # For this demo endpoint, there's no actual DB operation to test
     # In a real application, we would simulate DB errors here
-    pass
+
 
 def test_get_seller_status_logging():
     """Test proper logging of seller status requests."""
     # For this demo endpoint, there's no specific logging to test
     # In a real application, we would check for log entries here
-    pass
+
 
 # === Test GET /seller/offers/stats ===
+
 
 def test_get_offer_stats_success():
     """Test successful retrieval of offer statistics."""
@@ -386,13 +440,15 @@ def test_get_offer_stats_success():
     assert "avg_price" in data
     assert "total_sales" in data
 
+
 def test_get_offer_stats_unauthorized(no_auth):
     """Test unauthorized access to offer statistics."""
     response = client.get("/seller/offers/stats")
 
     # Expect 401 UNAUTHORIZED
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json()['detail']['error_code'] == "NOT_AUTHENTICATED"
+    assert response.json()["detail"]["error_code"] == "NOT_AUTHENTICATED"
+
 
 def test_get_offer_stats_admin_access(admin_auth):
     """Test admin can access offer statistics."""
@@ -404,39 +460,44 @@ def test_get_offer_stats_admin_access(admin_auth):
     assert "total_offers" in data
     assert "offers_by_status" in data
 
+
 def test_get_offer_stats_buyer_forbidden(buyer_auth):
     """Test buyers are forbidden from accessing offer statistics."""
     response = client.get("/seller/offers/stats")
 
     # Expect 403 FORBIDDEN (buyers shouldn't have access)
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json()['detail']['error_code'] == "INSUFFICIENT_PERMISSIONS"
+    assert (
+        response.json()["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
+    )
+
 
 def test_get_offer_stats_empty_offers():
     """Test behavior when seller has no offers."""
     # For this demo endpoint, there's no actual DB operation to test
     # In a real application, we would configure the mock to return empty stats
-    pass
+
 
 def test_get_offer_stats_db_error():
     """Test handling of database errors when getting offer statistics."""
     # For this demo endpoint, there's no actual DB operation to test
     # In a real application, we would simulate DB errors here
-    pass
+
 
 def test_get_offer_stats_logging():
     """Test proper logging of offer statistics requests."""
     # For this demo endpoint, there's no specific logging to test
     # In a real application, we would check for log entries here
-    pass
+
 
 # === Test GET /seller/account/sales ===
+
 
 def test_list_seller_sales_success():
     """Test successful retrieval of seller sales history."""
     response = client.get("/seller/account/sales")
 
-    # Expect 200 OK 
+    # Expect 200 OK
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert "items" in data
@@ -445,14 +506,16 @@ def test_list_seller_sales_success():
     assert "limit" in data
     assert isinstance(data["items"], list)
 
+
 def test_list_seller_sales_unauthorized(no_auth):
     """Test unauthorized access to seller sales history."""
     response = client.get("/seller/account/sales")
 
     # Expect 401 UNAUTHORIZED
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json()['detail']['error_code'] == "NOT_AUTHENTICATED"
-    assert StubOrderService._call_count.get('get_seller_sales', 0) == 0
+    assert response.json()["detail"]["error_code"] == "NOT_AUTHENTICATED"
+    assert StubOrderService._call_count.get("get_seller_sales", 0) == 0
+
 
 def test_list_seller_sales_admin_access(admin_auth):
     """Test admin can access seller sales history."""
@@ -466,33 +529,33 @@ def test_list_seller_sales_admin_access(admin_auth):
     assert "page" in data
     assert "limit" in data
 
+
 def test_list_seller_sales_buyer_forbidden(buyer_auth):
     """Test buyers are forbidden from accessing seller sales history."""
     response = client.get("/seller/account/sales")
 
     # Expect 403 FORBIDDEN (buyers shouldn't have access)
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json()['detail']['error_code'] == "INSUFFICIENT_PERMISSIONS"
-    assert StubOrderService._call_count.get('get_seller_sales', 0) == 0
+    assert (
+        response.json()["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
+    )
+    assert StubOrderService._call_count.get("get_seller_sales", 0) == 0
+
 
 def test_list_seller_sales_empty_results():
     """Test behavior when seller has no sales."""
     # Set up the stub to return empty results
     original_return_value = StubOrderService._return_value
-    
+
     empty_response = OrderListResponse(
-        items=[],
-        total=0,
-        page=1,
-        limit=100,
-        pages=0
+        items=[], total=0, page=1, limit=100, pages=0
     )
-    
+
     StubOrderService._return_value = empty_response
-    
+
     try:
         response = client.get("/seller/account/sales")
-        
+
         # Expect 200 OK with empty items
         assert response.status_code == status.HTTP_200_OK
         response_json = response.json()
@@ -505,6 +568,7 @@ def test_list_seller_sales_empty_results():
     finally:
         # Restore original return value
         StubOrderService._return_value = original_return_value
+
 
 def test_list_seller_sales_pagination():
     """Test pagination functionality in seller sales history."""
@@ -520,15 +584,16 @@ def test_list_seller_sales_pagination():
     assert "total" in data
     assert "page" in data
     assert "limit" in data
-    
+
     # Test with custom sort parameter
     sort = "created_at_asc"
     response = client.get(f"/seller/account/sales?sort={sort}")
-    
+
     # Expect 200 OK
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert "items" in data
+
 
 def test_list_seller_sales_invalid_pagination():
     """Test invalid pagination parameters in seller sales history."""
@@ -545,21 +610,22 @@ def test_list_seller_sales_invalid_pagination():
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # Verify service was not called
-    assert StubOrderService._call_count.get('get_seller_sales', 0) == 0
+    assert StubOrderService._call_count.get("get_seller_sales", 0) == 0
+
 
 def test_list_seller_sales_db_error():
     """Test resilience to database errors in seller sales history.
-    
+
     In a real scenario with proper mocking, we would test error handling.
-    Since our current setup can't easily generate DB errors, 
+    Since our current setup can't easily generate DB errors,
     we'll verify the endpoint returns success and has proper response format.
     """
     StubOrderService._reset()
     StubLogService._reset()
-    
+
     # For now, we'll just test that the endpoint succeeds
     response = client.get("/seller/account/sales")
-    
+
     # Verify success response format
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -568,15 +634,16 @@ def test_list_seller_sales_db_error():
     assert "page" in data
     assert "limit" in data
 
+
 def test_list_seller_sales_logging_success():
     """Test successful logging in seller sales history."""
     # No explicit success logging in this endpoint, so this test is empty
     # In a real application with success logging, we would check log entries here
-    pass
+
 
 def test_list_seller_sales_logging_failure():
     """Test resilience to logging service failures.
-    
+
     In a real scenario with proper mocking, we would test error handling.
     Since our current setup can't easily generate logging errors,
     we'll verify the endpoint returns success and has proper response format.
@@ -584,10 +651,10 @@ def test_list_seller_sales_logging_failure():
     # Reset stubs
     StubOrderService._reset()
     StubLogService._reset()
-    
+
     # For now, we'll just test that the endpoint succeeds even if logging might fail
     response = client.get("/seller/account/sales")
-    
+
     # Verify success response format
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -596,11 +663,12 @@ def test_list_seller_sales_logging_failure():
     assert "page" in data
     assert "limit" in data
 
+
 def test_list_seller_sales_large_page():
     """Test behavior with very large page numbers."""
     large_page = 999999
     response = client.get(f"/seller/account/sales?page={large_page}")
-    
+
     # Should return 200 with results
     assert response.status_code == status.HTTP_200_OK
     response_json = response.json()
@@ -609,26 +677,28 @@ def test_list_seller_sales_large_page():
     assert "page" in response_json
     assert "limit" in response_json
 
+
 def test_list_seller_sales_service_timeout():
     """Test service timeouts are handled gracefully.
-    
+
     In a real scenario with proper mocking, we would test timeout handling.
     Since our current setup can't easily generate timeouts,
     we'll verify the endpoint returns success and has proper response format.
     """
     # Reset StubOrderService
     StubOrderService._reset()
-    
+
     # For now, we'll just test that the endpoint succeeds
     response = client.get("/seller/account/sales")
-    
+
     # Verify success response format
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert "items" in data
     assert "total" in data
     assert "page" in data
-    assert "limit" in data 
+    assert "limit" in data
+
 
 def test_list_seller_sales_sort_options():
     """Test different sort options in seller sales history."""
@@ -641,12 +711,12 @@ def test_list_seller_sales_sort_options():
         "total_amount_desc",
         "total_amount_asc",
         "status_desc",
-        "status_asc"
+        "status_asc",
     ]
-    
+
     for sort in sort_options:
         response = client.get(f"/seller/account/sales?sort={sort}")
-        
+
         # Expect 200 OK for all valid sort options
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -654,9 +724,9 @@ def test_list_seller_sales_sort_options():
         assert "total" in data
         assert "page" in data
         assert "limit" in data
-        
+
     # Test with invalid sort option (should default to created_at_desc)
     response = client.get("/seller/account/sales?sort=invalid_sort")
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    assert "items" in data 
+    assert "items" in data

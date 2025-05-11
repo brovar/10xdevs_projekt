@@ -12,4 +12,4 @@ OFFER_IMAGES_DIR.mkdir(exist_ok=True)
 
 # Payment gateway configuration
 PAYMENT_GATEWAY_URL = "http://mock-payment.local"
-PAYMENT_CALLBACK_URL = "http://api.steambay.local/payments/callback" 
+PAYMENT_CALLBACK_URL = "http://api.steambay.local/payments/callback"

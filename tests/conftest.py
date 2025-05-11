@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 # Get the absolute path to the project's root directory
 # __file__ in tests/conftest.py is /home/brooo/10xdevs/steambay/tests/conftest.py
@@ -12,6 +12,13 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 # Add src directory to Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+)
 # Add frontend/src directory to Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'src'))) 
+sys.path.insert(
+    0,
+    os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "frontend", "src")
+    ),
+)

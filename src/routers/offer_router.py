@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks, status, Request, Path
-from sqlalchemy.ext.asyncio import AsyncSession
-from logging import Logger
+import logging
 from decimal import Decimal
-from typing import Optional, List
-from fastapi_csrf_protect import CsrfProtect
+from logging import Logger
+from typing import Optional
 from uuid import UUID
 
-import logging
+from fastapi import (APIRouter, BackgroundTasks, Depends, File, Form,
+                     HTTPException, Path, Request, UploadFile, status)
+from fastapi_csrf_protect import CsrfProtect
+from sqlalchemy.ext.asyncio import AsyncSession
+
 logger = logging.getLogger(__name__)
 
-from dependencies import get_db_session, get_logger as get_logger_dependency, require_seller, get_offer_service, get_media_service
-from services.offer_service import OfferService
+from dependencies import get_db_session
+from dependencies import get_logger as get_logger_dependency
+from dependencies import get_media_service, get_offer_service, require_seller
+from schemas import OfferDetailDTO, OfferSummaryDTO
 from services.media_service import MediaService
-from schemas import OfferSummaryDTO, OfferDetailDTO, UserRole, LogEventType
-from services.log_service import LogService
-from models import LogModel
+from services.offer_service import OfferService
 
 router = APIRouter(tags=["offers"])
+
 
 @router.post(
     "/offers",
@@ -31,27 +34,42 @@ router = APIRouter(tags=["offers"])
                     "examples": {
                         "INVALID_INPUT": {
                             "summary": "Missing or invalid fields",
-                            "value": {"error_code": "INVALID_INPUT", "message": "Invalid request data"}
+                            "value": {
+                                "error_code": "INVALID_INPUT",
+                                "message": "Invalid request data",
+                            },
                         },
                         "INVALID_PRICE": {
                             "summary": "Invalid price",
-                            "value": {"error_code": "INVALID_PRICE", "message": "Price must be greater than 0"}
+                            "value": {
+                                "error_code": "INVALID_PRICE",
+                                "message": "Price must be greater than 0",
+                            },
                         },
                         "INVALID_QUANTITY": {
                             "summary": "Invalid quantity",
-                            "value": {"error_code": "INVALID_QUANTITY", "message": "Quantity cannot be negative"}
+                            "value": {
+                                "error_code": "INVALID_QUANTITY",
+                                "message": "Quantity cannot be negative",
+                            },
                         },
                         "INVALID_FILE_TYPE": {
                             "summary": "Invalid image format",
-                            "value": {"error_code": "INVALID_FILE_TYPE", "message": "Unsupported image format. Use JPG, PNG or WebP"}
+                            "value": {
+                                "error_code": "INVALID_FILE_TYPE",
+                                "message": "Unsupported image format. Use JPG, PNG or WebP",
+                            },
                         },
                         "FILE_TOO_LARGE": {
                             "summary": "Image too large",
-                            "value": {"error_code": "FILE_TOO_LARGE", "message": "Image size exceeds the 5MB limit"}
-                        }
+                            "value": {
+                                "error_code": "FILE_TOO_LARGE",
+                                "message": "Image size exceeds the 5MB limit",
+                            },
+                        },
                     }
                 }
-            }
+            },
         },
         401: {
             "description": "User not authenticated",
@@ -59,10 +77,10 @@ router = APIRouter(tags=["offers"])
                 "application/json": {
                     "example": {
                         "error_code": "NOT_AUTHENTICATED",
-                        "message": "Użytkownik nie jest zalogowany."
+                        "message": "Użytkownik nie jest zalogowany.",
                     }
                 }
-            }
+            },
         },
         403: {
             "description": "User not authorized",
@@ -71,15 +89,21 @@ router = APIRouter(tags=["offers"])
                     "examples": {
                         "INSUFFICIENT_PERMISSIONS": {
                             "summary": "Not a seller",
-                            "value": {"error_code": "INSUFFICIENT_PERMISSIONS", "message": "Nie masz uprawnień do wykonania tej operacji."}
+                            "value": {
+                                "error_code": "INSUFFICIENT_PERMISSIONS",
+                                "message": "Nie masz uprawnień do wykonania tej operacji.",
+                            },
                         },
                         "INVALID_CSRF": {
                             "summary": "CSRF token invalid",
-                            "value": {"error_code": "INVALID_CSRF", "message": "CSRF token missing or invalid"}
-                        }
+                            "value": {
+                                "error_code": "INVALID_CSRF",
+                                "message": "CSRF token missing or invalid",
+                            },
+                        },
                     }
                 }
-            }
+            },
         },
         404: {
             "description": "Category not found",
@@ -87,10 +111,10 @@ router = APIRouter(tags=["offers"])
                 "application/json": {
                     "example": {
                         "error_code": "CATEGORY_NOT_FOUND",
-                        "message": "Category not found"
+                        "message": "Category not found",
                     }
                 }
-            }
+            },
         },
         500: {
             "description": "Server error",
@@ -99,17 +123,23 @@ router = APIRouter(tags=["offers"])
                     "examples": {
                         "CREATE_FAILED": {
                             "summary": "Database error",
-                            "value": {"error_code": "CREATE_FAILED", "message": "Failed to create the offer"}
+                            "value": {
+                                "error_code": "CREATE_FAILED",
+                                "message": "Failed to create the offer",
+                            },
                         },
                         "FILE_UPLOAD_FAILED": {
                             "summary": "File saving error",
-                            "value": {"error_code": "FILE_UPLOAD_FAILED", "message": "Failed to upload the image"}
-                        }
+                            "value": {
+                                "error_code": "FILE_UPLOAD_FAILED",
+                                "message": "Failed to upload the image",
+                            },
+                        },
                     }
                 }
-            }
-        }
-    }
+            },
+        },
+    },
 )
 async def create_offer(
     background_tasks: BackgroundTasks,
@@ -127,10 +157,10 @@ async def create_offer(
 ):
     """
     Create a new product offer.
-    
+
     This endpoint allows sellers to create new product listings with optional image upload.
     The offer will be created with an initial status of "inactive".
-    
+
     ## Request
     - **title**: Product title (required)
     - **price**: Product price (required, must be greater than 0)
@@ -138,12 +168,12 @@ async def create_offer(
     - **quantity**: Available quantity (default: 1, must be non-negative)
     - **description**: Product description (optional)
     - **image**: Product image file (optional, max 5MB, formats: JPG, PNG, WebP)
-    
+
     ## Authentication
     - Requires user to be logged in
     - Requires Seller role
     - Requires valid CSRF token
-    
+
     ## Response
     Returns the created offer details including:
     - Offer ID
@@ -155,7 +185,7 @@ async def create_offer(
     - Quantity
     - Status (initially "inactive")
     - Creation timestamp
-    
+
     ## Error Codes
     - INVALID_INPUT: Missing or invalid fields in request
     - INVALID_PRICE: Price must be greater than 0
@@ -168,7 +198,7 @@ async def create_offer(
     - CATEGORY_NOT_FOUND: Specified category does not exist
     - CREATE_FAILED: Database error during offer creation
     - FILE_UPLOAD_FAILED: Error saving the image file
-    
+
     ## Notes
     - All fields except image and description are required
     - New offers are created with "inactive" status by default
@@ -184,13 +214,13 @@ async def create_offer(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "error_code": "INVALID_CSRF",
-                    "message": "CSRF token missing or invalid"
-                }
+                    "message": "CSRF token missing or invalid",
+                },
             )
-        
+
         # Get user ID from session data
         seller_id = session_data["user_id"]
-        
+
         # Create the offer
         new_offer = await offer_service.create_offer(
             seller_id=seller_id,
@@ -200,9 +230,9 @@ async def create_offer(
             quantity=quantity,
             description=description,
             image=image,
-            background_tasks=background_tasks
+            background_tasks=background_tasks,
         )
-        
+
         return new_offer
     except HTTPException:
         # Re-raise HTTP exceptions
@@ -213,9 +243,10 @@ async def create_offer(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
                 "error_code": "CREATE_FAILED",
-                "message": "Failed to create the offer"
-            }
+                "message": "Failed to create the offer",
+            },
         )
+
 
 @router.post(
     "/{offer_id}/deactivate",
@@ -228,10 +259,10 @@ async def create_offer(
                 "application/json": {
                     "example": {
                         "error_code": "INVALID_STATUS_TRANSITION",
-                        "message": "Cannot deactivate offer with status 'sold'"
+                        "message": "Cannot deactivate offer with status 'sold'",
                     }
                 }
-            }
+            },
         },
         401: {
             "description": "User not authenticated",
@@ -239,10 +270,10 @@ async def create_offer(
                 "application/json": {
                     "example": {
                         "error_code": "NOT_AUTHENTICATED",
-                        "message": "Użytkownik nie jest zalogowany."
+                        "message": "Użytkownik nie jest zalogowany.",
                     }
                 }
-            }
+            },
         },
         403: {
             "description": "User not authorized",
@@ -251,15 +282,21 @@ async def create_offer(
                     "examples": {
                         "INSUFFICIENT_PERMISSIONS": {
                             "summary": "Not a seller",
-                            "value": {"error_code": "INSUFFICIENT_PERMISSIONS", "message": "Only sellers can deactivate offers"}
+                            "value": {
+                                "error_code": "INSUFFICIENT_PERMISSIONS",
+                                "message": "Only sellers can deactivate offers",
+                            },
                         },
                         "NOT_OFFER_OWNER": {
                             "summary": "Not offer owner",
-                            "value": {"error_code": "NOT_OFFER_OWNER", "message": "You can only deactivate your own offers"}
-                        }
+                            "value": {
+                                "error_code": "NOT_OFFER_OWNER",
+                                "message": "You can only deactivate your own offers",
+                            },
+                        },
                     }
                 }
-            }
+            },
         },
         404: {
             "description": "Offer not found",
@@ -267,10 +304,10 @@ async def create_offer(
                 "application/json": {
                     "example": {
                         "error_code": "OFFER_NOT_FOUND",
-                        "message": "Offer not found"
+                        "message": "Offer not found",
                     }
                 }
-            }
+            },
         },
         409: {
             "description": "Offer already inactive",
@@ -278,10 +315,10 @@ async def create_offer(
                 "application/json": {
                     "example": {
                         "error_code": "ALREADY_INACTIVE",
-                        "message": "Offer is already inactive"
+                        "message": "Offer is already inactive",
                     }
                 }
-            }
+            },
         },
         500: {
             "description": "Server error",
@@ -289,28 +326,30 @@ async def create_offer(
                 "application/json": {
                     "example": {
                         "error_code": "DEACTIVATION_FAILED",
-                        "message": "Failed to deactivate offer"
+                        "message": "Failed to deactivate offer",
                     }
                 }
-            }
-        }
-    }
+            },
+        },
+    },
 )
 async def deactivate_offer(
     request: Request,
     offer_id: UUID = Path(
-        ..., 
+        ...,
         description="UUID of the offer to deactivate",
-        examples={"valid_uuid": {"value": "123e4567-e89b-12d3-a456-426614174000"}}
+        examples={
+            "valid_uuid": {"value": "123e4567-e89b-12d3-a456-426614174000"}
+        },
     ),
-    current_user = Depends(require_seller),  # Require seller role
+    current_user=Depends(require_seller),  # Require seller role
     db: AsyncSession = Depends(get_db_session),
     logger: Logger = Depends(get_logger_dependency),
     csrf_protect: CsrfProtect = Depends(),
 ):
     """
     Deactivate an offer by changing its status from 'active' to 'inactive'.
-    
+
     - Requires Seller role and ownership of the offer
     - Offer must be in 'active' status
     - Returns the updated offer with seller and category information
@@ -326,33 +365,36 @@ async def deactivate_offer(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "error_code": "INVALID_CSRF",
-                    "message": "CSRF token missing or invalid"
-                }
+                    "message": "CSRF token missing or invalid",
+                },
             )
-        
+
         # Create service and call method
         offer_service = OfferService(db, logger)
         result = await offer_service.deactivate_offer(
             offer_id=offer_id,
             user_id=current_user.id,
-            user_role=current_user.role
+            user_role=current_user.role,
         )
-        
+
         return result
-        
+
     except HTTPException:
         # Re-raise HTTP exceptions (already handled in service)
         raise
     except Exception as e:
         # Log unexpected errors
-        logger.error(f"Unexpected error in deactivate_offer endpoint: {str(e)}")
+        logger.error(
+            f"Unexpected error in deactivate_offer endpoint: {str(e)}"
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
                 "error_code": "DEACTIVATION_FAILED",
-                "message": "An unexpected error occurred"
-            }
-        ) 
+                "message": "An unexpected error occurred",
+            },
+        )
+
 
 @router.post(
     "/{offer_id}/mark-sold",
@@ -365,10 +407,10 @@ async def deactivate_offer(
                 "application/json": {
                     "example": {
                         "error_code": "INVALID_STATUS_TRANSITION",
-                        "message": "Cannot mark offer with status 'archived' as sold"
+                        "message": "Cannot mark offer with status 'archived' as sold",
                     }
                 }
-            }
+            },
         },
         401: {
             "description": "User not authenticated",
@@ -376,10 +418,10 @@ async def deactivate_offer(
                 "application/json": {
                     "example": {
                         "error_code": "NOT_AUTHENTICATED",
-                        "message": "Użytkownik nie jest zalogowany."
+                        "message": "Użytkownik nie jest zalogowany.",
                     }
                 }
-            }
+            },
         },
         403: {
             "description": "User not authorized",
@@ -388,19 +430,28 @@ async def deactivate_offer(
                     "examples": {
                         "INSUFFICIENT_PERMISSIONS": {
                             "summary": "Not a seller",
-                            "value": {"error_code": "INSUFFICIENT_PERMISSIONS", "message": "Only sellers can mark offers as sold"}
+                            "value": {
+                                "error_code": "INSUFFICIENT_PERMISSIONS",
+                                "message": "Only sellers can mark offers as sold",
+                            },
                         },
                         "NOT_OFFER_OWNER": {
                             "summary": "Not offer owner",
-                            "value": {"error_code": "NOT_OFFER_OWNER", "message": "You can only mark your own offers as sold"}
+                            "value": {
+                                "error_code": "NOT_OFFER_OWNER",
+                                "message": "You can only mark your own offers as sold",
+                            },
                         },
                         "INVALID_CSRF": {
                             "summary": "CSRF token invalid",
-                            "value": {"error_code": "INVALID_CSRF", "message": "CSRF token missing or invalid"}
-                        }
+                            "value": {
+                                "error_code": "INVALID_CSRF",
+                                "message": "CSRF token missing or invalid",
+                            },
+                        },
                     }
                 }
-            }
+            },
         },
         404: {
             "description": "Offer not found",
@@ -408,10 +459,10 @@ async def deactivate_offer(
                 "application/json": {
                     "example": {
                         "error_code": "OFFER_NOT_FOUND",
-                        "message": "Offer not found"
+                        "message": "Offer not found",
                     }
                 }
-            }
+            },
         },
         409: {
             "description": "Offer already sold",
@@ -419,10 +470,10 @@ async def deactivate_offer(
                 "application/json": {
                     "example": {
                         "error_code": "ALREADY_SOLD",
-                        "message": "Offer is already marked as sold"
+                        "message": "Offer is already marked as sold",
                     }
                 }
-            }
+            },
         },
         500: {
             "description": "Server error",
@@ -430,27 +481,29 @@ async def deactivate_offer(
                 "application/json": {
                     "example": {
                         "error_code": "MARK_SOLD_FAILED",
-                        "message": "Failed to mark offer as sold"
+                        "message": "Failed to mark offer as sold",
                     }
                 }
-            }
-        }
-    }
+            },
+        },
+    },
 )
 async def mark_offer_as_sold(
     request: Request,
     offer_id: UUID = Path(
-        ..., 
+        ...,
         description="UUID of the offer to mark as sold",
-        examples={"valid_uuid": {"value": "123e4567-e89b-12d3-a456-426614174000"}}
+        examples={
+            "valid_uuid": {"value": "123e4567-e89b-12d3-a456-426614174000"}
+        },
     ),
-    current_user = Depends(require_seller),
+    current_user=Depends(require_seller),
     offer_service: OfferService = Depends(get_offer_service),
     csrf_protect: CsrfProtect = Depends(),
 ):
     """
     Mark an offer as sold by changing its status to 'sold' and setting quantity to 0.
-    
+
     - Requires Seller role and ownership of the offer
     - Offer must not be already sold, archived, or deleted
     - Operation is irreversible - once marked as sold, an offer cannot be activated again
@@ -467,26 +520,31 @@ async def mark_offer_as_sold(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "error_code": "INVALID_CSRF",
-                    "message": "CSRF token missing or invalid"
-                }
+                    "message": "CSRF token missing or invalid",
+                },
             )
-        
+
         # Create service and call method
         result = await offer_service.mark_offer_as_sold(
             offer_id=offer_id,
             user_id=current_user.id,
-            user_role=current_user.role
+            user_role=current_user.role,
         )
-        
+
         return result
-        
+
     except HTTPException:
         # Re-raise HTTP exceptions (already handled in service)
         raise
     except Exception as e:
         # Log unexpected errors
-        logger.error(f"Unexpected error in mark_offer_as_sold endpoint: {str(e)}")
+        logger.error(
+            f"Unexpected error in mark_offer_as_sold endpoint: {str(e)}"
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error_code": "MARK_SOLD_FAILED", "message": "An unexpected error occurred"}
-        ) 
+            detail={
+                "error_code": "MARK_SOLD_FAILED",
+                "message": "An unexpected error occurred",
+            },
+        )

@@ -1,23 +1,24 @@
 import os
 import sys
-import importlib
 
 # Add frontend/src to Python path for services module
 # This line is no longer needed as services have been moved to src/services
 # sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'frontend', 'src'))
 # Ensure project root directory is in Python path (for importing 'src')
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+)
 # Ensure src directory is in Python path for top-level imports
 sys.path.insert(0, os.path.dirname(__file__))
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi_csrf_protect import CsrfProtect
 from fastapi_csrf_protect.exceptions import CsrfProtectError
-from fastapi.responses import JSONResponse
 
 from security.csrf import CsrfSettings, handle_csrf_error
 
@@ -129,53 +130,60 @@ Common error codes include:
     """,
     version="0.1.0",
     docs_url=None,  # Disable default docs
-    redoc_url=None  # Disable default redoc
+    redoc_url=None,  # Disable default redoc
 )
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(","),
+    allow_origins=os.environ.get(
+        "ALLOWED_ORIGINS", "http://localhost:3000"
+    ).split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Configure CSRF Protection
 @CsrfProtect.load_config
 def get_csrf_config():
     return CsrfSettings()
 
+
 # CSRF exception handler
 @app.exception_handler(CsrfProtectError)
-async def csrf_protect_exception_handler(request: Request, exc: CsrfProtectError):
-    return JSONResponse(
-        status_code=403,
-        content=handle_csrf_error(exc)
-    )
+async def csrf_protect_exception_handler(
+    request: Request, exc: CsrfProtectError
+):
+    return JSONResponse(status_code=403, content=handle_csrf_error(exc))
+
 
 # Validation error handler
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+):
     return JSONResponse(
         status_code=400,
         content={
             "error_code": "INVALID_INPUT",
             "message": "Invalid request data",
-            "detail": str(exc)
-        }
+            "detail": str(exc),
+        },
     )
 
+
+from routers.account_router import router as account_router
+from routers.admin_router import router as admin_router
 # Import all routers after the app configuration is complete to avoid circular imports
 from routers.auth_router import router as auth_router
-from routers.seller_router import router as seller_router
 from routers.buyer_router import router as buyer_router
-from routers.account_router import router as account_router
 from routers.category_router import router as category_router
+from routers.media_router import router as media_router
 from routers.offer_router import router as offer_router
 from routers.order_router import router as order_router
-from routers.media_router import router as media_router
-from routers.admin_router import router as admin_router
+from routers.seller_router import router as seller_router
 
 # Include routers
 app.include_router(auth_router)
@@ -188,6 +196,7 @@ app.include_router(order_router)
 app.include_router(media_router)
 app.include_router(admin_router)
 
+
 # Custom OpenAPI and docs endpoints
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():
@@ -196,8 +205,9 @@ async def custom_swagger_ui_html():
         title=f"{app.title} - API Documentation",
         swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
         swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
-        swagger_favicon_url="/favicon.ico"
+        swagger_favicon_url="/favicon.ico",
     )
+
 
 @app.get("/openapi.json", include_in_schema=False)
 async def get_openapi_schema():
@@ -207,60 +217,69 @@ async def get_openapi_schema():
         description=app.description,
         routes=app.routes,
     )
-    
+
     # Add security schemes
     openapi_schema["components"] = {
         "securitySchemes": {
             "cookieAuth": {
                 "type": "apiKey",
                 "in": "cookie",
-                "name": "steambay_session"
+                "name": "steambay_session",
             },
             "csrfToken": {
                 "type": "apiKey",
                 "in": "header",
-                "name": "X-CSRF-Token"
-            }
+                "name": "X-CSRF-Token",
+            },
         }
     }
-    
+
     # Add security to all endpoints except login and register
     for path in openapi_schema["paths"]:
         if not (path == "/auth/login" or path == "/auth/register"):
             for method in openapi_schema["paths"][path]:
                 openapi_schema["paths"][path][method]["security"] = [
                     {"cookieAuth": []},
-                    {"csrfToken": []}
+                    {"csrfToken": []},
                 ]
-    
+
     # Add API version info to title
-    openapi_schema["info"]["title"] = f"{openapi_schema['info']['title']} v{app.version}"
-    
+    openapi_schema["info"][
+        "title"
+    ] = f"{openapi_schema['info']['title']} v{app.version}"
+
     return openapi_schema
 
-@app.get("/", summary="API welcome page", description="Returns a welcome message to confirm the API is running.")
+
+@app.get(
+    "/",
+    summary="API welcome page",
+    description="Returns a welcome message to confirm the API is running.",
+)
 async def root():
     """
     Root endpoint that confirms the API is running.
-    
+
     Returns:
         dict: Welcome message
     """
     return {
         "message": "Welcome to SteamBay API",
         "version": app.version,
-        "docs_url": "/docs"
+        "docs_url": "/docs",
     }
 
-@app.get("/health", summary="API health status", description="Returns the health status of the API for monitoring purposes.")
+
+@app.get(
+    "/health",
+    summary="API health status",
+    description="Returns the health status of the API for monitoring purposes.",
+)
 async def health_check():
     """
     Health check endpoint for monitoring API status.
-    
+
     Returns:
         dict: Health status
     """
-    return {
-        "status": "ok",
-        "api_version": app.version
-    } 
+    return {"status": "ok", "api_version": app.version}

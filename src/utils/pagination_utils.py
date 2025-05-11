@@ -1,13 +1,12 @@
-from typing import TypeVar, List
+from typing import List, TypeVar
+
 from schemas import PaginatedResponse
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 def build_paginated_response(
-    items: List[T],
-    total: int,
-    page: int,
-    limit: int
+    items: List[T], total: int, page: int, limit: int
 ) -> PaginatedResponse:
     """
     Build a generic paginated response.
@@ -22,4 +21,6 @@ def build_paginated_response(
         PaginatedResponse with items, total, page, limit, pages
     """
     pages = (total + limit - 1) // limit if total > 0 else 0
-    return PaginatedResponse(items=items, total=total, page=page, limit=limit, pages=pages) 
+    return PaginatedResponse(
+        items=items, total=total, page=page, limit=limit, pages=pages
+    )

@@ -17,13 +17,13 @@ Test Structure:
 - Uses pytest fixtures for setup and mocking authenticated users
 """
 
-import pytest
-from starlette.testclient import TestClient
-from fastapi import status, HTTPException, Depends, Request
-from typing import Dict, Optional, List, Any
-from uuid import uuid4, UUID
 import logging
 import types
+from uuid import UUID, uuid4
+
+import pytest
+from fastapi import HTTPException, Request, status
+from starlette.testclient import TestClient
 
 import dependencies
 import routers.buyer_router as buyer_router
@@ -35,54 +35,62 @@ MOCK_BUYER_ID = uuid4()
 MOCK_SELLER_ID = uuid4()
 MOCK_ADMIN_ID = uuid4()
 
+
 # Default authenticated user stubs
 def _authenticated_buyer():
     return {
-        'user_id': str(MOCK_BUYER_ID),
-        'email': "buyer@example.com",
-        'role': UserRole.BUYER
+        "user_id": str(MOCK_BUYER_ID),
+        "email": "buyer@example.com",
+        "role": UserRole.BUYER,
     }
+
 
 def _authenticated_seller():
     return {
-        'user_id': str(MOCK_SELLER_ID),
-        'email': "seller@example.com",
-        'role': UserRole.SELLER
+        "user_id": str(MOCK_SELLER_ID),
+        "email": "seller@example.com",
+        "role": UserRole.SELLER,
     }
+
 
 def _authenticated_admin():
     return {
-        'user_id': str(MOCK_ADMIN_ID),
-        'email': "admin@example.com",
-        'role': UserRole.ADMIN
+        "user_id": str(MOCK_ADMIN_ID),
+        "email": "admin@example.com",
+        "role": UserRole.ADMIN,
     }
+
 
 # Mock CSRF protection
 class MockCsrfProtect:
     def validate_csrf(self, request: Request):
         pass  # Do nothing in tests
-    
+
     def set_csrf_cookie(self, response):
         pass  # Do nothing in tests
+
 
 # Mock DB session
 def mock_db_session_add(*args, **kwargs):
     pass
 
+
 async def mock_db_session_commit(*args, **kwargs):
     pass
+
 
 async def mock_db_session_rollback(*args, **kwargs):
     pass
 
+
 mock_session = types.SimpleNamespace(
     add=mock_db_session_add,
     commit=mock_db_session_commit,
-    rollback=mock_db_session_rollback
+    rollback=mock_db_session_rollback,
 )
 
 # Add logger to router
-logger = logging.getLogger('test_buyer')
+logger = logging.getLogger("test_buyer")
 buyer_router.logger = logger
 
 # Include the router for testing
@@ -91,6 +99,7 @@ app.include_router(buyer_router.router)
 # Set up test client
 client = TestClient(app)
 
+
 @pytest.fixture(autouse=True)
 def override_dependencies():
     """Fixture patching dependencies and services."""
@@ -98,33 +107,45 @@ def override_dependencies():
     original_overrides = app.dependency_overrides.copy()
 
     # Mock User Management (local state within fixture)
-    current_user_data = _authenticated_buyer()  # Default to buyer for these tests
+    current_user_data = (
+        _authenticated_buyer()
+    )  # Default to buyer for these tests
 
     # Define Mock for require_buyer_or_seller Dependency
     async def mock_require_buyer_or_seller():
         if not current_user_data:
             raise HTTPException(
                 status.HTTP_401_UNAUTHORIZED,
-                detail={"error_code": "NOT_AUTHENTICATED", "message": "Użytkownik nie jest zalogowany."}
+                detail={
+                    "error_code": "NOT_AUTHENTICATED",
+                    "message": "Użytkownik nie jest zalogowany.",
+                },
             )
 
         # Check if the user has the correct role
-        if current_user_data['role'] not in [UserRole.BUYER, UserRole.SELLER]:
+        if current_user_data["role"] not in [UserRole.BUYER, UserRole.SELLER]:
             raise HTTPException(
                 status.HTTP_403_FORBIDDEN,
-                detail={"error_code": "INSUFFICIENT_PERMISSIONS", "message": "Nie masz uprawnień do wykonania tej operacji."}
+                detail={
+                    "error_code": "INSUFFICIENT_PERMISSIONS",
+                    "message": "Nie masz uprawnień do wykonania tej operacji.",
+                },
             )
 
         return {
-            "user_id": UUID(current_user_data['user_id']),
-            "user_role": current_user_data['role'],
-            "email": current_user_data['email']
+            "user_id": UUID(current_user_data["user_id"]),
+            "user_role": current_user_data["role"],
+            "email": current_user_data["email"],
         }
 
     # Override Dependencies
-    app.dependency_overrides[dependencies.get_db_session] = lambda: mock_session
+    app.dependency_overrides[dependencies.get_db_session] = (
+        lambda: mock_session
+    )
     app.dependency_overrides[dependencies.get_logger] = lambda: logger
-    app.dependency_overrides[dependencies.require_buyer_or_seller] = mock_require_buyer_or_seller
+    app.dependency_overrides[dependencies.require_buyer_or_seller] = (
+        mock_require_buyer_or_seller
+    )
 
     # Helper to change user for tests
     def set_mock_user(user_func):
@@ -139,24 +160,31 @@ def override_dependencies():
     # Cleanup
     app.dependency_overrides = original_overrides
     if dependencies.get_db_session not in app.dependency_overrides:
-        app.dependency_overrides[dependencies.get_db_session] = lambda: mock_session
+        app.dependency_overrides[dependencies.get_db_session] = (
+            lambda: mock_session
+        )
     if dependencies.get_logger not in app.dependency_overrides:
         app.dependency_overrides[dependencies.get_logger] = lambda: logger
+
 
 # Fixtures using the set_mock_user helper
 @pytest.fixture
 def seller_auth():
-     override_dependencies.set_mock_user(_authenticated_seller)
+    override_dependencies.set_mock_user(_authenticated_seller)
+
 
 @pytest.fixture
 def admin_auth():
-     override_dependencies.set_mock_user(_authenticated_admin)
-     
+    override_dependencies.set_mock_user(_authenticated_admin)
+
+
 @pytest.fixture
 def no_auth():
-     override_dependencies.set_mock_user(None)
+    override_dependencies.set_mock_user(None)
+
 
 # === Test GET /buyer/profile ===
+
 
 def test_get_buyer_profile_success_as_buyer():
     """Test successful retrieval of buyer profile as a buyer."""
@@ -166,7 +194,7 @@ def test_get_buyer_profile_success_as_buyer():
     # Expect 200 OK
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    
+
     # Check response structure and content
     assert data["buyer_id"] == str(MOCK_BUYER_ID)
     assert data["role"] == UserRole.BUYER
@@ -176,6 +204,7 @@ def test_get_buyer_profile_success_as_buyer():
     assert "pending" in data["orders"]
     assert "completed" in data["orders"]
 
+
 def test_get_buyer_profile_success_as_seller(seller_auth):
     """Test successful retrieval of buyer profile as a seller."""
     response = client.get("/buyer/profile")
@@ -183,12 +212,13 @@ def test_get_buyer_profile_success_as_seller(seller_auth):
     # Expect 200 OK
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    
+
     # Check response structure and content
     assert data["buyer_id"] == str(MOCK_SELLER_ID)
     assert data["role"] == UserRole.SELLER
     assert data["account_status"] == "active"
     assert "orders" in data
+
 
 def test_get_buyer_profile_unauthorized(no_auth):
     """Test unauthorized access to buyer profile."""
@@ -196,7 +226,8 @@ def test_get_buyer_profile_unauthorized(no_auth):
 
     # Expect 401 UNAUTHORIZED
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json()['detail']['error_code'] == "NOT_AUTHENTICATED"
+    assert response.json()["detail"]["error_code"] == "NOT_AUTHENTICATED"
+
 
 def test_get_buyer_profile_admin_forbidden(admin_auth):
     """Test forbidden access to buyer profile for admin users."""
@@ -204,24 +235,34 @@ def test_get_buyer_profile_admin_forbidden(admin_auth):
 
     # Expect 403 FORBIDDEN
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json()['detail']['error_code'] == "INSUFFICIENT_PERMISSIONS"
+    assert (
+        response.json()["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
+    )
+
 
 def test_get_buyer_profile_dependency_error():
     """Test handling of dependency injection errors."""
     # Override the require_buyer_or_seller dependency to simulate an error
-    original_dependency = app.dependency_overrides[dependencies.require_buyer_or_seller]
-    
+    original_dependency = app.dependency_overrides[
+        dependencies.require_buyer_or_seller
+    ]
+
     async def failing_dependency():
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error_code": "DEPENDENCY_ERROR", "message": "Simulated dependency error"}
+            detail={
+                "error_code": "DEPENDENCY_ERROR",
+                "message": "Simulated dependency error",
+            },
         )
-    
-    app.dependency_overrides[dependencies.require_buyer_or_seller] = failing_dependency
-    
+
+    app.dependency_overrides[dependencies.require_buyer_or_seller] = (
+        failing_dependency
+    )
+
     try:
         response = client.get("/buyer/profile")
-        
+
         # Expect 500 INTERNAL SERVER ERROR
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         data = response.json()
@@ -229,9 +270,13 @@ def test_get_buyer_profile_dependency_error():
         assert "Simulated dependency error" in data["detail"]["message"]
     finally:
         # Restore the original dependency
-        app.dependency_overrides[dependencies.require_buyer_or_seller] = original_dependency
+        app.dependency_overrides[dependencies.require_buyer_or_seller] = (
+            original_dependency
+        )
+
 
 # === Test GET /buyer/orders/history ===
+
 
 def test_get_order_history_success_as_buyer():
     """Test successful retrieval of order history as a buyer."""
@@ -241,12 +286,13 @@ def test_get_order_history_success_as_buyer():
     # Expect 200 OK
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    
+
     # Check response structure
     assert "orders" in data
     assert "total_orders" in data
     assert "total_spent" in data
     assert "most_recent_order" in data
+
 
 def test_get_order_history_success_as_seller(seller_auth):
     """Test successful retrieval of order history as a seller."""
@@ -255,12 +301,13 @@ def test_get_order_history_success_as_seller(seller_auth):
     # Expect 200 OK
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    
+
     # Check response structure
     assert "orders" in data
     assert "total_orders" in data
     assert "total_spent" in data
     assert "most_recent_order" in data
+
 
 def test_get_order_history_unauthorized(no_auth):
     """Test unauthorized access to order history."""
@@ -268,7 +315,8 @@ def test_get_order_history_unauthorized(no_auth):
 
     # Expect 401 UNAUTHORIZED
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json()['detail']['error_code'] == "NOT_AUTHENTICATED"
+    assert response.json()["detail"]["error_code"] == "NOT_AUTHENTICATED"
+
 
 def test_get_order_history_admin_forbidden(admin_auth):
     """Test forbidden access to order history for admin users."""
@@ -276,24 +324,34 @@ def test_get_order_history_admin_forbidden(admin_auth):
 
     # Expect 403 FORBIDDEN
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json()['detail']['error_code'] == "INSUFFICIENT_PERMISSIONS"
+    assert (
+        response.json()["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
+    )
+
 
 def test_get_order_history_dependency_error():
     """Test handling of dependency injection errors."""
     # Override the require_buyer_or_seller dependency to simulate an error
-    original_dependency = app.dependency_overrides[dependencies.require_buyer_or_seller]
-    
+    original_dependency = app.dependency_overrides[
+        dependencies.require_buyer_or_seller
+    ]
+
     async def failing_dependency():
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error_code": "DEPENDENCY_ERROR", "message": "Simulated dependency error"}
+            detail={
+                "error_code": "DEPENDENCY_ERROR",
+                "message": "Simulated dependency error",
+            },
         )
-    
-    app.dependency_overrides[dependencies.require_buyer_or_seller] = failing_dependency
-    
+
+    app.dependency_overrides[dependencies.require_buyer_or_seller] = (
+        failing_dependency
+    )
+
     try:
         response = client.get("/buyer/orders/history")
-        
+
         # Expect 500 INTERNAL SERVER ERROR
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         data = response.json()
@@ -301,4 +359,6 @@ def test_get_order_history_dependency_error():
         assert "Simulated dependency error" in data["detail"]["message"]
     finally:
         # Restore the original dependency
-        app.dependency_overrides[dependencies.require_buyer_or_seller] = original_dependency 
+        app.dependency_overrides[dependencies.require_buyer_or_seller] = (
+            original_dependency
+        )
