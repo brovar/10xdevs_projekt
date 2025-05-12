@@ -21,7 +21,6 @@ const LoginPage = () => {
       navigate('/');
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Wystąpił błąd podczas logowania. Spróbuj ponownie później.';
-      const errorCode = error.response?.data?.error_code;
       
       setApiError(errorMessage);
       addError(errorMessage);

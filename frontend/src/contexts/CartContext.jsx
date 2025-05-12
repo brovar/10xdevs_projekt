@@ -58,38 +58,6 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
   const [cart, dispatch] = useReducer(cartReducer, []);
   
-  // Ładowanie koszyka z localStorage przy inicjalizacji
-  useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        const parsedCart = JSON.parse(savedCart);
-        dispatch({ type: INIT_CART, payload: parsedCart });
-      } catch (error) {
-        console.error('Failed to parse cart from localStorage:', error);
-      }
-    }
-  }, []);
-  
-  // Zapisywanie koszyka do localStorage przy każdej zmianie
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
-  
-  // Nasłuchiwanie na zdarzenie wylogowania użytkownika
-  useEffect(() => {
-    const handleLogout = () => {
-      clearCart();
-      localStorage.removeItem('cart');
-    };
-    
-    window.addEventListener('user-logout', handleLogout);
-    
-    return () => {
-      window.removeEventListener('user-logout', handleLogout);
-    };
-  }, [clearCart]);
-  
   // Metody do manipulacji koszykiem
   const addToCart = useCallback((offerId, offer, quantity = 1) => {
     if (quantity <= 0) return;
@@ -122,6 +90,38 @@ export const CartProvider = ({ children }) => {
   const clearCart = useCallback(() => {
     dispatch({ type: CLEAR_CART });
   }, []);
+  
+  // Ładowanie koszyka z localStorage przy inicjalizacji
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      try {
+        const parsedCart = JSON.parse(savedCart);
+        dispatch({ type: INIT_CART, payload: parsedCart });
+      } catch (error) {
+        console.error('Failed to parse cart from localStorage:', error);
+      }
+    }
+  }, []);
+  
+  // Zapisywanie koszyka do localStorage przy każdej zmianie
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
+  
+  // Nasłuchiwanie na zdarzenie wylogowania użytkownika
+  useEffect(() => {
+    const handleLogout = () => {
+      clearCart();
+      localStorage.removeItem('cart');
+    };
+    
+    window.addEventListener('user-logout', handleLogout);
+    
+    return () => {
+      window.removeEventListener('user-logout', handleLogout);
+    };
+  }, [clearCart]);
   
   // Obliczanie łącznej ilości produktów w koszyku
   const totalItems = cart.reduce((total, item) => total + item.quantity, 0);

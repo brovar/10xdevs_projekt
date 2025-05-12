@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Alert, Spinner, Row, Col, Card, Badge, Button } from 'react-bootstrap';
-import { useAuth } from '../../contexts/AuthContext';
+// import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../services/api';
@@ -9,7 +9,6 @@ const MyOffersPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [offers, setOffers] = useState([]);
   const [error, setError] = useState(null);
-  const { user } = useAuth();
   const { addError } = useNotifications();
   const navigate = useNavigate();
 

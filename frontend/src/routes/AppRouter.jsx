@@ -94,11 +94,6 @@ const RequireAnon = ({ children }) => {
   return children;
 };
 
-// Loader komponentu - opcjonalnie do wykorzystania zgodnie z React Router
-const registerLoader = () => {
-  return null; // Tu potencjalnie możemy pobierać dane do inicjalizacji
-};
-
 // Routing configuration
 const router = createBrowserRouter([
   {

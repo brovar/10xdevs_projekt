@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Alert, Spinner } from 'react-bootstrap';
-import { useAuth } from '../../contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 
 // Components
@@ -19,7 +18,6 @@ const ITEMS_PER_PAGE = 10;
  * This page displays a list of user's orders with basic information and status
  */
 const OrdersPage = () => {
-  const { } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Get current page from URL or default to 1
