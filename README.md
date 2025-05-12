@@ -7,8 +7,7 @@ SteamBay is an e-commerce platform for digital game sales, featuring a React fro
 - `frontend/` - React frontend application
 - `src/` - FastAPI backend application
 - `docker-compose.yml` - Docker Compose configuration
-- `Dockerfile.backend` - Backend Dockerfile
-- `Dockerfile.frontend` - Frontend Dockerfile
+- `Dockerfile` - Main Dockerfile for the application
 - `tests/` - Backend unit tests
 
 ## Features
@@ -20,35 +19,6 @@ SteamBay is an e-commerce platform for digital game sales, featuring a React fro
 - Admin dashboard
 - Seller dashboard for managing offers
 
-## Running Locally
-
-### Prerequisites
-
-- Python 3.10 or higher
-- Node.js 18 or higher
-- PostgreSQL 14 or higher
-
-### Setup and Run
-
-1. Make sure PostgreSQL is running
-2. Run the local setup script:
-
-```bash
-./run_local.sh
-```
-
-3. Navigate to `frontend/` directory and run:
-
-```bash
-npm install
-npm start
-```
-
-4. Access the application:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - API Documentation: http://localhost:8000/docs
-
 ## Running with Docker
 
 ### Prerequisites
@@ -57,16 +27,23 @@ npm start
 
 ### Setup and Run
 
-1. Run the Docker setup script:
+1. Build and start the application:
 
 ```bash
-./run_docker.sh
+docker compose up -d --build
 ```
 
 2. Access the application:
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:8000
    - API Documentation: http://localhost:8000/docs
+
+The application runs in a single container that includes:
+- PostgreSQL database
+- FastAPI backend
+- React frontend
+
+All data is stored within the container and will be removed when the container is stopped.
 
 ## Test Users
 
@@ -91,3 +68,35 @@ The frontend is built with React and uses React Router for navigation. The API s
 The application uses a shared service architecture where business logic services are located in `frontend/src/services/` but are used by both the frontend and backend components. When running tests, the Python path is configured to include both directories.
 
 For more details, see the [Services Module README](frontend/src/services/README.md).
+
+## Continuous Integration
+
+The project uses GitHub Actions for continuous integration. The workflow is defined in `.github/workflows/simple-build.yml` and includes:
+
+### Linting
+- Python code linting using flake8
+- JavaScript/TypeScript linting using ESLint
+- Runs on every push and pull request
+
+### Testing
+- Python unit tests with pytest
+- Code coverage reporting
+- Uploads coverage reports to Codecov (optional)
+- Runs after successful linting
+
+### Pull Request Comments
+- Automatically posts build status comments on pull requests
+- Shows success/failure status for linting and tests
+- Includes links to the workflow run
+
+To run the CI checks locally:
+```bash
+# Python linting
+flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+# JavaScript linting
+cd frontend && npx eslint src --ext .js,.jsx,.ts,.tsx
+
+# Python tests
+pytest --cov=. --cov-report=term
+```

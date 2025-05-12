@@ -73,18 +73,44 @@ jobs:
         # so the build doesn't fail just for coverage upload issues.
         continue-on-error: true
 
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: steambay:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test container startup
+        run: |
+          docker compose up -d
+          sleep 30  # Wait for services to start
+          curl -f http://localhost:8000/docs || exit 1  # Check if API is accessible
+          curl -f http://localhost:3000 || exit 1  # Check if frontend is accessible
+          docker compose down
 
   status-comment:
     runs-on: ubuntu-latest
-    needs: [lint, test] # Runs after lint and test
-    # Only runs on pull requests and if previous jobs were successful.
-    if: github.event_name == 'pull_request' && needs.lint.result == 'success' && needs.test.result == 'success'
+    needs: [lint, test, build]
+    if: github.event_name == 'pull_request' && needs.lint.result == 'success' && needs.test.result == 'success' && needs.build.result == 'success'
     steps:
       - name: Post success comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          # Create a new comment if one with this header doesn't exist, otherwise update the existing one.
-          header: build-status 
+          header: build-status
           message: |
             🎉 **Build Successful!** 🎉
 
@@ -92,6 +118,7 @@ jobs:
             - ✅ Python Linting
             - ✅ JavaScript Linting
             - ✅ Python Unit Tests (Coverage: ${{ needs.test.outputs.coverage }})
+            - ✅ Container Build and Startup Test
 
             Nice work! 👍
             
@@ -99,9 +126,8 @@ jobs:
 
   failure-comment:
     runs-on: ubuntu-latest
-    needs: [lint, test] # Runs after lint and test
-    # Only runs on pull requests and if any of the previous critical jobs failed.
-    if: github.event_name == 'pull_request' && (needs.lint.result == 'failure' || needs.test.result == 'failure')
+    needs: [lint, test, build]
+    if: github.event_name == 'pull_request' && (needs.lint.result == 'failure' || needs.test.result == 'failure' || needs.build.result == 'failure')
     steps:
       - name: Determine failure step
         id: failure_reason
@@ -112,6 +138,9 @@ jobs:
           elif [[ "${{ needs.test.result }}" == "failure" ]]; then
             echo "failure_job=Unit Tests" >> $GITHUB_OUTPUT
             echo "job_status=❌ Failed" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.build.result }}" == "failure" ]]; then
+            echo "failure_job=Container Build" >> $GITHUB_OUTPUT
+            echo "job_status=❌ Failed" >> $GITHUB_OUTPUT
           else
             echo "failure_job=Unknown" >> $GITHUB_OUTPUT
             echo "job_status=❓" >> $GITHUB_OUTPUT
@@ -119,14 +148,15 @@ jobs:
       - name: Post failure comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: build-status # Same header to update the comment
+          header: build-status
           message: |
             🚨 **Build Failed!** 🚨
 
             One or more checks did not pass:
             - Python Linting: ${{ needs.lint.result == 'success' && '✅ Passed' || '❌ Failed' }}
-            - JavaScript Linting: ${{ needs.lint.result == 'success' && '✅ Passed' || '❌ Failed' }} (dependent on Python linting step for now)
+            - JavaScript Linting: ${{ needs.lint.result == 'success' && '✅ Passed' || '❌ Failed' }}
             - Python Unit Tests: ${{ needs.test.result == 'success' && '✅ Passed' || needs.test.result == 'skipped' && '⚪ Skipped' || '❌ Failed' }}
+            - Container Build: ${{ needs.build.result == 'success' && '✅ Passed' || needs.build.result == 'skipped' && '⚪ Skipped' || '❌ Failed' }}
             
             Failed step: **${{ steps.failure_reason.outputs.failure_job }}** ${{ steps.failure_reason.outputs.job_status }}
 
