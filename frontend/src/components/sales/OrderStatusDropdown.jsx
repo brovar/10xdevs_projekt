@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Dropdown, Button, Spinner } from 'react-bootstrap';
+import { Dropdown, Spinner } from 'react-bootstrap';
 
 /**
  * OrderStatusDropdown component for changing order status

@@ -19,7 +19,7 @@ const ITEMS_PER_PAGE = 10;
  * This page displays a list of user's orders with basic information and status
  */
 const OrdersPage = () => {
-  const { user } = useAuth();
+  const { } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Get current page from URL or default to 1

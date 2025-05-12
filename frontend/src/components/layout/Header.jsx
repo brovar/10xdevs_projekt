@@ -193,9 +193,8 @@ const Header = () => {
                     </li>
                   )}
                   <li className="nav-item">
-                    <a
-                      href="#"
-                      className="nav-link"
+                    <button
+                      className="nav-link border-0 bg-transparent"
                       onClick={handleLogoutClick}
                       aria-label="Wyloguj się z systemu"
                     >
@@ -207,7 +206,7 @@ const Header = () => {
                       ) : (
                         "Wyloguj się"
                       )}
-                    </a>
+                    </button>
                   </li>
                   {user?.role === 'Buyer' && (
                     <li className="nav-item">

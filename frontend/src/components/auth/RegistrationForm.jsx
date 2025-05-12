@@ -29,8 +29,6 @@ const RegistrationForm = ({ onSubmit, isLoading }) => {
     }
   });
 
-  const passwordValue = watch('password', '');
-
   const processSubmit = (data) => {
     // Remove confirmPassword before sending to API
     const { confirmPassword, ...registerData } = data;

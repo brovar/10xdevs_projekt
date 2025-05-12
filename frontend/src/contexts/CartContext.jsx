@@ -88,7 +88,7 @@ export const CartProvider = ({ children }) => {
     return () => {
       window.removeEventListener('user-logout', handleLogout);
     };
-  }, []);
+  }, [clearCart]);
   
   // Metody do manipulacji koszykiem
   const addToCart = useCallback((offerId, offer, quantity = 1) => {
