@@ -4,7 +4,7 @@ Unit tests for the endpoints in the auth_router.py module.
 Combines tests for /register, /login, and /logout endpoints.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import UUID
 
@@ -512,3 +512,21 @@ def test_logout_csrf_error(test_app):
     data = response.json()
     assert data["error_code"] == "LOGOUT_FAILED"
     assert "Wystąpił" in data["message"] or "Unexpected" in data["message"]
+
+
+# Dodaję brakujący import dla StubUserService
+class StubUserService:
+    def __init__(self, db_session, logger):
+        self.db_session = db_session
+        self.logger = logger
+    
+    async def get_user_by_id(self, user_id):
+        """Returns a mock user"""
+        return {
+            "id": user_id,
+            "email": "test@example.com",
+            "role": "Admin",
+            "status": "Active",
+            "first_name": "Test",
+            "last_name": "User"
+        }

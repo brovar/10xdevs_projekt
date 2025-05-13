@@ -9,6 +9,8 @@ These tests verify:
 """
 
 import io
+import pytest
+import logging
 from logging import Logger
 from typing import Optional
 from unittest.mock import MagicMock
@@ -17,6 +19,8 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException, UploadFile, status
 from starlette.testclient import TestClient
+from fastapi_csrf_protect import CsrfProtect
+from PIL import Image
 
 import dependencies
 import routers.offer_router as offer_router
