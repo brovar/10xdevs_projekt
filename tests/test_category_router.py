@@ -44,6 +44,14 @@ class StubCategoryService:
     ):  # Match potential dependency injection
         pass
 
+    async def list_categories(self) -> List[CategoryDTO]:
+        StubCategoryService.called = True
+        # Simulate successful retrieval
+        return [
+            CategoryDTO(id=1, name="Electronics"),
+            CategoryDTO(id=2, name="Books"),
+        ]
+
     async def get_all_categories(self) -> List[CategoryDTO]:
         StubCategoryService.called = True
         # Simulate successful retrieval
@@ -111,21 +119,16 @@ def test_list_categories_success():
     assert body["items"][0] == {"id": 1, "name": "Electronics"}
     assert body["items"][1] == {"id": 2, "name": "Books"}
 
-    # Verify service and logging calls
+    # Verify service call
     assert StubCategoryService.called is True
+    
+    # Verify anonymous logging is called
     assert StubLogService.create_log_called is True
-    assert str(StubLogService.create_log_data["user_id"]) == str(
-        MOCK_USER_ID
-    )  # Compare as strings
-    assert (
-        StubLogService.create_log_data["event_type"] == "CATEGORY_LIST_VIEWED"
-    )
-    assert (
-        "viewed categories list" in StubLogService.create_log_data["message"]
-    )
+    assert StubLogService.create_log_data["user_id"] is None  # Anonymous user
+    assert StubLogService.create_log_data["event_type"] == LogEventType.CATEGORY_LIST_VIEWED
 
 
-# 2. Unauthenticated scenario
+# 2. Unauthenticated scenario - now should succeed since we removed authentication requirement
 def test_list_categories_unauthenticated(monkeypatch):
     # Override authentication to raise
     def bad_auth():
@@ -141,16 +144,21 @@ def test_list_categories_unauthenticated(monkeypatch):
         app.dependency_overrides, dependencies.require_authenticated, bad_auth
     )
 
+    # Request should now succeed since we don't require authentication
     response = client.get("/categories")
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_200_OK
     body = response.json()
-    assert body.get("detail", {}).get("error_code") == "NOT_AUTHENTICATED"
+    assert "items" in body
+    assert len(body["items"]) == 2
 
 
 # 3. Service error scenario
 def test_list_categories_service_error(monkeypatch):
     # Mock CategoryService to raise an error
     class ErrorCategoryService(StubCategoryService):
+        async def list_categories(self) -> List[CategoryDTO]:
+            raise Exception("Database connection failed")
+            
         async def get_all_categories(self) -> List[CategoryDTO]:
             raise Exception("Database connection failed")
 
@@ -167,17 +175,8 @@ def test_list_categories_service_error(monkeypatch):
         == "Failed to retrieve category data"
     )
 
-    # Verify error logging
-    assert StubLogService.create_log_called
-    assert (
-        StubLogService.create_log_data["event_type"]
-        == LogEventType.ADMIN_ACTION_FAIL
-    )
-    log_message_lower = StubLogService.create_log_data["message"].lower()
-    assert "error fetching categories" in log_message_lower
-    assert (
-        "database connection failed" in log_message_lower
-    )  # Verify specific error part
+    # Verify error logging is no longer done through LogService
+    assert not StubLogService.create_log_called
 
 
 # End of originally intended tests for this file, removing hallucinated tests below.

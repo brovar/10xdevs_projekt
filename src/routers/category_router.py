@@ -17,24 +17,15 @@ router = APIRouter(tags=["categories"])
     response_model=CategoriesListResponse,
     responses={
         200: {"description": "Successfully retrieved categories list"},
-        401: {
-            "description": "User is not authenticated",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "error_code": "NOT_AUTHENTICATED",
-                        "message": "Użytkownik nie jest zalogowany.",
-                    }
-                }
-            },
-        },
         500: {
             "description": "Server error",
             "content": {
                 "application/json": {
                     "example": {
-                        "error_code": "FETCH_FAILED",
-                        "message": "Failed to retrieve category data",
+                        "detail": {
+                            "error_code": "FETCH_FAILED",
+                            "message": "Failed to retrieve category data",
+                        }
                     }
                 }
             },
@@ -43,65 +34,38 @@ router = APIRouter(tags=["categories"])
 )
 async def list_categories(
     request: Request,
-    session_data: dict = Depends(require_authenticated),
     db_session: AsyncSession = Depends(get_db_session),
     logger: Logger = Depends(get_logger),
-):
+) -> CategoriesListResponse:
     """
-    Get all available product categories.
-
-    This endpoint returns a list of all categories available in the system.
-    Categories are used to classify product offers.
-
-    ## Response
-    Returns a list of categories, each with:
-    - id: Unique identifier for the category
-    - name: Display name of the category
-
-    ## Authentication
-    This endpoint requires user authentication.
-
-    ## Error Codes
-    - NOT_AUTHENTICATED: User is not logged in
-    - FETCH_FAILED: Server error occurred while retrieving categories
+    List all available categories
     """
     try:
-        # Get user ID from session for logging
-        user_id = session_data.get("user_id")
-        user_email = session_data.get(
-            "email", "unknown_user"
-        )  # Get email for logging, provide default
-
-        # Call service to get categories
-        category_service = CategoryService(db_session, logger)
-        categories = await category_service.get_all_categories()
-
-        # Initialize log service
-        log_service = LogService(db_session)
-
-        # Log the action
-        await log_service.create_log(
-            event_type=LogEventType.CATEGORY_LIST_VIEWED,
-            message=f"User {user_email} viewed categories list",
-            user_id=UUID(user_id) if user_id else None,
-        )
-
-        # Return categories list response
-        return CategoriesListResponse(items=categories)
-    except HTTPException as e:
-        # Re-raise HTTP exceptions
-        raise
+        # Create category service
+        category_service = CategoryService(db_session)
+        
+        # Get all categories
+        categories = await category_service.list_categories()
+        
+        # Add log entry (without requiring authentication)
+        try:
+            log_service = LogService(db_session)
+            await log_service.create_log(
+                user_id=None,  # Anonymous user
+                event_type=LogEventType.CATEGORY_LIST_VIEWED,
+                message="Categories list viewed",
+                ip_address=request.client.host if request.client else None,
+            )
+        except Exception as log_error:
+            # If logging fails, just log the error but don't fail the request
+            logger.error(f"Failed to log category list view: {str(log_error)}")
+        
+        return {"items": categories}
     except Exception as e:
-        # Initialize log service
-        log_service = LogService(db_session)
-
-        # Log error with user id if available from session_data
-        user_id_for_log = session_data.get("user_id") if session_data else None
-        await log_service.create_log(
-            event_type=LogEventType.ADMIN_ACTION_FAIL,
-            message=f"Error fetching categories: {str(e)}",
-            user_id=UUID(user_id_for_log) if user_id_for_log else None,
-        )
+        # Log the error
+        logger.error(f"Failed to retrieve category data: {str(e)}")
+        
+        # Return a meaningful error
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={

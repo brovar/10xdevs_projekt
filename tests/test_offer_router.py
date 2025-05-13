@@ -231,39 +231,93 @@ class StubOfferService:
             user_role=user_role,
         )
 
-        # Używamy poprawnego LogEventType.OFFER_STATUS_CHANGE
         await self.log_service.create_log(
             user_id=user_id,
             event_type=LogEventType.OFFER_STATUS_CHANGE,
-            message=f"Offer {offer_id} status changed to sold (simulated)",
+            message=f"Offer {offer_id} marked as sold (simulated)",
         )
+
         self._maybe_raise()
 
-        # Zmodyfikowano mock_response_dict, aby zawierał zagnieżdżone seller i category
-        mock_response_dict = {
+        return StubOfferService._return_value or {
             "id": str(offer_id),
+            "seller_id": str(MOCK_SELLER_ID),
             "category_id": 1,
-            "title": "Sold Offer",
-            "price": 10.0,
-            "image_filename": "sold_offer.jpg",
-            "quantity": 0,
+            "title": "Test Product Marked as Sold",
+            "description": "This product has been marked as sold",
+            "price": "49.99",
+            "image_filename": None,
+            "quantity": 0,  # Marked as sold sets quantity to 0
             "status": OfferStatus.SOLD.value,
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "seller_id": str(user_id),
-            "description": "Mocked offer description",
             "updated_at": datetime.now(timezone.utc).isoformat(),
             "seller": {
-                "id": str(user_id),
-                "first_name": "MockSellerFirst",
-                "last_name": "MockSellerLast",
+                "id": str(MOCK_SELLER_ID),
+                "first_name": "Test",
+                "last_name": "Seller",
             },
-            "category": {
-                "id": 1,
-                "name": "MockCategory",
-            },
+            "category": {"id": 1, "name": "Electronics"},
         }
-        # Zwracamy ten słownik, FastAPI zwaliduje go względem OfferDetailDTO
-        return StubOfferService._return_value or mock_response_dict
+    
+    async def search_offers(
+        self,
+        search: Optional[str] = None,
+        category_id: Optional[int] = None,
+        page: int = 1,
+        limit: int = 20,
+        sort: str = "created_at_desc",
+    ):
+        self._record_call(
+            "search_offers",
+            search=search,
+            category_id=category_id,
+            page=page,
+            limit=limit,
+            sort=sort,
+        )
+        
+        self._maybe_raise()
+        
+        # Create mock data with different categories to test filtering
+        mock_offers = [
+            OfferSummaryDTO(
+                id=uuid4(),
+                seller_id=MOCK_SELLER_ID,
+                category_id=1,
+                title="Test Electronics Product" if not search else f"Test {search} Product",
+                price=Decimal("99.99"),
+                image_filename=None,
+                quantity=5,
+                status=OfferStatus.ACTIVE,
+                created_at=datetime.now(timezone.utc),
+            ),
+            OfferSummaryDTO(
+                id=uuid4(),
+                seller_id=MOCK_SELLER_ID,
+                category_id=2,
+                title="Test Book Product",
+                price=Decimal("29.99"),
+                image_filename=None,
+                quantity=10,
+                status=OfferStatus.ACTIVE,
+                created_at=datetime.now(timezone.utc),
+            ),
+        ]
+        
+        # Filter by category if specified
+        if category_id is not None:
+            mock_offers = [o for o in mock_offers if o.category_id == category_id]
+        
+        # Mock pagination
+        total_offers = len(mock_offers)
+        
+        return StubOfferService._return_value or {
+            "items": mock_offers,
+            "total": total_offers,
+            "page": page,
+            "limit": limit,
+            "pages": (total_offers + limit - 1) // limit if limit > 0 else 0
+        }
 
 
 # Use a simple mock db session as done in test_order_router
@@ -438,7 +492,7 @@ def test_mark_offer_as_sold_success(seller_auth):
     assert log_entry["user_id"] == str(MOCK_SELLER_ID)
     assert log_entry["event_type"] == LogEventType.OFFER_STATUS_CHANGE.value
     assert (
-        f"Offer {MOCK_OFFER_ID} status changed to sold" in log_entry["message"]
+        f"Offer {MOCK_OFFER_ID} marked as sold" in log_entry["message"]
     )
 
 
@@ -1384,3 +1438,119 @@ async def api_mark_offer_as_sold(offer_id: UUID, request: Request = None):
                 "message": "An unexpected error occurred",
             },
         )
+
+
+# Add a test route for search offers
+@test_app.post("/offers/search")
+@pytest.mark.skip(reason="This is an API endpoint definition, not a test")
+async def api_search_offers(request: Request = None):
+    from schemas import OfferListQueryParams
+    from pydantic import BaseModel
+    import json
+    
+    # Parse request body as OfferListQueryParams
+    body = await request.json()
+    
+    class RequestModel(BaseModel):
+        search: Optional[str] = None
+        category_id: Optional[int] = None
+        page: int = 1
+        limit: int = 20
+        sort: str = "created_at_desc"
+    
+    params = RequestModel(**body)
+    
+    offer_service = get_offer_service_override()
+    
+    try:
+        result = await offer_service.search_offers(
+            search=params.search,
+            category_id=params.category_id,
+            page=params.page,
+            limit=params.limit,
+            sort=params.sort
+        )
+        return result
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error_code": "FETCH_FAILED",
+                "message": "Failed to retrieve offers",
+            },
+        )
+
+
+# Now let's add tests for the search endpoint
+def test_search_offers_success():
+    """Test successful offer search with default parameters"""
+    response = client.post("/offers/search", json={})
+    
+    assert response.status_code == status.HTTP_200_OK
+    assert "items" in response.json()
+    assert "total" in response.json()
+    assert "page" in response.json()
+    assert "limit" in response.json()
+    assert "pages" in response.json()
+    
+    # Verify service call
+    assert StubOfferService._call_count.get("search_offers", 0) == 1
+    assert StubOfferService._call_args.get("search_offers") == {
+        "search": None,
+        "category_id": None,
+        "page": 1,
+        "limit": 20,
+        "sort": "created_at_desc"
+    }
+
+
+def test_search_offers_with_filters():
+    """Test offer search with filters"""
+    params = {
+        "search": "electronics",
+        "category_id": 1,
+        "page": 2,
+        "limit": 5,
+        "sort": "price_asc"
+    }
+    
+    response = client.post("/offers/search", json=params)
+    
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["page"] == 2
+    assert data["limit"] == 5
+    
+    # Verify service call
+    assert StubOfferService._call_count.get("search_offers", 0) == 1
+    assert StubOfferService._call_args.get("search_offers") == {
+        "search": "electronics",
+        "category_id": 1,
+        "page": 2,
+        "limit": 5,
+        "sort": "price_asc"
+    }
+
+
+def test_search_offers_error(monkeypatch):
+    """Test error handling for offer search"""
+    # Set up the stub to raise an exception
+    StubOfferService._raise = HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail={
+            "error_code": "FETCH_FAILED",
+            "message": "Failed to retrieve offers",
+        },
+    )
+    
+    response = client.post("/offers/search", json={})
+    
+    # Reset the stub
+    StubOfferService._raise = None
+    
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+    error = response.json()["detail"]
+    assert error["error_code"] == "FETCH_FAILED"
+    assert error["message"] == "Failed to retrieve offers"

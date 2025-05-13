@@ -10,7 +10,8 @@ import ErrorPage from '../pages/ErrorPage';
 // Lazy-loaded components
 const RegisterPage = lazy(() => import('../pages/auth/RegisterPage'));
 const LoginPage = lazy(() => import('../pages/auth/LoginPage'));
-const HomePage = lazy(() => import('../pages/HomePage'));
+const OfferDiscoveryPage = lazy(() => import('../pages/offers/OfferDiscoveryPage'));
+const OfferDetailPage = lazy(() => import('../pages/offers/OfferDetailPage'));
 const AccountPage = lazy(() => import('../pages/account/AccountPage'));
 const OrdersPage = lazy(() => import('../pages/account/OrdersPage'));
 const OrderDetailPage = lazy(() => import('../pages/orders/OrderDetailPage'));
@@ -27,7 +28,7 @@ const AppLayout = () => {
     <div className="d-flex flex-column min-vh-100">
       <Header />
       <main className="flex-grow-1">
-        <Suspense fallback={<div className="container py-5 text-center">Ładowanie...</div>}>
+        <Suspense fallback={<LoadingSpinner message="Ładowanie zawartości..." />}>
           <Outlet />
         </Suspense>
       </main>
@@ -102,7 +103,30 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <HomePage />
+        element: (
+          <Suspense fallback={<LoadingSpinner message="Ładowanie strony głównej..." />}>
+            <OfferDiscoveryPage />
+          </Suspense>
+        ),
+        errorElement: <ErrorBoundary />
+      },
+      {
+        path: 'offers',
+        element: (
+          <Suspense fallback={<LoadingSpinner message="Ładowanie ofert..." />}>
+            <OfferDiscoveryPage />
+          </Suspense>
+        ),
+        errorElement: <ErrorBoundary />
+      },
+      {
+        path: 'offers/:offerId',
+        element: (
+          <Suspense fallback={<LoadingSpinner message="Ładowanie szczegółów oferty..." />}>
+            <OfferDetailPage />
+          </Suspense>
+        ),
+        errorElement: <ErrorBoundary />
       },
       {
         path: 'register',
@@ -148,12 +172,10 @@ const router = createBrowserRouter([
       {
         path: 'cart',
         element: (
-          <RequireAuth requiredRole="Buyer">
-            <div className="container py-5">
-              <h2>Koszyk</h2>
-              <p>Ta strona zostanie zaimplementowana później.</p>
-            </div>
-          </RequireAuth>
+          <div className="container py-5">
+            <h2>Koszyk</h2>
+            <p>Ta strona zostanie zaimplementowana później.</p>
+          </div>
         )
       },
       // Seller routes
@@ -202,4 +224,4 @@ const AppRouter = () => {
   return <RouterProvider router={router} />;
 };
 
-export default AppRouter; 
+export default AppRouter;

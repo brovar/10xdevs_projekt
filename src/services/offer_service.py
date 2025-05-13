@@ -547,3 +547,111 @@ class OfferService:
         seller = await self.db_session.get(UserModel, offer.seller_id)
         category = await self.db_session.get(CategoryModel, offer.category_id)
         return self._map_to_offer_detail_dto(offer, seller, category)
+        
+    async def search_offers(
+        self,
+        search: Optional[str] = None,
+        category_id: Optional[int] = None,
+        page: int = 1,
+        limit: int = 20,
+        sort: str = "created_at_desc",
+    ) -> OfferListResponse:
+        """
+        Search and filter public offers with pagination.
+        Only returns active offers for public consumption.
+
+        Args:
+            search: Optional search term for title/description
+            category_id: Optional category ID to filter by
+            page: Page number (default: 1)
+            limit: Number of items per page (default: 20)
+            sort: Sort order (price_asc, price_desc, created_at_desc, relevance)
+
+        Returns:
+            OfferListResponse: Paginated list of offers
+        """
+        try:
+            # Calculate offset
+            offset = (page - 1) * limit
+
+            # Base query - only include ACTIVE offers
+            base_query = select(OfferModel).where(OfferModel.status == OfferStatus.ACTIVE)
+            filters = []
+            
+            if search:
+                term = f"%{search}%"
+                filters.append(
+                    or_(
+                        OfferModel.title.ilike(term),
+                        OfferModel.description.ilike(term),
+                    )
+                )
+            if category_id is not None:
+                filters.append(OfferModel.category_id == category_id)
+
+            # Apply filters
+            query = base_query.where(*filters) if filters else base_query
+
+            # Sorting
+            if sort == "price_asc":
+                query = query.order_by(OfferModel.price.asc())
+            elif sort == "price_desc":
+                query = query.order_by(OfferModel.price.desc())
+            elif sort == "relevance" and search:
+                # Simple relevance: exact match first, prefix match next, then others
+                query = query.order_by(
+                    case(
+                        [
+                            (OfferModel.title.ilike(search), 1),
+                            (OfferModel.title.ilike(f"{search}%"), 2),
+                        ],
+                        else_=3,
+                    )
+                )
+            else:
+                # default sort by creation date descending
+                query = query.order_by(OfferModel.created_at.desc())
+
+            # Count total
+            count_q = select(func.count()).select_from(query.subquery())
+            total = (await self.db_session.execute(count_q)).scalar() or 0
+
+            # Fetch paginated data
+            result = await self.db_session.execute(
+                query.offset(offset).limit(limit)
+            )
+            offers = result.scalars().all()
+
+            # Map to DTOs
+            items = [
+                OfferSummaryDTO(
+                    id=o.id,
+                    seller_id=o.seller_id,
+                    category_id=o.category_id,
+                    title=o.title,
+                    price=o.price,
+                    image_filename=o.image_filename,
+                    quantity=o.quantity,
+                    status=o.status,
+                    created_at=o.created_at,
+                )
+                for o in offers
+            ]
+
+            # Build and return paginated response
+            return OfferListResponse(
+                items=items,
+                total=total,
+                page=page,
+                limit=limit,
+                pages=(total + limit - 1) // limit if limit > 0 else 0
+            )
+        except Exception as e:
+            self.logger.error(f"Error searching offers: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "error_code": "FETCH_FAILED",
+                    "message": "Failed to fetch offers",
+                },
+            )

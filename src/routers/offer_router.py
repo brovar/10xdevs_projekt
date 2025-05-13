@@ -14,11 +14,92 @@ logger = logging.getLogger(__name__)
 from dependencies import get_db_session
 from dependencies import get_logger as get_logger_dependency
 from dependencies import get_media_service, get_offer_service, require_seller
-from schemas import OfferDetailDTO, OfferSummaryDTO
+from schemas import OfferDetailDTO, OfferListQueryParams, OfferListResponse, OfferSummaryDTO
 from services.media_service import MediaService
 from services.offer_service import OfferService
 
 router = APIRouter(tags=["offers"])
+
+
+@router.post(
+    "/offers/search",
+    response_model=OfferListResponse,
+    responses={
+        200: {"description": "Successfully retrieved list of offers"},
+        400: {
+            "description": "Invalid input parameters",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error_code": "INVALID_INPUT",
+                        "message": "Invalid request data",
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Server error",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error_code": "FETCH_FAILED",
+                        "message": "Failed to retrieve offers",
+                    }
+                }
+            },
+        },
+    },
+)
+async def search_offers(
+    request: Request,
+    query_params: OfferListQueryParams,
+    db_session: AsyncSession = Depends(get_db_session),
+    logger: Logger = Depends(get_logger_dependency),
+):
+    """
+    Search and filter offers.
+
+    This endpoint allows users to search and filter offers with pagination.
+    It returns active offers visible to all users.
+
+    ## Request
+    - search: Optional search term for offer title/description
+    - category_id: Optional category ID to filter by
+    - page: Page number (default: 1)
+    - limit: Number of items per page (default: 20, max: 100)
+    - sort: Sorting criteria (price_asc, price_desc, created_at_desc, relevance)
+
+    ## Response
+    Returns a paginated list of offers matching the search criteria.
+
+    ## Error Codes
+    - INVALID_INPUT: Invalid query parameters
+    - FETCH_FAILED: Server error occurred while retrieving offers
+    """
+    try:
+        # Call service to get offers
+        offer_service = OfferService(db_session, logger)
+        offers = await offer_service.search_offers(
+            search=query_params.search,
+            category_id=query_params.category_id,
+            page=query_params.page,
+            limit=query_params.limit,
+            sort=query_params.sort
+        )
+
+        return offers
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"Error searching offers: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error_code": "FETCH_FAILED",
+                "message": "Failed to retrieve offers",
+            },
+        )
 
 
 @router.post(

@@ -1,15 +1,31 @@
 import React from 'react';
-import { Spinner, Container } from 'react-bootstrap';
+import PropTypes from 'prop-types';
 
-const LoadingSpinner = ({ message = 'Ładowanie...' }) => {
+const LoadingSpinner = ({ message = 'Ładowanie...', size = 'md' }) => {
+  // Define spinner sizes
+  const spinnerSizes = {
+    sm: 'spinner-border-sm',
+    md: '',
+    lg: 'spinner-border-lg'
+  };
+
   return (
-    <Container className="d-flex flex-column align-items-center justify-content-center py-5">
-      <Spinner animation="border" role="status" className="mb-3">
+    <div className="d-flex flex-column align-items-center justify-content-center py-5">
+      <div 
+        className={`spinner-border text-primary ${spinnerSizes[size]}`} 
+        role="status"
+        aria-hidden="true"
+      >
         <span className="visually-hidden">Ładowanie...</span>
-      </Spinner>
-      <p className="text-center">{message}</p>
-    </Container>
+      </div>
+      {message && <p className="mt-3 text-center">{message}</p>}
+    </div>
   );
+};
+
+LoadingSpinner.propTypes = {
+  message: PropTypes.string,
+  size: PropTypes.oneOf(['sm', 'md', 'lg'])
 };
 
 export default LoadingSpinner; 

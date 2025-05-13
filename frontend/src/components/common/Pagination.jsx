@@ -1,96 +1,104 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Pagination as BsPagination } from 'react-bootstrap';
 
-/**
- * Pagination component for navigating between pages of results
- * 
- * @param {Object} props - Component props
- * @param {number} props.currentPage - Current active page
- * @param {number} props.totalPages - Total number of pages available
- * @param {function} props.onPageChange - Handler for page change events
- * @returns {JSX.Element} - Rendered component
- */
-const Pagination = React.memo(({ currentPage, totalPages, onPageChange }) => {
-  // Generate page numbers to display with visible range and ellipsis
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  // Generate array of page numbers to display
   const pageNumbers = useMemo(() => {
-    // Always show first and last pages, and up to 3 pages around current page
-    const visiblePages = [];
-    const maxVisiblePages = 5;
+    const pages = [];
     
-    if (totalPages <= maxVisiblePages) {
-      // If we have 5 or fewer pages, show all
+    // Always show first and last page
+    // For small number of pages, show all
+    if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) {
-        visiblePages.push(i);
+        pages.push(i);
       }
     } else {
-      // Always show page 1
-      visiblePages.push(1);
+      // For larger number of pages, use ellipsis
+      pages.push(1); // Always show first page
       
-      // Show ellipsis if current page is more than 3
-      if (currentPage > 3) {
-        visiblePages.push('ellipsis-1');
+      // Determine range around current page
+      let startPage = Math.max(2, currentPage - 2);
+      let endPage = Math.min(totalPages - 1, currentPage + 2);
+      
+      // Adjust range if we're near the beginning or end
+      if (currentPage <= 4) {
+        endPage = 5;
+      } else if (currentPage >= totalPages - 3) {
+        startPage = totalPages - 4;
       }
       
-      // Show pages around current page
-      const startPage = Math.max(2, currentPage - 1);
-      const endPage = Math.min(totalPages - 1, currentPage + 1);
+      // Add ellipsis before range if needed
+      if (startPage > 2) {
+        pages.push('...');
+      }
       
+      // Add page numbers in the range
       for (let i = startPage; i <= endPage; i++) {
-        visiblePages.push(i);
+        pages.push(i);
       }
       
-      // Show ellipsis if current page is less than totalPages - 2
-      if (currentPage < totalPages - 2) {
-        visiblePages.push('ellipsis-2');
+      // Add ellipsis after range if needed
+      if (endPage < totalPages - 1) {
+        pages.push('...');
       }
       
-      // Always show last page
-      if (totalPages > 1) {
-        visiblePages.push(totalPages);
-      }
+      pages.push(totalPages); // Always show last page
     }
     
-    return visiblePages;
+    return pages;
   }, [currentPage, totalPages]);
-  
-  // If there's only one page or no pages, don't render pagination
-  if (totalPages <= 1) return null;
-  
+
   return (
-    <BsPagination aria-label="Nawigacja między stronami wyników">
-      <BsPagination.Prev
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        aria-label="Poprzednia strona"
-      />
-      
-      {pageNumbers.map((page, index) => {
-        if (typeof page === 'string' && page.includes('ellipsis')) {
-          return <BsPagination.Ellipsis key={page} disabled />;
-        }
-        
-        return (
-          <BsPagination.Item
-            key={`page-${page}`}
-            active={page === currentPage}
-            onClick={() => onPageChange(page)}
-            aria-label={`Przejdź do strony ${page}`}
-            aria-current={page === currentPage ? 'page' : undefined}
+    <nav aria-label="Nawigacja paginacji">
+      <ul className="pagination">
+        {/* Previous page button */}
+        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+          <button
+            className="page-link"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            aria-label="Poprzednia strona"
           >
-            {page}
-          </BsPagination.Item>
-        );
-      })}
-      
-      <BsPagination.Next
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        aria-label="Następna strona"
-      />
-    </BsPagination>
+            &laquo;
+          </button>
+        </li>
+        
+        {/* Page numbers */}
+        {pageNumbers.map((page, index) => (
+          <li
+            key={index}
+            className={`page-item ${page === currentPage ? 'active' : ''} ${page === '...' ? 'disabled' : ''}`}
+          >
+            {page === '...' ? (
+              <span className="page-link">...</span>
+            ) : (
+              <button
+                className="page-link"
+                onClick={() => onPageChange(page)}
+                aria-label={`Strona ${page}`}
+                aria-current={page === currentPage ? 'page' : undefined}
+              >
+                {page}
+              </button>
+            )}
+          </li>
+        ))}
+        
+        {/* Next page button */}
+        <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+          <button
+            className="page-link"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            aria-label="Następna strona"
+          >
+            &raquo;
+          </button>
+        </li>
+      </ul>
+    </nav>
   );
-});
+};
 
 Pagination.propTypes = {
   currentPage: PropTypes.number.isRequired,
@@ -98,6 +106,4 @@ Pagination.propTypes = {
   onPageChange: PropTypes.func.isRequired
 };
 
-Pagination.displayName = 'Pagination';
-
-export default Pagination; 
+export default Pagination;
