@@ -26,6 +26,8 @@ app.dependency_overrides[dependencies.get_db_session] = lambda: None
 app.dependency_overrides[dependencies.get_logger] = lambda: __import__(
     "logging"
 ).getLogger("test")
+# Add override for get_user_service
+app.dependency_overrides[dependencies.get_user_service] = lambda: StubUserService(None, __import__("logging").getLogger("test"))
 
 
 # Default authenticated session stub

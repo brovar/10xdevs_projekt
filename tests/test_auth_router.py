@@ -178,12 +178,15 @@ def test_app():
     app.include_router(auth_router.router)
 
     # Override dependencies
-    app.dependency_overrides[dependencies.get_db_session] = dummy_db_session
-    app.dependency_overrides[dependencies.get_logger] = lambda: DummyLogger()
+    app.dependency_overrides[dependencies.get_db_session] = lambda: None
+    app.dependency_overrides[dependencies.get_logger] = lambda: __import__(
+        "logging"
+    ).getLogger("test")
     app.dependency_overrides[dependencies.get_session_service] = (
         dummy_session_service
     )
     app.dependency_overrides[CsrfProtect] = lambda: NoopCsrfProtect()
+    app.dependency_overrides[dependencies.get_user_service] = lambda: StubUserService(None, __import__("logging").getLogger("test"))
 
     return app
 

@@ -56,7 +56,7 @@ from dependencies import get_order_service
 from exceptions.base import ConflictError
 from main import app
 from schemas import (LogEventType, OfferStatus, OrderDetailDTO, OrderItemDTO,
-                     OrderListResponse, OrderStatus, UserRole)
+                     OrderListResponse, OrderStatus, UserRole, UserDTO, UserStatus)
 
 # Define custom exception for testing conflict errors - Moved to top
 # REMOVED Local definition - use the imported one
@@ -374,6 +374,24 @@ class StubLogService:
         StubLogService.logs.append(log_data)  # Append to class list
 
 
+# Stub UserService
+class StubUserService:
+    def __init__(self, db_session, logger):
+        self.db_session = db_session
+        self.logger = logger
+    
+    async def get_user_by_id(self, user_id):
+        """Returns a mock user"""
+        return UserDTO(
+            id=user_id,
+            email="test@example.com",
+            role=UserRole.BUYER,
+            status=UserStatus.ACTIVE,
+            first_name="Test",
+            last_name="User"
+        )
+
+
 # Use the actual router from the application
 app.include_router(order_router.router)
 
@@ -476,6 +494,9 @@ def override_dependencies(monkeypatch):
     app.dependency_overrides[dependencies.get_log_service] = (
         lambda: stub_log_service
     )
+
+    # Add UserService dependency override
+    app.dependency_overrides[dependencies.get_user_service] = lambda: StubUserService(None, logging.getLogger("test"))
 
     yield  # Run test
 

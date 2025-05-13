@@ -28,7 +28,7 @@ from starlette.testclient import TestClient
 import dependencies
 import routers.buyer_router as buyer_router
 from main import app
-from schemas import UserRole
+from schemas import UserDTO, UserRole, UserStatus
 
 # Mock user IDs and other constants
 MOCK_BUYER_ID = uuid4()
@@ -68,6 +68,44 @@ class MockCsrfProtect:
 
     def set_csrf_cookie(self, response):
         pass  # Do nothing in tests
+
+
+# Stub UserService for dependency override
+class StubUserService:
+    def __init__(self, db_session, logger):
+        self.db_session = db_session
+        self.logger = logger
+    
+    async def get_user_by_id(self, user_id):
+        """Returns a mock user based on predefined IDs"""
+        if str(user_id) == str(MOCK_BUYER_ID):
+            return UserDTO(
+                id=MOCK_BUYER_ID,
+                email="buyer@example.com",
+                role=UserRole.BUYER,
+                status=UserStatus.ACTIVE,
+                first_name="Test",
+                last_name="Buyer"
+            )
+        elif str(user_id) == str(MOCK_SELLER_ID):
+            return UserDTO(
+                id=MOCK_SELLER_ID,
+                email="seller@example.com",
+                role=UserRole.SELLER,
+                status=UserStatus.ACTIVE,
+                first_name="Test",
+                last_name="Seller"
+            )
+        elif str(user_id) == str(MOCK_ADMIN_ID):
+            return UserDTO(
+                id=MOCK_ADMIN_ID,
+                email="admin@example.com",
+                role=UserRole.ADMIN,
+                status=UserStatus.ACTIVE,
+                first_name="Test",
+                last_name="Admin"
+            )
+        return None
 
 
 # Mock DB session
@@ -145,6 +183,10 @@ def override_dependencies():
     app.dependency_overrides[dependencies.get_logger] = lambda: logger
     app.dependency_overrides[dependencies.require_buyer_or_seller] = (
         mock_require_buyer_or_seller
+    )
+    # Add override for get_user_service
+    app.dependency_overrides[dependencies.get_user_service] = lambda: StubUserService(
+        mock_session, logger
     )
 
     # Helper to change user for tests

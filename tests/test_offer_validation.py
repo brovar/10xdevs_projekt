@@ -21,7 +21,7 @@ from starlette.testclient import TestClient
 import dependencies
 import routers.offer_router as offer_router
 from main import app
-from schemas import LogEventType, OfferStatus, UserRole
+from schemas import LogEventType, OfferStatus, UserRole, UserDTO, UserStatus
 
 # Import the class that will be monkeypatched
 # from src.services.offer_service import FileService
@@ -328,6 +328,24 @@ class MockFileService:
         return "mock_saved_image.jpg"  # Dummy filename
 
 
+# Stub UserService
+class StubUserService:
+    def __init__(self, db_session, logger):
+        self.db_session = db_session
+        self.logger = logger
+    
+    async def get_user_by_id(self, user_id):
+        """Returns a mock user"""
+        return UserDTO(
+            id=user_id,
+            email="test@example.com",
+            role=UserRole.ADMIN,
+            status=UserStatus.ACTIVE,
+            first_name="Test",
+            last_name="User"
+        )
+
+
 @pytest.fixture(autouse=True)
 def setup_dependencies(monkeypatch):
     """Set up dependencies for tests."""
@@ -362,6 +380,9 @@ def setup_dependencies(monkeypatch):
     app.dependency_overrides[offer_router.CsrfProtect] = (
         lambda: MockCsrfProtect()
     )
+
+    # Add StubUserService to dependency overrides
+    app.dependency_overrides[dependencies.get_user_service] = lambda: StubUserService(None, logging.getLogger("test"))
 
     yield
 

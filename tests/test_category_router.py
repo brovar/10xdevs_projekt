@@ -9,7 +9,7 @@ import dependencies
 import routers.category_router as category_router
 from main import app
 # Import schema for type checking and response validation
-from schemas import CategoryDTO, LogEventType
+from schemas import CategoryDTO, LogEventType, UserDTO, UserRole, UserStatus
 
 # Stub core dependencies
 app.dependency_overrides[dependencies.get_db_session] = lambda: None
@@ -94,6 +94,24 @@ class StubLogService:
         )
 
 
+# Add Stub UserService class
+class StubUserService:
+    def __init__(self, db_session, logger):
+        self.db_session = db_session
+        self.logger = logger
+    
+    async def get_user_by_id(self, user_id):
+        """Returns a mock user based on ID"""
+        return UserDTO(
+            id=user_id,
+            email="test@example.com",
+            role=UserRole.ADMIN,  # Default to admin for tests
+            status=UserStatus.ACTIVE,
+            first_name="Test",
+            last_name="User"
+        )
+
+
 @pytest.fixture(autouse=True)
 def override_services(monkeypatch):
     # Reset stub states
@@ -106,6 +124,9 @@ def override_services(monkeypatch):
         category_router, "CategoryService", StubCategoryService
     )
     monkeypatch.setattr(category_router, "LogService", StubLogService)
+    
+    # Fix: Override the dependency function directly instead of trying to override its return value
+    app.dependency_overrides[dependencies.get_user_service] = lambda: StubUserService(None, __import__("logging").getLogger("test"))
     yield
 
 

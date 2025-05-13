@@ -20,6 +20,10 @@ const MyOffersPage = lazy(() => import('../pages/seller/MyOffersPage'));
 // Poprawny import dla historii sprzedaży, używając pełnej implementacji, która już istnieje
 const SalesHistoryPage = lazy(() => import('../pages/seller/SellerSalesHistoryPage'));
 const CreateOfferPage = lazy(() => import('../pages/seller/CreateOfferPage'));
+// Admin pages
+const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'));
+const AdminUserDetailPage = lazy(() => import('../pages/admin/AdminUserDetailPage'));
+const AdminOrderDetailPage = lazy(() => import('../pages/admin/AdminOrderDetailPage'));
 // Pozostałe strony będą dodawane tutaj
 
 // Layout component
@@ -207,6 +211,40 @@ const router = createBrowserRouter([
           <RequireAuth requiredRole="Seller">
             <Suspense fallback={<LoadingSpinner message="Ładowanie historii sprzedaży..." />}>
               <SalesHistoryPage />
+            </Suspense>
+          </RequireAuth>
+        ),
+        errorElement: <ErrorBoundary />
+      },
+      // Admin routes
+      {
+        path: 'admin',
+        element: (
+          <RequireAuth requiredRole="Admin">
+            <Suspense fallback={<LoadingSpinner message="Ładowanie panelu administratora..." />}>
+              <AdminDashboardPage />
+            </Suspense>
+          </RequireAuth>
+        ),
+        errorElement: <ErrorBoundary />
+      },
+      {
+        path: 'admin/users/:userId',
+        element: (
+          <RequireAuth requiredRole="Admin">
+            <Suspense fallback={<LoadingSpinner message="Ładowanie szczegółów użytkownika..." />}>
+              <AdminUserDetailPage />
+            </Suspense>
+          </RequireAuth>
+        ),
+        errorElement: <ErrorBoundary />
+      },
+      {
+        path: 'admin/orders/:orderId',
+        element: (
+          <RequireAuth requiredRole="Admin">
+            <Suspense fallback={<LoadingSpinner message="Ładowanie szczegółów zamówienia..." />}>
+              <AdminOrderDetailPage />
             </Suspense>
           </RequireAuth>
         ),

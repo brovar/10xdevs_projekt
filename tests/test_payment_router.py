@@ -30,7 +30,7 @@ from starlette.testclient import TestClient
 import dependencies
 import routers.payment_router as payment_router
 from main import app
-from schemas import LogEventType, OrderStatus, TransactionStatus
+from schemas import LogEventType, OrderStatus, TransactionStatus, UserDTO, UserStatus, UserRole
 from services.order_service import ConflictError
 
 # Define mock IDs and constants
@@ -153,6 +153,24 @@ class StubLogService:
         StubLogService.logs.append(log_data)
 
 
+# Stub UserService
+class StubUserService:
+    def __init__(self, db_session, logger):
+        self.db_session = db_session
+        self.logger = logger
+    
+    async def get_user_by_id(self, user_id):
+        """Returns a mock user"""
+        return UserDTO(
+            id=user_id,
+            email="test@example.com",
+            role=UserRole.BUYER,
+            status=UserStatus.ACTIVE,
+            first_name="Test",
+            last_name="User"
+        )
+
+
 # Include the router for testing
 app.include_router(payment_router.router)
 
@@ -182,6 +200,9 @@ def override_dependencies():
     app.dependency_overrides[dependencies.get_log_service] = (
         lambda: stub_log_service
     )
+
+    # Add UserService override
+    app.dependency_overrides[dependencies.get_user_service] = lambda: StubUserService(None, logging.getLogger("test"))
 
     yield
 

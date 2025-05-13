@@ -1,183 +1,159 @@
-"""
-Unit tests for the CSRF protection implementation in the application.
-
-These tests verify that the CSRF validation works consistently across all routers
-after changing from validate_csrf_in_cookies to validate_csrf.
-"""
-
+import logging
 from uuid import UUID
+from datetime import datetime, timezone
 
 import pytest
 from fastapi import status
 from fastapi_csrf_protect import CsrfProtect
-from fastapi_csrf_protect.exceptions import CsrfProtectError
 from starlette.testclient import TestClient
 
 import dependencies
 from main import app
-from schemas import UserDTO, UserRole
+from schemas import UserDTO, UserRole, UserStatus, UserListResponse
 
-# --- Constants ---
-MOCK_USER_ID = UUID("11111111-1111-1111-1111-111111111111")
-MOCK_ADMIN_ID = UUID("22222222-2222-2222-2222-222222222222")
-MOCK_SELLER_ID = UUID("33333333-3333-3333-3333-333333333333")
-
-# --- Mock classes for CSRF protection ---
+client = TestClient(app)
 
 
 class SuccessCsrfProtect:
-    """Mock CSRF protector that does nothing (simulates success)."""
+    """CSRF Protector that always succeeds validation."""
 
     def validate_csrf(self, request):
-        pass
+        pass  # Always validate successfully
 
     def set_csrf_cookie(self, response):
-        pass
+        pass  # No need to actually set a cookie for tests
 
 
 class FailingCsrfProtect:
-    """Mock CSRF protector that raises an error (simulates CSRF failure)."""
+    """CSRF Protector that always fails validation."""
 
     def validate_csrf(self, request):
-        raise CsrfProtectError(
-            status_code=403, message="CSRF token missing or invalid"
-        )
+        # Always fail with a CSRF error
+        from fastapi_csrf_protect.exceptions import CsrfProtectError
+
+        raise CsrfProtectError("CSRF token missing or invalid")
 
     def set_csrf_cookie(self, response):
-        pass
-
-
-# --- Mock authentication functions ---
+        pass  # No need to actually set a cookie for tests
 
 
 def mock_authenticated_user():
-    """Mock of an authenticated regular user."""
+    """Returns a mock authenticated user (basic)."""
     return {
-        "user_id": MOCK_USER_ID,
+        "user_id": "11111111-1111-1111-1111-111111111111",
         "email": "user@example.com",
-        "role": UserRole.BUYER,
+        "role": "Buyer",
     }
 
 
 def mock_authenticated_admin():
-    """Mock of an authenticated admin user for authentication middleware."""
+    """Returns a mock authenticated admin user."""
     return {
-        "user_id": MOCK_ADMIN_ID,
+        "user_id": "22222222-2222-2222-2222-222222222222",
         "email": "admin@example.com",
-        "role": UserRole.ADMIN,
+        "role": "Admin",
     }
 
 
 def mock_authenticated_seller():
-    """Mock of an authenticated seller."""
+    """Returns a mock authenticated seller user."""
     return {
-        "user_id": MOCK_SELLER_ID,
+        "user_id": "33333333-3333-3333-3333-333333333333",
         "email": "seller@example.com",
-        "role": UserRole.SELLER,
+        "role": "Seller",
     }
 
 
-# User DTO objects for endpoints requiring structured user objects
 def mock_admin_dto():
-    """Mock admin user as UserDTO object."""
-    admin = UserDTO(
-        id=MOCK_ADMIN_ID,
+    """Returns a mock admin UserDTO."""
+    return UserDTO(
+        id=UUID("22222222-2222-2222-2222-222222222222"),
         email="admin@example.com",
         role=UserRole.ADMIN,
-        status="Active",
+        status=UserStatus.ACTIVE,
         first_name="Admin",
         last_name="User",
-        created_at="2025-01-01T00:00:00Z",
-        updated_at="2025-01-01T00:00:00Z",
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
-    return admin
 
 
 def mock_seller_dto():
-    """Mock seller user as UserDTO object."""
-    seller = UserDTO(
-        id=MOCK_SELLER_ID,
+    """Returns a mock seller UserDTO."""
+    return UserDTO(
+        id=UUID("33333333-3333-3333-3333-333333333333"),
         email="seller@example.com",
         role=UserRole.SELLER,
-        status="Active",
+        status=UserStatus.ACTIVE,
         first_name="Seller",
         last_name="User",
-        created_at="2025-01-01T00:00:00Z",
-        updated_at="2025-01-01T00:00:00Z",
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
-    return seller
 
 
 def mock_buyer_dto():
-    """Mock buyer user as UserDTO object."""
-    buyer = UserDTO(
-        id=MOCK_USER_ID,
+    """Returns a mock buyer UserDTO."""
+    return UserDTO(
+        id=UUID("11111111-1111-1111-1111-111111111111"),
         email="user@example.com",
         role=UserRole.BUYER,
-        status="Active",
-        first_name="Test",
-        last_name="User",
-        created_at="2025-01-01T00:00:00Z",
-        updated_at="2025-01-01T00:00:00Z",
+        status=UserStatus.ACTIVE,
+        first_name="John",
+        last_name="Doe",
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
-    return buyer
 
 
 def mock_require_admin():
-    """Mock of require_admin dependency."""
+    """Returns a mock admin user for require_admin dependency."""
     return mock_admin_dto()
 
 
 def mock_require_seller():
-    """Mock of require_seller dependency."""
+    """Returns a mock seller user for require_seller dependency."""
     return mock_seller_dto()
 
 
 def mock_require_buyer():
-    """Mock of require_buyer dependency."""
+    """Returns a mock buyer user for require_buyer_or_seller dependency."""
     return mock_buyer_dto()
 
 
-# --- Test client ---
-client = TestClient(app)
+def mock_get_admin_user():
+    """Returns a mock admin user for the get_admin_user dependency."""
+    return mock_admin_dto()
 
 
-# --- Test Fixtures ---
 @pytest.fixture
 def setup_auth():
-    """Set up authentication dependencies."""
-    original_overrides = {}
+    """Set up authentication for tests."""
+    # Store original overrides to restore later
+    original_overrides = app.dependency_overrides.copy()
 
-    # Store original overrides
-    dependencies_to_override = [
-        dependencies.require_authenticated,
-        dependencies.require_admin,
-        dependencies.require_seller,
-        dependencies.require_roles,
-    ]
-
-    for dep in dependencies_to_override:
-        original_overrides[dep] = app.dependency_overrides.get(dep)
-
-    # Override dependencies
-    app.dependency_overrides[dependencies.require_authenticated] = (
-        lambda: mock_authenticated_user()
-    )
-    app.dependency_overrides[dependencies.require_admin] = mock_require_admin
-    app.dependency_overrides[dependencies.require_seller] = mock_require_seller
-
-    # Handle require_roles dependency which takes arguments
-    app.dependency_overrides[dependencies.require_roles] = (
-        lambda roles: mock_require_buyer
-    )
+    # Mock all authentication dependencies
+    for dep, mock_fn in [
+        (dependencies.require_authenticated, mock_authenticated_user),
+        (dependencies.require_admin, mock_require_admin),
+        (dependencies.require_seller, mock_require_seller),
+        (dependencies.require_buyer_or_seller, mock_require_buyer),
+        (dependencies.get_admin_user, mock_get_admin_user),
+    ]:
+        app.dependency_overrides[dep] = lambda fn=mock_fn: fn()
 
     yield
 
     # Restore original overrides
-    for dep, override in original_overrides.items():
-        if override:
-            app.dependency_overrides[dep] = override
-        else:
+    app.dependency_overrides = original_overrides
+    for dep in [
+        dependencies.require_authenticated,
+        dependencies.require_admin,
+        dependencies.require_seller,
+        dependencies.require_buyer_or_seller,
+        dependencies.get_admin_user,
+    ]:
+        if dep not in original_overrides:
             app.dependency_overrides.pop(dep, None)
 
 
@@ -356,3 +332,69 @@ def test_refresh_csrf_token(setup_auth):
             app.dependency_overrides[CsrfProtect] = original_override
         else:
             app.dependency_overrides.pop(CsrfProtect, None)
+
+
+# Stub UserService
+class StubUserService:
+    def __init__(self, db_session, logger):
+        self.db_session = db_session
+        self.logger = logger
+    
+    async def get_user_by_id(self, user_id):
+        """Returns a mock user"""
+        return UserDTO(
+            id=user_id,
+            email="test@example.com",
+            role=UserRole.ADMIN,
+            status=UserStatus.ACTIVE,
+            first_name="Test",
+            last_name="User"
+        )
+    
+    async def block_user(self, user_id):
+        """Mock blocking a user"""
+        return UserDTO(
+            id=user_id,
+            email="test@example.com",
+            role=UserRole.ADMIN,
+            status=UserStatus.INACTIVE,
+            first_name="Test",
+            last_name="User"
+        )
+    
+    async def unblock_user(self, user_id):
+        """Mock unblocking a user"""
+        return UserDTO(
+            id=user_id,
+            email="test@example.com",
+            role=UserRole.ADMIN,
+            status=UserStatus.ACTIVE,
+            first_name="Test",
+            last_name="User"
+        )
+    
+    async def list_users(self, page=1, limit=10, role=None, status=None, search=None):
+        """Mock listing users"""
+        mock_users = [
+            UserDTO(
+                id=UUID("11111111-1111-1111-1111-111111111111"),
+                email="user@example.com",
+                role=UserRole.BUYER,
+                status=UserStatus.ACTIVE,
+                first_name="John",
+                last_name="Doe",
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
+            )
+        ]
+        
+        return UserListResponse(
+            items=mock_users,
+            total=len(mock_users),
+            page=page,
+            limit=limit,
+            pages=1,
+        )
+
+# Set up the dependency overrides
+app.dependency_overrides[dependencies.get_user_service] = lambda: StubUserService(None, logging.getLogger("test")) 

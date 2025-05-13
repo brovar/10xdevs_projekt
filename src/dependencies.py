@@ -2,13 +2,14 @@ import logging
 import os
 from logging import Logger
 from typing import AsyncGenerator, Callable, Dict, List, Optional, TYPE_CHECKING
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from schemas import UserRole
+from schemas import UserDTO, UserRole
 from services.auth_service import AuthService
 from services.log_service import LogService
 from services.order_service import OrderService
@@ -194,9 +195,56 @@ def get_user_service(
     logger: Logger = Depends(get_logger),
 ) -> "UserService":
     """Dependency that provides a UserService instance."""
-    from services.user_service import UserService
-
     return UserService(db_session, logger)
+
+
+# New dependency for admin router that returns a UserDTO object instead of a dict
+async def get_admin_user(
+    user_data: Dict = Depends(require_admin),
+    user_service: UserService = Depends(get_user_service),
+) -> UserDTO:
+    """
+    Dependency that provides the current admin user as a UserDTO object.
+    
+    This is needed because some admin endpoints expect a UserDTO object,
+    but require_admin returns a dict with just user_id and user_role.
+    
+    Args:
+        user_data: Dict containing user_id and user_role from require_admin
+        user_service: UserService for fetching complete user details
+        
+    Returns:
+        UserDTO: The complete user object
+        
+    Raises:
+        HTTPException: If the user cannot be found
+    """
+    try:
+        # Convert user_id to UUID if it's a string
+        user_id = user_data.get("user_id")
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+            
+        # Get complete user details from database
+        user = await user_service.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail={
+                    "error_code": "USER_NOT_FOUND",
+                    "message": "User account not found. Please login again.",
+                },
+            )
+        return user
+    except Exception as e:
+        # Handle any other errors
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error_code": "USER_FETCH_FAILED",
+                "message": f"Failed to fetch user details: {str(e)}",
+            },
+        )
 
 
 def get_payment_service(

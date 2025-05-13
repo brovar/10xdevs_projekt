@@ -38,7 +38,7 @@ from starlette.testclient import TestClient
 import dependencies
 import routers.seller_router as seller_router
 from main import app
-from schemas import OfferStatus, OrderListResponse, OrderStatus, UserRole
+from schemas import OfferStatus, OrderListResponse, OrderStatus, UserRole, UserDTO, UserStatus
 
 # Mock user IDs and other constants
 MOCK_BUYER_ID = uuid4()
@@ -264,6 +264,24 @@ class StubLogService:
         StubLogService.logs.append(log_data)
 
 
+# Stub UserService
+class StubUserService:
+    def __init__(self, db_session, logger):
+        self.db_session = db_session
+        self.logger = logger
+    
+    async def get_user_by_id(self, user_id):
+        """Returns a mock user"""
+        return UserDTO(
+            id=user_id,
+            email="test@example.com",
+            role=UserRole.SELLER,
+            status=UserStatus.ACTIVE,
+            first_name="Test",
+            last_name="User"
+        )
+
+
 # Use the actual router from the application
 app.include_router(seller_router.router)
 
@@ -280,10 +298,15 @@ def override_dependencies(monkeypatch):
     """Fixture patching dependencies and services."""
     # Store current overrides to restore
     original_overrides = app.dependency_overrides.copy()
+    
+    # Create stub service instances
+    stub_order_service = StubOrderService(mock_session, logger)
+    stub_log_service = StubLogService(mock_session, logger)
+    stub_user_service = StubUserService(mock_session, logger)
 
     # --- Reset stub services for each test ---
-    stub_order_service._reset()
-    stub_log_service._reset()
+    StubOrderService._reset()
+    StubLogService._reset()
 
     # --- Mock User Management (local state within fixture) ---
     current_user_data = (
@@ -326,6 +349,9 @@ def override_dependencies(monkeypatch):
     app.dependency_overrides[dependencies.get_log_service] = (
         lambda: stub_log_service
     )
+
+    # --- Override User Service Dependency ---
+    app.dependency_overrides[dependencies.get_user_service] = lambda: stub_user_service
 
     # --- Helper to change user for tests ---
     def set_mock_user(user_func):

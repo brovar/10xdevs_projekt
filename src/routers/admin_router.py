@@ -4,8 +4,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from fastapi_csrf_protect import CsrfProtect
 
-from dependencies import (get_log_service, get_logger, get_offer_service,
-                          get_order_service, get_user_service, require_admin)
+from dependencies import (get_admin_user, get_log_service, get_logger, get_offer_service,
+                          get_order_service, get_user_service)
 from schemas import (AdminLogListQueryParams, AdminOfferListQueryParams,
                      AdminOrderListQueryParams, ErrorResponse, LogEventType,
                      LogListResponse, OfferDetailDTO, OfferListResponse,
@@ -43,7 +43,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 )
 async def list_users(
     query_params: UserListQueryParams = Depends(),
-    current_user: UserDTO = Depends(require_admin),
+    current_user: UserDTO = Depends(get_admin_user),
     user_service: UserService = Depends(get_user_service),
     log_service: LogService = Depends(get_log_service),
     logger: Logger = Depends(get_logger),
@@ -115,7 +115,7 @@ async def list_users(
 )
 async def get_user_details(
     user_id: UUID = Path(..., description="The ID of the user to retrieve"),
-    current_user: UserDTO = Depends(require_admin),
+    current_user: UserDTO = Depends(get_admin_user),
     user_service: UserService = Depends(get_user_service),
     log_service: LogService = Depends(get_log_service),
     logger: Logger = Depends(get_logger),
@@ -259,7 +259,7 @@ async def block_user(
     request: Request,
     csrf_protect: CsrfProtect = Depends(),
     user_id: UUID = Path(..., description="ID of user to block"),
-    current_user: UserDTO = Depends(require_admin),
+    current_user: UserDTO = Depends(get_admin_user),
     user_service: UserService = Depends(get_user_service),
     log_service: LogService = Depends(get_log_service),
     logger: Logger = Depends(get_logger),
@@ -428,7 +428,7 @@ async def unblock_user(
     request: Request,
     csrf_protect: CsrfProtect = Depends(),
     user_id: UUID = Path(..., description="ID of user to unblock"),
-    current_user: UserDTO = Depends(require_admin),
+    current_user: UserDTO = Depends(get_admin_user),
     user_service: UserService = Depends(get_user_service),
     log_service: LogService = Depends(get_log_service),
     logger: Logger = Depends(get_logger),
@@ -526,7 +526,7 @@ async def unblock_user(
 )
 async def list_all_offers(
     query_params: AdminOfferListQueryParams = Depends(),
-    current_user: UserDTO = Depends(require_admin),
+    current_user: UserDTO = Depends(get_admin_user),
     offer_service: OfferService = Depends(get_offer_service),
     log_service: LogService = Depends(get_log_service),
     logger: Logger = Depends(get_logger),
@@ -623,7 +623,7 @@ async def list_all_offers(
 )
 async def moderate_offer(
     offer_id: UUID = Path(..., description="The ID of the offer to moderate"),
-    current_user: UserDTO = Depends(require_admin),
+    current_user: UserDTO = Depends(get_admin_user),
     offer_service: OfferService = Depends(get_offer_service),
     log_service: LogService = Depends(get_log_service),
     logger: Logger = Depends(get_logger),
@@ -719,7 +719,7 @@ async def unmoderate_offer(
     offer_id: UUID = Path(
         ..., description="The ID of the offer to unmoderate"
     ),
-    current_user: UserDTO = Depends(require_admin),
+    current_user: UserDTO = Depends(get_admin_user),
     offer_service: OfferService = Depends(get_offer_service),
     log_service: LogService = Depends(get_log_service),
     logger: Logger = Depends(get_logger),
@@ -791,7 +791,7 @@ async def unmoderate_offer(
 )
 async def list_all_orders(
     query_params: AdminOrderListQueryParams = Depends(),
-    current_user: UserDTO = Depends(require_admin),
+    current_user: UserDTO = Depends(get_admin_user),
     order_service: OrderService = Depends(get_order_service),
     log_service: LogService = Depends(get_log_service),
     logger: Logger = Depends(get_logger),
@@ -917,7 +917,7 @@ async def list_all_orders(
 )
 async def cancel_order(
     order_id: UUID = Path(..., description="The ID of the order to cancel"),
-    current_user: UserDTO = Depends(require_admin),
+    current_user: UserDTO = Depends(get_admin_user),
     order_service: OrderService = Depends(get_order_service),
     log_service: LogService = Depends(get_log_service),
     logger: Logger = Depends(get_logger),
@@ -1074,7 +1074,7 @@ async def cancel_order(
 )
 async def list_logs(
     query_params: AdminLogListQueryParams = Depends(),
-    current_user: UserDTO = Depends(require_admin),
+    current_user: UserDTO = Depends(get_admin_user),
     log_service: LogService = Depends(get_log_service),
     logger: Logger = Depends(get_logger),
 ) -> LogListResponse:

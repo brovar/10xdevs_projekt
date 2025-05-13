@@ -194,6 +194,7 @@ app.dependency_overrides[dependencies.get_db_session] = lambda: mock_session
 app.dependency_overrides[dependencies.get_logger] = lambda: logging.getLogger(
     "test_admin"
 )
+app.dependency_overrides[dependencies.get_user_service] = lambda: StubUserService(mock_session, logging.getLogger("test_admin"))
 
 # Set logger to router
 logger = logging.getLogger("test_admin")
@@ -798,6 +799,9 @@ def override_dependencies(monkeypatch):
     )
 
     # Override service dependencies
+    app.dependency_overrides[dependencies.get_user_service] = (
+        lambda: stub_user_service
+    )
     app.dependency_overrides[admin_router.UserService] = (
         lambda: stub_user_service
     )
@@ -829,18 +833,29 @@ def override_dependencies(monkeypatch):
         admin_router, "AdminLogListQueryParams", MockAdminLogListQueryParams
     )
 
-    # Set up default admin authentication
-    async def mock_require_authenticated():
-        return _authenticated_admin()
-
-    async def mock_require_admin():
-        return _authenticated_admin()
-
-    # Override authentication dependencies
-    app.dependency_overrides[dependencies.require_authenticated] = (
-        mock_require_authenticated
+    # Create a mock admin user that will be returned by get_admin_user
+    admin_user = UserDTO(
+        id=MOCK_ADMIN_ID,
+        email="admin@example.com",
+        role=UserRole.ADMIN,
+        status=UserStatus.ACTIVE,
+        first_name="Test Admin",
+        last_name="User",
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
-    app.dependency_overrides[dependencies.require_admin] = mock_require_admin
+    
+    # Create a stub admin object for require_admin
+    admin_obj = _authenticated_admin()
+    
+    # Create a direct mock implementation for get_admin_user
+    async def mock_get_admin_user():
+        return admin_user
+    
+    # Override authentication dependencies
+    app.dependency_overrides[dependencies.require_authenticated] = lambda: admin_obj
+    app.dependency_overrides[dependencies.require_admin] = lambda: admin_obj
+    app.dependency_overrides[dependencies.get_admin_user] = mock_get_admin_user
     app.dependency_overrides[CsrfProtect] = lambda: MockCsrfProtect()
 
     yield
@@ -1563,18 +1578,30 @@ def buyer_auth():
                 "message": "Admin role required",
             },
         )
+        
+    async def mock_get_admin_user():
+        # This should also raise a forbidden error
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error_code": "INSUFFICIENT_PERMISSIONS",
+                "message": "Admin role required",
+            },
+        )
 
     # Store original overrides
     original_authenticated = app.dependency_overrides.get(
         dependencies.require_authenticated
     )
     original_admin = app.dependency_overrides.get(dependencies.require_admin)
+    original_get_admin_user = app.dependency_overrides.get(dependencies.get_admin_user)
 
     # Override the dependencies
     app.dependency_overrides[dependencies.require_authenticated] = (
         mock_buyer_authenticated
     )
     app.dependency_overrides[dependencies.require_admin] = mock_buyer_admin
+    app.dependency_overrides[dependencies.get_admin_user] = mock_get_admin_user
 
     yield
 
@@ -1590,6 +1617,11 @@ def buyer_auth():
         app.dependency_overrides[dependencies.require_admin] = original_admin
     else:
         app.dependency_overrides.pop(dependencies.require_admin, None)
+        
+    if original_get_admin_user:
+        app.dependency_overrides[dependencies.get_admin_user] = original_get_admin_user
+    else:
+        app.dependency_overrides.pop(dependencies.get_admin_user, None)
 
 
 @pytest.fixture
@@ -1607,18 +1639,30 @@ def seller_auth():
                 "message": "Admin role required",
             },
         )
+        
+    async def mock_get_admin_user():
+        # This should also raise a forbidden error
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error_code": "INSUFFICIENT_PERMISSIONS",
+                "message": "Admin role required",
+            },
+        )
 
     # Store original overrides
     original_authenticated = app.dependency_overrides.get(
         dependencies.require_authenticated
     )
     original_admin = app.dependency_overrides.get(dependencies.require_admin)
+    original_get_admin_user = app.dependency_overrides.get(dependencies.get_admin_user)
 
     # Override the dependencies
     app.dependency_overrides[dependencies.require_authenticated] = (
         mock_seller_authenticated
     )
     app.dependency_overrides[dependencies.require_admin] = mock_seller_admin
+    app.dependency_overrides[dependencies.get_admin_user] = mock_get_admin_user
 
     yield
 
@@ -1634,6 +1678,11 @@ def seller_auth():
         app.dependency_overrides[dependencies.require_admin] = original_admin
     else:
         app.dependency_overrides.pop(dependencies.require_admin, None)
+        
+    if original_get_admin_user:
+        app.dependency_overrides[dependencies.get_admin_user] = original_get_admin_user
+    else:
+        app.dependency_overrides.pop(dependencies.get_admin_user, None)
 
 
 @pytest.fixture
@@ -1655,18 +1704,29 @@ def no_auth():
                 "message": "User not authenticated",
             },
         )
+        
+    async def mock_get_admin_user():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error_code": "NOT_AUTHENTICATED",
+                "message": "User not authenticated",
+            },
+        )
 
     # Store original overrides
     original_authenticated = app.dependency_overrides.get(
         dependencies.require_authenticated
     )
     original_admin = app.dependency_overrides.get(dependencies.require_admin)
+    original_get_admin_user = app.dependency_overrides.get(dependencies.get_admin_user)
 
     # Override the dependencies
     app.dependency_overrides[dependencies.require_authenticated] = (
         mock_require_authenticated
     )
     app.dependency_overrides[dependencies.require_admin] = mock_require_admin
+    app.dependency_overrides[dependencies.get_admin_user] = mock_get_admin_user
 
     yield
 
@@ -1682,6 +1742,11 @@ def no_auth():
         app.dependency_overrides[dependencies.require_admin] = original_admin
     else:
         app.dependency_overrides.pop(dependencies.require_admin, None)
+        
+    if original_get_admin_user:
+        app.dependency_overrides[dependencies.get_admin_user] = original_get_admin_user
+    else:
+        app.dependency_overrides.pop(dependencies.get_admin_user, None)
 
 
 def test_logout_csrf_error(monkeypatch):
