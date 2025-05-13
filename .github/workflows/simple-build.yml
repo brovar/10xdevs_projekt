@@ -97,9 +97,15 @@ jobs:
       - name: Test container startup
         run: |
           docker compose up -d
-          sleep 30  # Wait for services to start
-          curl -f http://localhost:8000/docs || exit 1  # Check if API is accessible
-          curl -f http://localhost:3000 || exit 1  # Check if frontend is accessible
+          echo "Waiting 60 seconds for services to start..."
+          sleep 60
+          echo "Attempting to fetch container logs before checks..."
+          docker compose logs app
+          echo "Checking API endpoint (http://localhost:8000/docs)..."
+          curl --verbose -f http://localhost:8000/docs || (echo "API check failed. Dumping logs:" && docker compose logs app && exit 1)
+          echo "Checking frontend endpoint (http://localhost:3000)..."
+          curl --verbose -f http://localhost:3000 || (echo "Frontend check failed. Dumping logs:" && docker compose logs app && exit 1)
+          echo "Shutting down containers..."
           docker compose down
 
   status-comment:
@@ -139,7 +145,7 @@ jobs:
             echo "failure_job=Unit Tests" >> $GITHUB_OUTPUT
             echo "job_status=❌ Failed" >> $GITHUB_OUTPUT
           elif [[ "${{ needs.build.result }}" == "failure" ]]; then
-            echo "failure_job=Container Build" >> $GITHUB_OUTPUT
+            echo "failure_job=Container Build/Startup" >> $GITHUB_OUTPUT
             echo "job_status=❌ Failed" >> $GITHUB_OUTPUT
           else
             echo "failure_job=Unknown" >> $GITHUB_OUTPUT
