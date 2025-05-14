@@ -31,7 +31,7 @@ const ImageGallery = ({ imageUrl, altText }) => {
             <div className="position-absolute top-50 start-50 translate-middle text-muted">
               <div className="text-center">
                 <i className="bi bi-image fs-1 mb-2"></i>
-                <p>Brak zdjęcia</p>
+                <p>No image</p>
               </div>
             </div>
           )}

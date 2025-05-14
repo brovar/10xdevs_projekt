@@ -61,10 +61,10 @@ const Header = () => {
 
     try {
       await logout();
-      addSuccess('Wylogowano pomyślnie.');
+      addSuccess('Logged out successfully.');
       navigate('/login');
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Wystąpił błąd podczas wylogowywania. Spróbuj ponownie później.';
+      const errorMessage = error.response?.data?.message || 'An error occurred while logging out. Please try again later.';
       addError(errorMessage);
     } finally {
       setIsLoggingOut(false);
@@ -98,7 +98,7 @@ const Header = () => {
                   className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
                   to="/"
                 >
-                  Strona Główna
+                  Home
                 </NavLink>
               </li>
               
@@ -109,7 +109,7 @@ const Header = () => {
                       className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
                       to="/account"
                     >
-                      Moje Konto
+                      My Account
                     </NavLink>
                   </li>
                   <li className="nav-item">
@@ -117,7 +117,7 @@ const Header = () => {
                       className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
                       to="/orders"
                     >
-                      Moje Zamówienia
+                      My Orders
                     </NavLink>
                   </li>
                 </>
@@ -130,7 +130,7 @@ const Header = () => {
                       className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
                       to="/account"
                     >
-                      Moje Konto
+                      My Account
                     </NavLink>
                   </li>
                   <li className="nav-item">
@@ -138,7 +138,7 @@ const Header = () => {
                       className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
                       to="/seller/offers"
                     >
-                      Moje Oferty
+                      My Offers
                     </NavLink>
                   </li>
                   <li className="nav-item">
@@ -146,7 +146,7 @@ const Header = () => {
                       className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
                       to="/seller/sales"
                     >
-                      Historia Sprzedaży
+                      Sales History
                     </NavLink>
                   </li>
                 </>
@@ -159,7 +159,7 @@ const Header = () => {
                       className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
                       to="/account"
                     >
-                      Moje Konto
+                      My Account
                     </NavLink>
                   </li>
                   <li className="nav-item">
@@ -167,7 +167,7 @@ const Header = () => {
                       className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
                       to="/admin"
                     >
-                      Panel Admina
+                      Admin Panel
                     </NavLink>
                   </li>
                 </>
@@ -196,15 +196,15 @@ const Header = () => {
                     <button
                       className="nav-link border-0 bg-transparent"
                       onClick={handleLogoutClick}
-                      aria-label="Wyloguj się z systemu"
+                      aria-label="Logout"
                     >
                       {isLoggingOut ? (
                         <>
                           <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                          Wylogowywanie...
+                          Logging out...
                         </>
                       ) : (
-                        "Wyloguj się"
+                        "Logout"
                       )}
                     </button>
                   </li>
@@ -213,7 +213,7 @@ const Header = () => {
                       <NavLink 
                         className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
                         to="/cart"
-                        aria-label="Koszyk zakupowy"
+                        aria-label="Shopping cart"
                       >
                         <i className="bi bi-cart" aria-hidden="true"></i>
                         {totalItems > 0 && (
@@ -230,7 +230,7 @@ const Header = () => {
                       className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
                       to="/login"
                     >
-                      Logowanie
+                      Login
                     </NavLink>
                   </li>
                   <li className="nav-item">
@@ -238,7 +238,7 @@ const Header = () => {
                       className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
                       to="/register"
                     >
-                      Rejestracja
+                      Register
                     </NavLink>
                   </li>
                 </>

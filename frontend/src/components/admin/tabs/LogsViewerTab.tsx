@@ -89,7 +89,7 @@ const LogsViewerTab: React.FC = () => {
 
   return (
     <div className="logs-viewer-tab">
-      <h2 className="mb-4">Logi Systemowe</h2>
+      <h2 className="mb-4">System Logs</h2>
       
       {/* Filters */}
       <LogFiltersComponent 
@@ -98,7 +98,7 @@ const LogsViewerTab: React.FC = () => {
       />
       
       {/* Loading state */}
-      {isLoading && <LoadingSpinner text="Ładowanie logów..." />}
+      {isLoading && <LoadingSpinner text="Loading logs..." />}
       
       {/* Error state */}
       {error && !isLoading && (
@@ -118,7 +118,7 @@ const LogsViewerTab: React.FC = () => {
           {/* No logs message */}
           {logs.length === 0 && (
             <div className="alert alert-info" role="status">
-              Brak logów spełniających kryteria wyszukiwania.
+              No logs matching search criteria.
             </div>
           )}
           
@@ -128,7 +128,7 @@ const LogsViewerTab: React.FC = () => {
               <PaginationComponent 
                 paginationInfo={paginationData}
                 onPageChange={handlePageChange}
-                ariaLabel="Nawigacja stronicowania logów systemowych"
+                ariaLabel="System logs pagination navigation"
               />
             </div>
           )}

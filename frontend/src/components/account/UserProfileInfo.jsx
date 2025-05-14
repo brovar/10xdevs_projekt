@@ -11,7 +11,7 @@ const UserProfileInfo = ({ userData }) => {
       <Card className="mb-4">
         <Card.Body className="text-center">
           <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Ładowanie...</span>
+            <span className="visually-hidden">Loading...</span>
           </div>
         </Card.Body>
       </Card>
@@ -20,29 +20,19 @@ const UserProfileInfo = ({ userData }) => {
 
   const { email, role, status, firstName, lastName, createdAt } = userData;
 
-  // Translate role to Polish
+  // No need to translate roles anymore, using English directly
   const translateRole = (role) => {
-    const roleMap = {
-      'Buyer': 'Kupujący',
-      'Seller': 'Sprzedający',
-      'Admin': 'Administrator'
-    };
-    return roleMap[role] || role;
+    return role;
   };
 
-  // Translate status to Polish
+  // No need to translate statuses anymore, using English directly
   const translateStatus = (status) => {
-    const statusMap = {
-      'Active': 'Aktywny',
-      'Inactive': 'Nieaktywny',
-      'Deleted': 'Usunięty'
-    };
-    return statusMap[status] || status;
+    return status;
   };
 
   return (
     <Card className="mb-4">
-      <Card.Header as="h5">Informacje o profilu</Card.Header>
+      <Card.Header as="h5">Profile Information</Card.Header>
       <ListGroup variant="flush">
         <ListGroup.Item>
           <div className="row">
@@ -52,19 +42,19 @@ const UserProfileInfo = ({ userData }) => {
         </ListGroup.Item>
         <ListGroup.Item>
           <div className="row">
-            <div className="col-md-4 fw-bold">Imię:</div>
+            <div className="col-md-4 fw-bold">First Name:</div>
             <div className="col-md-8">{firstName || "-"}</div>
           </div>
         </ListGroup.Item>
         <ListGroup.Item>
           <div className="row">
-            <div className="col-md-4 fw-bold">Nazwisko:</div>
+            <div className="col-md-4 fw-bold">Last Name:</div>
             <div className="col-md-8">{lastName || "-"}</div>
           </div>
         </ListGroup.Item>
         <ListGroup.Item>
           <div className="row">
-            <div className="col-md-4 fw-bold">Rola:</div>
+            <div className="col-md-4 fw-bold">Role:</div>
             <div className="col-md-8">{translateRole(role)}</div>
           </div>
         </ListGroup.Item>
@@ -76,7 +66,7 @@ const UserProfileInfo = ({ userData }) => {
         </ListGroup.Item>
         <ListGroup.Item>
           <div className="row">
-            <div className="col-md-4 fw-bold">Data utworzenia:</div>
+            <div className="col-md-4 fw-bold">Created At:</div>
             <div className="col-md-8">{createdAt}</div>
           </div>
         </ListGroup.Item>

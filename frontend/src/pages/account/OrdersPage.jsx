@@ -51,7 +51,7 @@ const OrdersPage = () => {
       setPaginationData(mapPaginationData(response));
     } catch (error) {
       console.error('Failed to fetch orders:', error);
-      setError('Nie udało się załadować historii zamówień. Spróbuj odświeżyć stronę.');
+      setError('Failed to load order history. Please try refreshing the page.');
     } finally {
       setIsLoading(false);
     }
@@ -83,15 +83,15 @@ const OrdersPage = () => {
 
   return (
     <Container className="py-5">
-      <h1 className="mb-4">Moje Zamówienia</h1>
+      <h1 className="mb-4">My Orders</h1>
       
       {/* Loading state */}
       {isLoading && orders.length === 0 && (
         <div className="text-center py-5">
           <Spinner animation="border" role="status" variant="primary">
-            <span className="visually-hidden">Ładowanie...</span>
+            <span className="visually-hidden">Loading...</span>
           </Spinner>
-          <p className="mt-3">Ładowanie historii zamówień...</p>
+          <p className="mt-3">Loading order history...</p>
         </div>
       )}
       
@@ -105,14 +105,14 @@ const OrdersPage = () => {
       {/* Empty state */}
       {!isLoading && !error && orders.length === 0 && (
         <Alert variant="info">
-          Nie masz jeszcze żadnych zamówień. Przejdź do sklepu, aby złożyć pierwsze zamówienie.
+          You don't have any orders yet. Go to the store to place your first order.
         </Alert>
       )}
       
       {/* Orders list */}
       {!error && orders.length > 0 && (
         <>
-          <p>Poniżej znajduje się lista Twoich zamówień.</p>
+          <p>Below is a list of your orders.</p>
           
           <OrdersList 
             orders={orders} 

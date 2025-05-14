@@ -22,7 +22,7 @@ const SearchFilters = ({
     <div>
       <div className="mb-3">
         <label htmlFor="categoryFilter" className="form-label">
-          Filtruj według kategorii:
+          Filter by category:
         </label>
         <select
           id="categoryFilter"
@@ -30,9 +30,9 @@ const SearchFilters = ({
           value={selectedCategoryId || ''}
           onChange={handleCategoryChange}
           disabled={isLoading || categories.length === 0}
-          aria-label="Filtruj według kategorii"
+          aria-label="Filter by category"
         >
-          <option value="">Wszystkie kategorie</option>
+          <option value="">All categories</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
@@ -40,25 +40,25 @@ const SearchFilters = ({
           ))}
         </select>
         {isLoading && (
-          <div className="text-muted small mt-1">Ładowanie kategorii...</div>
+          <div className="text-muted small mt-1">Loading categories...</div>
         )}
       </div>
 
       <div className="mb-3">
         <label htmlFor="sortOrder" className="form-label">
-          Sortuj według:
+          Sort by:
         </label>
         <select
           id="sortOrder"
           className="form-select"
           value={sortBy}
           onChange={handleSortChange}
-          aria-label="Sortuj według"
+          aria-label="Sort by"
         >
-          <option value="created_at_desc">Najnowsze</option>
-          <option value="price_asc">Cena: od najniższej</option>
-          <option value="price_desc">Cena: od najwyższej</option>
-          <option value="relevance">Trafność</option>
+          <option value="created_at_desc">Newest</option>
+          <option value="price_asc">Price: Low to High</option>
+          <option value="price_desc">Price: High to Low</option>
+          <option value="relevance">Relevance</option>
         </select>
       </div>
     </div>

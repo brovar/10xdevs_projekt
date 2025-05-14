@@ -7,8 +7,9 @@ const OfferCard = ({ offer }) => {
 
   // Format date to display
   const formatDate = (dateString) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL');
+    return date.toLocaleDateString('en-US');
   };
 
   // Status badge mapping
@@ -22,11 +23,11 @@ const OfferCard = ({ offer }) => {
     };
     
     const statusLabels = {
-      active: 'Aktywna',
-      inactive: 'Nieaktywna',
-      sold: 'Sprzedana',
-      moderated: 'Moderowana',
-      archived: 'Archiwalna'
+      active: 'Active',
+      inactive: 'Inactive',
+      sold: 'Sold',
+      moderated: 'Moderated',
+      archived: 'Archived'
     };
     
     return (
@@ -73,11 +74,11 @@ const OfferCard = ({ offer }) => {
         <div className="d-flex justify-content-between align-items-center mb-2">
           {offer.quantity > 0 ? (
             <p className="card-text small text-muted mb-0">
-              Dostępnych: {offer.quantity} szt.
+              Available: {offer.quantity} pcs.
             </p>
           ) : (
             <p className="card-text small text-danger mb-0">
-              Produkt niedostępny
+              Product unavailable
             </p>
           )}
           
@@ -91,9 +92,9 @@ const OfferCard = ({ offer }) => {
         <Link 
           to={offer.detailsLink} 
           className="btn btn-outline-primary mt-auto stretched-link"
-          aria-label={`Zobacz szczegóły oferty ${offer.title}`}
+          aria-label={`View details of offer ${offer.title}`}
         >
-          Zobacz szczegóły
+          View details
         </Link>
       </div>
     </div>

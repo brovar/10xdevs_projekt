@@ -7,10 +7,10 @@ const Footer = () => {
     <footer className="bg-light py-3 mt-auto">
       <div className="container text-center">
         <p className="mb-0">
-          &copy; {currentYear} Steambay. Wszelkie prawa zastrzeżone.
+          &copy; {currentYear} Steambay. All rights reserved.
         </p>
         <p className="small text-muted mb-0">
-          Projekt edukacyjny - platforma handlowa
+          Educational project - e-commerce platform
         </p>
       </div>
     </footer>

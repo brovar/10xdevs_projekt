@@ -35,7 +35,7 @@ async def get_current_user(request: Request, db: AsyncSession):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 "error_code": "NOT_AUTHENTICATED",
-                "message": "Użytkownik nie jest zalogowany.",
+                "message": "User is not logged in.",
             },
         )
 
@@ -50,7 +50,7 @@ async def get_current_user(request: Request, db: AsyncSession):
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
                 "error_code": "USER_NOT_FOUND",
-                "message": "Nie znaleziono użytkownika.",
+                "message": "User not found.",
             },
         )
 

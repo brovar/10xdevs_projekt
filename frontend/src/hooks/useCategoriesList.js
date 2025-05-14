@@ -20,7 +20,7 @@ const useCategoriesList = () => {
         setCategories(data.items || []);
       } catch (error) {
         console.error('Error fetching categories:', error);
-        setError(error.message || 'Wystąpił błąd podczas pobierania kategorii');
+        setError(error.message || 'An error occurred while fetching categories');
       } finally {
         setIsLoading(false);
       }

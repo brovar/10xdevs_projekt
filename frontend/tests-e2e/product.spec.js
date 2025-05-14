@@ -2,17 +2,17 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Product Browsing and Searching', () => {
   
-  // 3.1 Przeglądanie listy ofert
+  // 3.1 Browsing product listings
   test('can view product listings', async ({ page }) => {
-    // Przejdź do aplikacji
+    // Navigate to the application
     await page.goto('/');
     
-    // Poczekaj na załadowanie aplikacji
+    // Wait for the application to load
     await page.waitForLoadState('networkidle');
     
     try {
-      // Poczekaj na załadowanie listy produktów
-      // Różne możliwe selektory dla produktów
+      // Wait for product list to load
+      // Different possible selectors for products
       const productSelectors = [
         '.product-card',
         '.product-item',
@@ -28,35 +28,35 @@ test.describe('Product Browsing and Searching', () => {
         const count = await elements.count();
         if (count > 0) {
           productSelector = selector;
-          console.log(`Znaleziono ${count} produktów z selektorem ${selector}`);
+          console.log(`Found ${count} products with selector ${selector}`);
           break;
         }
       }
       
-      // Jeśli nie znaleziono żadnych produktów, zrób zrzut ekranu i zakończ test
+      // If no products found, take a screenshot and end the test
       if (!productSelector) {
-        console.log('Nie znaleziono produktów na stronie głównej.');
+        console.log('No products found on the main page.');
         await page.screenshot({ path: 'no-products.png' });
         
-        // Sprawdź czy strona ma jakąkolwiek zawartość, która mogłaby wskazywać, że aplikacja działa
+        // Check if the page has any content that might indicate the application is working
         const bodyText = await page.textContent('body');
-        console.log(`Zawartość strony: ${bodyText.substring(0, 200)}...`);
+        console.log(`Page content: ${bodyText.substring(0, 200)}...`);
         
-        // Test przechodzi, ale z ostrzeżeniem w logach
+        // Test passes, but with a warning in the logs
         return;
       }
       
-      // Zrzut ekranu z listą produktów
+      // Screenshot with product list
       await page.screenshot({ path: 'product-list.png' });
       
-      // Sprawdź, czy karty produktów zawierają podstawowe elementy
+      // Check if product cards contain basic elements
       const firstProduct = page.locator(productSelector).first();
       const productContent = await firstProduct.textContent();
       
-      // Sprawdzamy czy karta produktu zawiera tekst (tytuł lub cenę)
+      // Check if the product card contains text (title or price)
       expect(productContent.length).toBeGreaterThan(0);
       
-      // Sprawdzamy paginację, jeśli istnieje
+      // Check pagination if it exists
       const paginationSelectors = [
         '.pagination',
         '[data-testid="pagination"]',
@@ -69,28 +69,28 @@ test.describe('Product Browsing and Searching', () => {
       for (const selector of paginationSelectors) {
         const paginationElement = page.locator(selector).first();
         if (await paginationElement.count() > 0) {
-          console.log(`Znaleziono element paginacji: ${selector}`);
+          console.log(`Found pagination element: ${selector}`);
           break;
         }
       }
       
     } catch (e) {
-      console.error('Błąd podczas testu:', e);
+      console.error('Error during test:', e);
       await page.screenshot({ path: 'product-list-error.png' });
       throw e;
     }
   });
   
-  // 3.2 Wyszukiwanie ofert
+  // 3.2 Searching for products
   test('can search for products', async ({ page }) => {
-    // Przejdź do aplikacji
+    // Navigate to the application
     await page.goto('/');
     
-    // Poczekaj na załadowanie aplikacji
+    // Wait for the application to load
     await page.waitForLoadState('networkidle');
     
     try {
-      // Znajdź pole wyszukiwania
+      // Find search field
       const searchSelectors = [
         'input[type="search"]',
         'input[placeholder*="search"]',
@@ -105,32 +105,32 @@ test.describe('Product Browsing and Searching', () => {
         const input = page.locator(selector).first();
         if (await input.count() > 0) {
           searchInput = input;
-          console.log(`Znaleziono pole wyszukiwania: ${selector}`);
+          console.log(`Found search field: ${selector}`);
           break;
         }
       }
       
-      // Jeśli nie znaleziono pola wyszukiwania, zrób zrzut ekranu i zakończ test
+      // If search field not found, take screenshot and end test
       if (!searchInput) {
-        console.log('Nie znaleziono pola wyszukiwania na stronie.');
+        console.log('No search field found on the page.');
         await page.screenshot({ path: 'no-search-input.png' });
-        // Pomijamy test, ale nie uznajemy za nieudany
+        // Skip test but don't mark as failed
         test.skip();
         return;
       }
       
-      // Wprowadź zapytanie wyszukiwania
+      // Enter search query
       const searchQuery = 'game';
       await searchInput.fill(searchQuery);
       await page.screenshot({ path: 'search-input-filled.png' });
       
-      // Wyślij zapytanie (naciśnij Enter lub znajdź przycisk wyszukiwania)
+      // Submit query (press Enter or find search button)
       try {
         await searchInput.press('Enter');
       } catch (e) {
-        console.log('Nie udało się nacisnąć Enter, próbujemy znaleźć przycisk wyszukiwania');
+        console.log('Failed to press Enter, trying to find search button');
         
-        // Szukaj przycisku wyszukiwania
+        // Look for search button
         const searchButtonSelectors = [
           'button[type="submit"]',
           'button:has-text("Search")',
@@ -146,24 +146,24 @@ test.describe('Product Browsing and Searching', () => {
           if (await button.count() > 0) {
             await button.click();
             searchButtonFound = true;
-            console.log(`Kliknięto przycisk wyszukiwania: ${selector}`);
+            console.log(`Clicked search button: ${selector}`);
             break;
           }
         }
         
         if (!searchButtonFound) {
-          console.log('Nie znaleziono przycisku wyszukiwania, test może być niepełny');
-          // Pomijamy dalszą część testu, bo nie mogliśmy wykonać wyszukiwania
+          console.log('Search button not found, test may be incomplete');
+          // Skip the rest of the test because we couldn't perform the search
           test.skip();
           return;
         }
       }
       
-      // Poczekaj na wyniki wyszukiwania
+      // Wait for search results
       await page.waitForTimeout(2000);
       await page.screenshot({ path: 'search-results.png' });
       
-      // Sprawdź wyniki wyszukiwania
+      // Check search results
       const resultSelectors = [
         '.product-card',
         '.product-item',
@@ -173,64 +173,64 @@ test.describe('Product Browsing and Searching', () => {
         '.search-result-item'
       ];
       
-      // Szukaj wyników lub komunikatu o braku wyników
+      // Look for results or no results message
       const noResultsIndicators = [
         'text=No results found',
         'text=No products found',
-        'text=Nie znaleziono',
+        'text=Not found',
         '[data-testid="no-results"]'
       ];
       
-      // Zmienna do śledzenia, czy znaleziono wyniki lub komunikat o braku wyników
+      // Variable to track if results or no results message found
       let searchResponseFound = false;
       
-      // Sprawdź najpierw, czy są jakieś wyniki
+      // First check if there are any results
       for (const selector of resultSelectors) {
         const results = page.locator(selector);
         const count = await results.count();
         if (count > 0) {
-          console.log(`Znaleziono ${count} wyników wyszukiwania z selektorem ${selector}`);
+          console.log(`Found ${count} search results with selector ${selector}`);
           searchResponseFound = true;
           
-          // Sprawdź, czy wyniki zawierają szukane słowo (opcjonalne)
+          // Check if results contain the search term (optional)
           const firstResultText = await results.first().textContent();
-          console.log(`Tekst pierwszego wyniku: ${firstResultText.substring(0, 100)}...`);
+          console.log(`Text of first result: ${firstResultText.substring(0, 100)}...`);
           break;
         }
       }
       
-      // Jeśli nie znaleziono wyników, sprawdź czy jest komunikat o braku wyników
+      // If no results found, check if there's a no results message
       if (!searchResponseFound) {
         for (const selector of noResultsIndicators) {
           const element = page.locator(selector).first();
           if (await element.count() > 0) {
-            console.log(`Znaleziono komunikat o braku wyników: ${selector}`);
+            console.log(`Found no results message: ${selector}`);
             searchResponseFound = true;
             break;
           }
         }
       }
       
-      // Test przechodzi, jeśli znaleziono wyniki lub komunikat o braku wyników
+      // Test passes if results or no results message found
       expect(searchResponseFound).toBeTruthy();
       
     } catch (e) {
-      console.error('Błąd podczas testu wyszukiwania:', e);
+      console.error('Error during search test:', e);
       await page.screenshot({ path: 'search-error.png' });
       throw e;
     }
   });
   
-  // 3.3 Przeglądanie szczegółów oferty
+  // 3.3 Viewing product details
   test('can view product details', async ({ page }) => {
-    // Przejdź do aplikacji
+    // Navigate to the application
     await page.goto('/');
     
-    // Poczekaj na załadowanie aplikacji
+    // Wait for the application to load
     await page.waitForLoadState('networkidle');
     
     try {
-      // Poczekaj na załadowanie listy produktów
+      // Wait for product list to load
       const productSelectors = [
         '.product-card',
         '.product-item',
@@ -248,35 +248,35 @@ test.describe('Product Browsing and Searching', () => {
         const count = await products.count();
         if (count > 0) {
           productSelector = selector;
-          console.log(`Znaleziono ${count} produktów z selektorem ${selector}`);
+          console.log(`Found ${count} products with selector ${selector}`);
           break;
         }
       }
       
-      // Jeśli nie znaleziono żadnych produktów, zrób zrzut ekranu i zakończ test
+      // If no products found, take a screenshot and end the test
       if (!productSelector || !products) {
-        console.log('Nie znaleziono produktów na stronie głównej.');
+        console.log('No products found on the main page.');
         await page.screenshot({ path: 'no-products-for-detail.png' });
         test.skip();
         return;
       }
       
-      // Kliknij na pierwszy produkt
+      // Click on the first product
       await page.screenshot({ path: 'before-product-click.png' });
       
-      // Opcjonalnie zapisz nazwę produktu przed kliknięciem
+      // Optionally save product name before clicking
       const firstProduct = products.first();
       const productName = await firstProduct.textContent() || 'Unknown product';
-      console.log(`Kliknięcie w produkt: ${productName.substring(0, 50)}...`);
+      console.log(`Clicking product: ${productName.substring(0, 50)}...`);
       
       await firstProduct.click();
       
-      // Poczekaj na załadowanie strony szczegółów produktu
+      // Wait for product details page to load
       await page.waitForTimeout(2000);
       await page.screenshot({ path: 'product-details.png' });
       
-      // Sprawdź czy strona szczegółów produktu zawiera jakieś elementy
-      // Różne możliwe selektory dla szczegółów produktu
+      // Check if product details page contains any elements
+      // Different possible selectors for product details
       const detailSelectors = [
         '.product-details',
         '.game-details',
@@ -293,12 +293,12 @@ test.describe('Product Browsing and Searching', () => {
         const element = page.locator(selector).first();
         if (await element.count() > 0) {
           detailsFound = true;
-          console.log(`Znaleziono szczegóły produktu z selektorem ${selector}`);
+          console.log(`Found product details with selector ${selector}`);
           break;
         }
       }
       
-      // Sprawdź czy strona zawiera cenę
+      // Check if page contains price
       const priceSelectors = [
         '.price',
         '.product-price',
@@ -312,13 +312,15 @@ test.describe('Product Browsing and Searching', () => {
         const element = page.locator(selector).first();
         if (await element.count() > 0) {
           priceFound = true;
-          console.log(`Znaleziono cenę produktu z selektorem ${selector}`);
+          console.log(`Found price with selector ${selector}`);
           break;
         }
       }
       
-      // Sprawdź czy dla zalogowanego użytkownika jest widoczny przycisk "Dodaj do koszyka"
-      // Szukamy różnych wersji przycisku
+      console.log(`Price information found: ${priceFound}`);
+      
+      // Check if "Add to Cart" button is visible for logged in user
+      // Look for different versions of the button
       const addToCartSelectors = [
         'button:has-text("Add to Cart")',
         'button:has-text("Dodaj do koszyka")',
@@ -329,16 +331,16 @@ test.describe('Product Browsing and Searching', () => {
       for (const selector of addToCartSelectors) {
         const element = page.locator(selector).first();
         if (await element.count() > 0) {
-          console.log(`Znaleziono przycisk dodania do koszyka: ${selector}`);
+          console.log(`Found add to cart button: ${selector}`);
           break;
         }
       }
       
-      // Test przechodzi, jeśli znaleziono stronę szczegółów produktu
+      // Test passes if product details page found
       expect(detailsFound).toBeTruthy();
       
     } catch (e) {
-      console.error('Błąd podczas testu szczegółów produktu:', e);
+      console.error('Error during product details test:', e);
       await page.screenshot({ path: 'product-details-error.png' });
       throw e;
     }

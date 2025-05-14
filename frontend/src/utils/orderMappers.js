@@ -7,19 +7,17 @@ export const mapOrderSummaryToViewModel = (dto) => {
   // Create a shortened display ID from the UUID
   const displayId = `Zam. #${dto.id.substring(0, 8).toUpperCase()}`;
   
-  // Format the date in Polish locale
-  const createdAt = new Date(dto.created_at).toLocaleDateString('pl-PL', {
-    day: '2-digit',
-    month: '2-digit',
+  // Format the date for display
+  const createdAt = new Date(dto.created_at).toLocaleDateString('en-US', {
     year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+    month: 'numeric',
+    day: 'numeric'
   });
   
   // Format the amount with currency
-  const totalAmount = new Intl.NumberFormat('pl-PL', {
+  const totalAmount = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'PLN'
+    currency: 'USD'
   }).format(parseFloat(dto.total_amount));
   
   // Get the number of items if available, or default to unknown
@@ -72,14 +70,14 @@ export const mapOrderItemToViewModel = (dto) => {
   const itemSum = priceAtPurchase * dto.quantity;
   
   // Format the prices for display
-  const priceAtPurchaseFormatted = new Intl.NumberFormat('pl-PL', {
+  const priceAtPurchaseFormatted = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'PLN'
+    currency: 'USD'
   }).format(priceAtPurchase);
   
-  const itemSumFormatted = new Intl.NumberFormat('pl-PL', {
+  const itemSumFormatted = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'PLN'
+    currency: 'USD'
   }).format(itemSum);
   
   return {
@@ -103,29 +101,26 @@ export const mapOrderDetailToViewModel = (dto) => {
   // Create a shortened display ID
   const displayId = `Zam. #${dto.id.substring(0, 8).toUpperCase()}`;
   
-  // Format the dates
-  const createdAt = new Date(dto.created_at).toLocaleDateString('pl-PL', {
-    day: '2-digit',
-    month: '2-digit',
+  // Format the date for display
+  const createdAt = new Date(dto.created_at).toLocaleDateString('en-US', {
     year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+    month: 'numeric',
+    day: 'numeric'
   });
   
-  const updatedAt = dto.updated_at 
-    ? new Date(dto.updated_at).toLocaleDateString('pl-PL', {
-        day: '2-digit', 
-        month: '2-digit', 
+  // Format updated date if available
+  const updatedAt = dto.updated_at
+    ? new Date(dto.updated_at).toLocaleDateString('en-US', {
         year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }) 
+        month: 'numeric',
+        day: 'numeric'
+      })
     : null;
   
   // Format the total amount
-  const totalAmount = new Intl.NumberFormat('pl-PL', {
+  const totalAmount = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'PLN'
+    currency: 'USD'
   }).format(parseFloat(dto.total_amount));
   
   // Map the order items

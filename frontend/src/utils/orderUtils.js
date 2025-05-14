@@ -3,36 +3,36 @@
  */
 export const orderStatusMap = {
   pending_payment: { 
-    display: 'Oczekuje na płatność', 
+    display: 'Pending Payment', 
     className: 'bg-warning text-dark'
   },
   processing: { 
-    display: 'W trakcie realizacji', 
+    display: 'Processing', 
     className: 'bg-info text-white'
   },
   shipped: { 
-    display: 'Wysłane', 
+    display: 'Shipped', 
     className: 'bg-primary text-white'
   },
   delivered: { 
-    display: 'Dostarczone', 
+    display: 'Delivered', 
     className: 'bg-success text-white'
   },
   cancelled: { 
-    display: 'Anulowane', 
+    display: 'Cancelled', 
     className: 'bg-danger text-white'
   },
   failed: { 
-    display: 'Nieudane', 
+    display: 'Failed', 
     className: 'bg-danger text-white'
   },
   // Dla kompatybilności z istniejącą aplikacją
   completed: { 
-    display: 'Zrealizowane', 
+    display: 'Completed', 
     className: 'bg-success text-white'
   },
   pending: { 
-    display: 'Oczekujące', 
+    display: 'Pending', 
     className: 'bg-warning text-dark'
   }
 };
@@ -52,13 +52,13 @@ export const mapOrderSummaryToSaleItemVM = (orderSummary) => {
   // Define next status options based on current status
   let nextStatusOptions = [];
   if (status === 'processing') {
-    nextStatusOptions = [{ value: 'shipped', label: 'Oznacz jako wysłane' }];
+    nextStatusOptions = [{ value: 'shipped', label: 'Mark as Shipped' }];
   } else if (status === 'shipped') {
-    nextStatusOptions = [{ value: 'delivered', label: 'Oznacz jako dostarczone' }];
+    nextStatusOptions = [{ value: 'delivered', label: 'Mark as Delivered' }];
   }
   
-  // Format date to Polish format
-  const createdAt = new Date(orderSummary.created_at).toLocaleString('pl-PL', {
+  // Format date
+  const createdAt = new Date(orderSummary.created_at).toLocaleString('en-US', {
     year: 'numeric',
     month: 'numeric',
     day: 'numeric',
@@ -67,9 +67,9 @@ export const mapOrderSummaryToSaleItemVM = (orderSummary) => {
   });
   
   // Format currency
-  const totalAmount = new Intl.NumberFormat('pl-PL', {
+  const totalAmount = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'PLN'
+    currency: 'USD'
   }).format(orderSummary.total_amount);
   
   // Create shortened display ID from UUID

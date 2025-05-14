@@ -14,7 +14,7 @@ const UserListTable: React.FC<UserListTableProps> = ({ users, onBlock, onUnblock
   const formatDate = useMemo(() => {
     return (dateString: string) => {
       const date = new Date(dateString);
-      return new Intl.DateTimeFormat('pl-PL', {
+      return new Intl.DateTimeFormat('en-US', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -27,7 +27,7 @@ const UserListTable: React.FC<UserListTableProps> = ({ users, onBlock, onUnblock
   if (users.length === 0) {
     return (
       <div className="alert alert-info">
-        Brak użytkowników spełniających kryteria wyszukiwania.
+        No users matching search criteria.
       </div>
     );
   }
@@ -38,11 +38,11 @@ const UserListTable: React.FC<UserListTableProps> = ({ users, onBlock, onUnblock
         <thead className="table-light">
           <tr>
             <th scope="col">Email</th>
-            <th scope="col">Imię i Nazwisko</th>
-            <th scope="col">Rola</th>
+            <th scope="col">Full Name</th>
+            <th scope="col">Role</th>
             <th scope="col">Status</th>
-            <th scope="col">Data utworzenia</th>
-            <th scope="col">Akcje</th>
+            <th scope="col">Created at</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>

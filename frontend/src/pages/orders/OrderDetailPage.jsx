@@ -28,7 +28,7 @@ const OrderDetailPage = () => {
   // Fetch order details from API
   const fetchOrder = useCallback(async () => {
     if (!orderId) {
-      setError('ID zamówienia jest wymagane');
+      setError('Order ID is required');
       setIsLoading(false);
       return;
     }
@@ -53,7 +53,7 @@ const OrderDetailPage = () => {
       setOrder(orderViewModel);
     } catch (error) {
       console.error('Failed to fetch order details:', error);
-      setError(error.message || 'Nie udało się załadować szczegółów zamówienia.');
+      setError(error.message || 'Failed to load order details.');
     } finally {
       setIsLoading(false);
     }
@@ -68,10 +68,10 @@ const OrderDetailPage = () => {
     <Container className="py-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1 className="mb-0">
-          {order ? `Szczegóły zamówienia ${order.displayId}` : 'Szczegóły zamówienia'}
+          {order ? `Order Details ${order.displayId}` : 'Order Details'}
         </h1>
         <Link to="/orders" className="btn btn-outline-secondary">
-          &larr; Wróć do historii zamówień
+          &larr; Back to Order History
         </Link>
       </div>
 
@@ -79,16 +79,16 @@ const OrderDetailPage = () => {
       {isLoading && (
         <div className="text-center py-5">
           <Spinner animation="border" role="status" variant="primary">
-            <span className="visually-hidden">Ładowanie...</span>
+            <span className="visually-hidden">Loading...</span>
           </Spinner>
-          <p className="mt-3">Ładowanie szczegółów zamówienia...</p>
+          <p className="mt-3">Loading order details...</p>
         </div>
       )}
       
       {/* Error state */}
       {error && (
         <Alert variant="danger" className="mb-4">
-          <Alert.Heading>Wystąpił błąd</Alert.Heading>
+          <Alert.Heading>An error occurred</Alert.Heading>
           <p>{error}</p>
           <hr />
           <div className="d-flex justify-content-end">
@@ -96,7 +96,7 @@ const OrderDetailPage = () => {
               variant="outline-danger" 
               onClick={fetchOrder}
             >
-              Spróbuj ponownie
+              Try Again
             </Button>
           </div>
         </Alert>
@@ -107,7 +107,7 @@ const OrderDetailPage = () => {
         <>
           <OrderDetailsPanel order={order} />
           
-          <h2 className="mt-5 mb-3">Produkty w zamówieniu</h2>
+          <h2 className="mt-5 mb-3">Products in Order</h2>
           <ItemsListInOrder items={order.items} />
         </>
       )}

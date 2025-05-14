@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { adminUsersApi } from '../../services/adminService.js';
 
@@ -60,7 +60,7 @@ const UserInfoItem = ({ label, value }) => {
   return (
     <div className="mb-3">
       <div className="text-muted small mb-1">{label}</div>
-      <div>{value || <em className="text-muted">Nie podano</em>}</div>
+      <div>{value || <em className="text-muted">Not provided</em>}</div>
     </div>
   );
 };
@@ -70,7 +70,7 @@ const UserDetailsPanel = ({ user }) => {
     if (!dateString) return null;
     
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pl-PL', {
+    return new Intl.DateTimeFormat('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -83,21 +83,21 @@ const UserDetailsPanel = ({ user }) => {
   return (
     <div className="card">
       <div className="card-header bg-light">
-        <h5 className="mb-0">Informacje o użytkowniku</h5>
+        <h5 className="mb-0">User Information</h5>
       </div>
       <div className="card-body">
         <div className="row">
           <div className="col-md-6">
             <UserInfoItem label="ID" value={user.id} />
             <UserInfoItem label="Email" value={user.email} />
-            <UserInfoItem label="Imię" value={user.first_name} />
-            <UserInfoItem label="Nazwisko" value={user.last_name} />
+            <UserInfoItem label="First Name" value={user.first_name} />
+            <UserInfoItem label="Last Name" value={user.last_name} />
           </div>
           <div className="col-md-6">
-            <UserInfoItem label="Rola" value={user.role} />
+            <UserInfoItem label="Role" value={user.role} />
             <UserInfoItem label="Status" value={<StatusBadge status={user.status} />} />
-            <UserInfoItem label="Data utworzenia" value={formatDate(user.created_at)} />
-            <UserInfoItem label="Data aktualizacji" value={formatDate(user.updated_at)} />
+            <UserInfoItem label="Created At" value={formatDate(user.created_at)} />
+            <UserInfoItem label="Updated At" value={formatDate(user.updated_at)} />
           </div>
         </div>
       </div>
@@ -114,7 +114,7 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, confir
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">{title}</h5>
-            <button type="button" className="btn-close" onClick={onCancel} aria-label="Zamknij"></button>
+            <button type="button" className="btn-close" onClick={onCancel} aria-label="Close"></button>
           </div>
           <div className="modal-body">
             <p>{message}</p>
@@ -126,7 +126,7 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, confir
               onClick={onCancel}
               disabled={isProcessing}
             >
-              Anuluj
+              Cancel
             </button>
             <button 
               type="button" 
@@ -137,7 +137,7 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, confir
               {isProcessing ? (
                 <>
                   <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Przetwarzanie...
+                  Processing...
                 </>
               ) : (
                 confirmButtonText
@@ -159,15 +159,15 @@ const ErrorMessageDisplay = ({ error, className = '', onRetry = null }) => {
       <div className="d-flex align-items-center">
         <div className="flex-grow-1">
           <i className="bi bi-exclamation-triangle-fill me-2"></i>
-          {typeof error === 'string' ? error : 'Wystąpił błąd podczas wykonywania operacji.'}
+          {typeof error === 'string' ? error : 'An error occurred while performing the operation.'}
         </div>
         {onRetry && (
           <button 
             className="btn btn-sm btn-outline-danger ms-3" 
             onClick={onRetry}
-            aria-label="Spróbuj ponownie"
+            aria-label="Try again"
           >
-            <i className="bi bi-arrow-clockwise"></i> Ponów
+            <i className="bi bi-arrow-clockwise"></i> Retry
           </button>
         )}
       </div>
@@ -175,11 +175,11 @@ const ErrorMessageDisplay = ({ error, className = '', onRetry = null }) => {
   );
 };
 
-const LoadingSpinner = ({ text = 'Ładowanie danych...' }) => {
+const LoadingSpinner = ({ text = 'Loading data...' }) => {
   return (
     <div className="d-flex flex-column align-items-center justify-content-center p-4">
       <div className="spinner-border text-primary mb-2" role="status">
-        <span className="visually-hidden">Ładowanie...</span>
+        <span className="visually-hidden">Loading...</span>
       </div>
       {text && <div>{text}</div>}
     </div>
@@ -195,7 +195,7 @@ const AdminUserDetailPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
   
-  const fetchUserDetails = async () => {
+  const fetchUserDetails = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
@@ -204,28 +204,28 @@ const AdminUserDetailPage = () => {
       const userData = await adminService.getUserDetails(userId);
       setUser(userData);
     } catch (err) {
-      setError(err.message || 'Wystąpił błąd podczas pobierania danych użytkownika.');
+      setError(err.message || 'An error occurred while fetching user details.');
       console.error('Error fetching user details:', err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
   
   useEffect(() => {
     if (userId) {
       fetchUserDetails();
     } else {
-      setError('ID użytkownika jest wymagane');
+      setError('User ID is required');
       setIsLoading(false);
     }
-  }, [userId]);
+  }, [userId, fetchUserDetails]);
   
   const handleBlockUser = () => {
     if (!user) return;
     
     setConfirmAction({
       type: 'block',
-      message: `Czy na pewno chcesz zablokować użytkownika ${user.email}?`
+      message: `Are you sure you want to block user ${user.email}?`
     });
   };
   
@@ -234,7 +234,7 @@ const AdminUserDetailPage = () => {
     
     setConfirmAction({
       type: 'unblock',
-      message: `Czy na pewno chcesz odblokować użytkownika ${user.email}?`
+      message: `Are you sure you want to unblock user ${user.email}?`
     });
   };
   
@@ -249,10 +249,10 @@ const AdminUserDetailPage = () => {
       
       if (confirmAction.type === 'block') {
         updatedUser = await adminService.blockUser(userId);
-        setSuccessMessage(`Użytkownik ${user.email} został zablokowany.`);
+        setSuccessMessage(`User ${user.email} has been blocked.`);
       } else if (confirmAction.type === 'unblock') {
         updatedUser = await adminService.unblockUser(userId);
-        setSuccessMessage(`Użytkownik ${user.email} został odblokowany.`);
+        setSuccessMessage(`User ${user.email} has been unblocked.`);
       }
       
       if (updatedUser) {
@@ -261,7 +261,7 @@ const AdminUserDetailPage = () => {
       
       setConfirmAction(null);
     } catch (err) {
-      setError(err.message || `Wystąpił błąd podczas ${confirmAction.type === 'block' ? 'blokowania' : 'odblokowywania'} użytkownika.`);
+      setError(err.message || `An error occurred while ${confirmAction.type === 'block' ? 'blocking' : 'unblocking'} user.`);
       console.error('Error processing action:', err);
     } finally {
       setIsProcessing(false);
@@ -273,9 +273,9 @@ const AdminUserDetailPage = () => {
       <div className="row mb-4">
         <div className="col">
           <Link to="/admin?tab=users" className="btn btn-outline-secondary mb-3">
-            <i className="bi bi-arrow-left"></i> Powrót do listy użytkowników
+            <i className="bi bi-arrow-left"></i> Return to Users List
           </Link>
-          <h1>Szczegóły Użytkownika</h1>
+          <h1>User Details</h1>
           {userId && <p className="text-muted">ID: {userId}</p>}
         </div>
       </div>
@@ -298,7 +298,7 @@ const AdminUserDetailPage = () => {
       )}
       
       {/* Loading state */}
-      {isLoading && <LoadingSpinner text="Ładowanie szczegółów użytkownika..." />}
+      {isLoading && <LoadingSpinner text="Loading user details..." />}
       
       {/* User details */}
       {!isLoading && !error && user && (
@@ -311,7 +311,7 @@ const AdminUserDetailPage = () => {
           <div className="col-12">
             <div className="card">
               <div className="card-header bg-light">
-                <h5 className="mb-0">Akcje</h5>
+                <h5 className="mb-0">Actions</h5>
               </div>
               <div className="card-body">
                 <div className="d-flex gap-2">
@@ -320,7 +320,7 @@ const AdminUserDetailPage = () => {
                       className="btn btn-warning" 
                       onClick={handleBlockUser}
                     >
-                      <i className="bi bi-lock me-1"></i> Zablokuj użytkownika
+                      <i className="bi bi-lock me-1"></i> Block User
                     </button>
                   )}
                   
@@ -329,7 +329,7 @@ const AdminUserDetailPage = () => {
                       className="btn btn-success" 
                       onClick={handleUnblockUser}
                     >
-                      <i className="bi bi-unlock me-1"></i> Odblokuj użytkownika
+                      <i className="bi bi-unlock me-1"></i> Unblock User
                     </button>
                   )}
                 </div>
@@ -342,11 +342,11 @@ const AdminUserDetailPage = () => {
       {/* Confirmation Modal */}
       <ConfirmationModal 
         isOpen={confirmAction !== null}
-        title={confirmAction?.type === 'block' ? 'Blokowanie użytkownika' : 'Odblokowywanie użytkownika'}
+        title={confirmAction?.type === 'block' ? 'Block User' : 'Unblock User'}
         message={confirmAction?.message || ''}
         onConfirm={handleConfirmAction}
         onCancel={() => setConfirmAction(null)}
-        confirmButtonText={confirmAction?.type === 'block' ? 'Zablokuj' : 'Odblokuj'}
+        confirmButtonText={confirmAction?.type === 'block' ? 'Block' : 'Unblock'}
         variant={confirmAction?.type === 'block' ? 'warning' : 'success'}
         isProcessing={isProcessing}
       />

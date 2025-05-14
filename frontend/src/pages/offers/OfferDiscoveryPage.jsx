@@ -37,7 +37,7 @@ const OfferDiscoveryPage = () => {
         setError(null);
       } catch (err) {
         console.error('Error fetching categories:', err);
-        setError('Nie udało się załadować kategorii.');
+        setError('Failed to load categories.');
       } finally {
         setIsLoadingCategories(false);
       }
@@ -88,7 +88,7 @@ const OfferDiscoveryPage = () => {
         setError(null);
       } catch (err) {
         console.error('Error fetching offers:', err);
-        setError('Nie udało się załadować ofert. Spróbuj ponownie później.');
+        setError('Failed to load offers. Please try again later.');
         setOffers([]);
         setPaginationData(null);
       } finally {
@@ -141,10 +141,10 @@ const OfferDiscoveryPage = () => {
 
   // Determine page title/header based on search/filter params
   const pageTitle = searchTerm 
-    ? `Wyniki wyszukiwania dla: "${searchTerm}"` 
+    ? `Search results for: "${searchTerm}"` 
     : categoryId 
-      ? `Kategoria: ${categories.find(c => c.id === categoryId)?.name || 'Ładowanie...'}`
-      : 'Witaj w Steambay!';
+      ? `Category: ${categories.find(c => c.id === categoryId)?.name || 'Loading...'}`
+      : 'Welcome to Steambay!';
 
   // Determine if we should show skeletons
   const showSkeletons = isLoadingOffers && offers.length === 0;
@@ -157,11 +157,11 @@ const OfferDiscoveryPage = () => {
           {searchTerm && (
             <p className="text-muted">
               {paginationData ? (
-                `Znaleziono ${paginationData.totalItems} wyników`
+                `Found ${paginationData.totalItems} results`
               ) : isLoadingOffers ? (
-                'Wyszukiwanie...'
+                'Searching...'
               ) : (
-                'Brak wyników'
+                'No results'
               )}
             </p>
           )}
@@ -173,7 +173,7 @@ const OfferDiscoveryPage = () => {
           <SearchBar 
             initialSearchTerm={searchTerm} 
             onSearch={handleSearch} 
-            placeholder="Wyszukaj produkty..."
+            placeholder="Search products..."
           />
         </div>
         <div className="col-md-4">
@@ -195,9 +195,9 @@ const OfferDiscoveryPage = () => {
             <button 
               className="btn btn-outline-danger"
               onClick={handleRetry}
-              aria-label="Odśwież stronę"
+              aria-label="Refresh page"
             >
-              Odśwież
+              Refresh
             </button>
           </div>
         </div>
@@ -213,7 +213,7 @@ const OfferDiscoveryPage = () => {
         </div>
       ) : isLoadingOffers ? (
         <div className="d-flex justify-content-center my-5">
-          <LoadingSpinner message="Aktualizowanie ofert..." />
+          <LoadingSpinner message="Updating offers..." />
         </div>
       ) : (
         <>

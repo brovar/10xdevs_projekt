@@ -15,12 +15,12 @@ const OrdersList = ({ orders, isLoading = false }) => {
     <Table responsive striped hover className="mt-4">
       <thead>
         <tr>
-          <th>Numer zamówienia</th>
-          <th>Data</th>
-          <th>Liczba produktów</th>
-          <th>Kwota</th>
+          <th>Order number</th>
+          <th>Date</th>
+          <th>Number of products</th>
+          <th>Amount</th>
           <th>Status</th>
-          <th>Akcje</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -31,14 +31,14 @@ const OrdersList = ({ orders, isLoading = false }) => {
           <tr>
             <td colSpan={6} className="text-center py-3">
               <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              Ładowanie zamówień...
+              Loading orders...
             </td>
           </tr>
         )}
         {!isLoading && orders.length === 0 && (
           <tr>
             <td colSpan={6} className="text-center py-3">
-              Brak zamówień do wyświetlenia
+              No orders to display
             </td>
           </tr>
         )}

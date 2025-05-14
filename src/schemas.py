@@ -183,13 +183,13 @@ class UpdateUserRequest(BaseModel):
     @field_validator("first_name")
     def validate_first_name(cls, v):
         if v is not None and len(v) > 100:
-            raise ValueError("Imię nie może przekraczać 100 znaków")
+            raise ValueError("First name cannot exceed 100 characters")
         return v
 
     @field_validator("last_name")
     def validate_last_name(cls, v):
         if v is not None and len(v) > 100:
-            raise ValueError("Nazwisko nie może przekraczać 100 znaków")
+            raise ValueError("Last name cannot exceed 100 characters")
         return v
 
 
@@ -469,9 +469,9 @@ class LogListResponse(PaginatedResponse):
 
 # Admin Query Params
 class UserListQueryParams(BaseModel):
-    page: int = Field(1, gt=0, description="Numer strony")
+    page: int = Field(1, gt=0, description="Page number")
     limit: int = Field(
-        100, gt=0, le=100, description="Liczba elementów na stronę"
+        100, gt=0, le=100, description="Items per page"
     )
     role: Optional[UserRole] = Field(None, description="Filter by user role")
     status: Optional[UserStatus] = Field(

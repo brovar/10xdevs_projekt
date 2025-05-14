@@ -10,7 +10,7 @@ const LogsTable: React.FC<LogsTableProps> = ({ logs }) => {
   const formatDate = useMemo(() => {
     return (dateString: string) => {
       const date = new Date(dateString);
-      return new Intl.DateTimeFormat('pl-PL', {
+      return new Intl.DateTimeFormat('en-US', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -31,7 +31,7 @@ const LogsTable: React.FC<LogsTableProps> = ({ logs }) => {
   if (logs.length === 0) {
     return (
       <div className="alert alert-info" role="alert">
-        Brak logów spełniających kryteria wyszukiwania.
+        No logs matching search criteria.
       </div>
     );
   }
@@ -39,15 +39,15 @@ const LogsTable: React.FC<LogsTableProps> = ({ logs }) => {
   return (
     <div className="table-responsive">
       <table className="table table-striped table-hover">
-        <caption>Lista logów systemowych</caption>
+        <caption>System logs list</caption>
         <thead className="table-light">
           <tr>
             <th scope="col">ID</th>
-            <th scope="col">Typ zdarzenia</th>
-            <th scope="col">Użytkownik ID</th>
-            <th scope="col">Adres IP</th>
-            <th scope="col">Wiadomość</th>
-            <th scope="col">Data i czas</th>
+            <th scope="col">Event Type</th>
+            <th scope="col">User ID</th>
+            <th scope="col">IP Address</th>
+            <th scope="col">Message</th>
+            <th scope="col">Date and Time</th>
           </tr>
         </thead>
         <tbody>

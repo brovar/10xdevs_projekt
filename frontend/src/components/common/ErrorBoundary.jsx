@@ -8,12 +8,12 @@ const ErrorBoundary = ({ resetErrorBoundary }) => {
   return (
     <div className="container py-5 text-center">
       <div className="alert alert-danger">
-        <h2>Wystąpił błąd</h2>
-        <p>Przepraszamy, coś poszło nie tak.</p>
+        <h2>An error occurred</h2>
+        <p>We're sorry, something went wrong.</p>
         <details className="mt-3">
-          <summary>Szczegóły błędu</summary>
+          <summary>Error details</summary>
           <pre className="mt-2 text-start bg-light p-3 rounded">
-            {error?.message || 'Nieznany błąd'}
+            {error?.message || 'Unknown error'}
           </pre>
         </details>
         {resetErrorBoundary && (
@@ -21,7 +21,7 @@ const ErrorBoundary = ({ resetErrorBoundary }) => {
             className="btn btn-primary mt-3"
             onClick={resetErrorBoundary}
           >
-            Spróbuj ponownie
+            Try again
           </button>
         )}
       </div>

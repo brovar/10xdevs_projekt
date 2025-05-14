@@ -18,9 +18,9 @@ const UserActionsComponent: React.FC<UserActionsProps> = ({ user, onBlock, onUnb
       <Link 
         to={`/admin/users/${user.id}`} 
         className="btn btn-sm btn-outline-primary"
-        aria-label={`Zobacz szczegóły użytkownika ${user.email}`}
+        aria-label={`View details of user ${user.email}`}
       >
-        <i className="bi bi-eye"></i> Szczegóły
+        <i className="bi bi-eye"></i> Details
       </Link>
       
       {/* Block button - only shown for active users */}
@@ -29,9 +29,9 @@ const UserActionsComponent: React.FC<UserActionsProps> = ({ user, onBlock, onUnb
           type="button"
           className="btn btn-sm btn-warning"
           onClick={() => onBlock(user.id)}
-          aria-label={`Zablokuj użytkownika ${user.email}`}
+          aria-label={`Block user ${user.email}`}
         >
-          <i className="bi bi-slash-circle"></i> Zablokuj
+          <i className="bi bi-slash-circle"></i> Block
         </button>
       )}
       
@@ -41,9 +41,9 @@ const UserActionsComponent: React.FC<UserActionsProps> = ({ user, onBlock, onUnb
           type="button"
           className="btn btn-sm btn-success"
           onClick={() => onUnblock(user.id)}
-          aria-label={`Odblokuj użytkownika ${user.email}`}
+          aria-label={`Unblock user ${user.email}`}
         >
-          <i className="bi bi-check-circle"></i> Odblokuj
+          <i className="bi bi-check-circle"></i> Unblock
         </button>
       )}
     </div>

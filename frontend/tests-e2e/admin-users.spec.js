@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Admin Panel - User Management', () => {
   
-  // Zaloguj się jako admin przed każdym testem
+  // Login as admin before each test
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
@@ -21,16 +21,16 @@ test.describe('Admin Panel - User Management', () => {
         await loginButton.click();
         await page.waitForTimeout(3000);
       } else {
-        console.log("Przycisk logowania jest wyłączony, test może nie działać poprawnie");
+        console.log("Login button is disabled, test may not work properly");
         test.skip();
       }
     } else {
-      console.log("Nie znaleziono formularza logowania");
+      console.log("Login form not found");
       test.skip();
     }
   });
   
-  // Funkcja pomocnicza do navigacji do panelu zarządzania użytkownikami
+  // Helper function to navigate to user management panel
   async function navigateToUserManagement(page) {
     await page.goto('/admin');
     await page.waitForLoadState('networkidle');
@@ -57,12 +57,12 @@ test.describe('Admin Panel - User Management', () => {
     return userSectionFound;
   }
   
-  // Scenariusz 1: Przeglądanie listy użytkowników
+  // Scenario 1: Browsing user list
   test('should display a list of all users with pagination', async ({ page }) => {
     const userSectionFound = await navigateToUserManagement(page);
     expect(userSectionFound).toBeTruthy();
     
-    // Sprawdź, czy strona zawiera listę użytkowników
+    // Check if page contains user list
     const userTableSelectors = [
       'table',
       '.user-table',
@@ -81,7 +81,7 @@ test.describe('Admin Panel - User Management', () => {
     
     expect(userTableElement).not.toBeNull();
     
-    // Sprawdź, czy są wyświetlane różne typy użytkowników (Buyers, Sellers, Admins)
+    // Check if different user types are displayed (Buyers, Sellers, Admins)
     const userRoles = ['Buyer', 'Seller', 'Admin', 'Kupujący', 'Sprzedawca', 'Administrator'];
     let foundRoles = [];
     
@@ -94,7 +94,7 @@ test.describe('Admin Panel - User Management', () => {
     
     expect(foundRoles.length).toBeGreaterThan(0);
     
-    // Sprawdź, czy działa paginacja (jeśli jest dostępna)
+    // Check if pagination works (if available)
     const paginationSelectors = [
       '.pagination',
       '[data-testid="pagination"]',
@@ -108,7 +108,7 @@ test.describe('Admin Panel - User Management', () => {
     for (const selector of paginationSelectors) {
       const element = page.locator(selector).first();
       if (await element.count() > 0) {
-        // Kliknij przycisk następnej strony, jeśli jest aktywny
+        // Click next page button if active
         const nextPageButton = page.locator('button:has-text("Next"), button:has-text("Następna"), a:has-text("Next"), a:has-text("Następna")').first();
         if (await nextPageButton.count() > 0 && !(await nextPageButton.isDisabled())) {
           const currentFirstUser = await page.locator('tr').nth(1).textContent();
@@ -123,20 +123,20 @@ test.describe('Admin Panel - User Management', () => {
       }
     }
     
-    // Testujemy paginację tylko jeśli była dostępna
+    // Only test pagination if it was available
     if (!paginationTested) {
-      console.log('Paginacja nie została przetestowana - może nie być dostępna lub aktywna.');
+      console.log('Pagination was not tested - may not be available or active.');
     }
     
     await page.screenshot({ path: 'admin-users-list.png' });
   });
   
-  // Scenariusz 2: Przeglądanie szczegółów użytkownika
+  // Scenario 2: Viewing user details
   test('should display user details when clicking on a user', async ({ page }) => {
     const userSectionFound = await navigateToUserManagement(page);
     expect(userSectionFound).toBeTruthy();
     
-    // Znajdź pierwszego użytkownika na liście i kliknij na niego
+    // Find first user in the list and click on it
     const userSelectors = [
       'table tbody tr',
       '.user-item',
@@ -154,10 +154,10 @@ test.describe('Admin Panel - User Management', () => {
     
     expect(userElement).not.toBeNull();
     
-    // Zapisz email użytkownika przed kliknięciem
+    // Save user email before clicking
     const userEmail = await userElement.locator('td').nth(1).textContent();
     
-    // Kliknij na użytkownika lub przycisk szczegółów
+    // Click on user or details button
     const detailsButtonSelectors = [
       'button:has-text("Details"), button:has-text("Szczegóły"), a:has-text("Details"), a:has-text("Szczegóły")',
       '[data-testid="view-user-details"]',
@@ -166,7 +166,7 @@ test.describe('Admin Panel - User Management', () => {
     
     let clickedDetails = false;
     
-    // Najpierw spróbuj kliknąć przycisk szczegółów, jeśli istnieje
+    // First try to click details button if it exists
     for (const selector of detailsButtonSelectors) {
       const detailsButton = userElement.locator(selector).first();
       if (await detailsButton.count() > 0) {
@@ -176,14 +176,14 @@ test.describe('Admin Panel - User Management', () => {
       }
     }
     
-    // Jeśli nie ma przycisku szczegółów, kliknij na cały wiersz
+    // If no details button, click on the entire row
     if (!clickedDetails) {
       await userElement.click();
     }
     
     await page.waitForTimeout(1000);
     
-    // Sprawdź, czy wyświetlane są szczegóły użytkownika
+    // Check if user details are displayed
     const detailsSelectors = [
       'h2:has-text("User Details"), h2:has-text("Szczegóły Użytkownika")',
       '[data-testid="user-details"]',
@@ -202,7 +202,7 @@ test.describe('Admin Panel - User Management', () => {
     
     expect(detailsFound).toBeTruthy();
     
-    // Sprawdź, czy wyświetlane są wszystkie wymagane informacje
+    // Check if all required information is displayed
     const expectedFields = ['ID', 'Email', 'Role', 'Status', 'Created At', 'Data utworzenia', 'Rola', 'Status'];
     let foundFields = 0;
     
@@ -215,21 +215,21 @@ test.describe('Admin Panel - User Management', () => {
     
     expect(foundFields).toBeGreaterThan(2);
     
-    // Sprawdź, czy email użytkownika jest wyświetlany w szczegółach
+    // Check if user email is displayed in details
     const emailInDetails = page.locator(`text=${userEmail}`).first();
     expect(await emailInDetails.count()).toBeGreaterThan(0);
     
-    // Sprawdź, czy hasło NIE jest wyświetlane
+    // Check if password is NOT displayed
     const passwordFields = ['Password', 'Hasło', 'password hash', 'hash hasła'];
     let passwordFound = false;
     
     for (const field of passwordFields) {
       const passwordElement = page.locator(`text=${field}`).first();
       if (await passwordElement.count() > 0) {
-        // Sprawdź, czy nie ma obok tego pola wartości hasła
+        // Check if there is no password value next to this field
         const passwordValue = await passwordElement.locator('..').textContent();
         if (passwordValue.includes('*') || passwordValue.includes('●')) {
-          // Jeśli są gwiazdki, to jest OK - hasło jest ukryte
+          // If there are asterisks, it's OK - password is hidden
           continue;
         }
         passwordFound = true;
@@ -242,15 +242,15 @@ test.describe('Admin Panel - User Management', () => {
     await page.screenshot({ path: 'admin-user-details.png' });
   });
   
-  // Scenariusz 8: Filtrowanie listy użytkowników
+  // Scenario 8: Filtering user list
   test('should filter users by criteria', async ({ page }) => {
     const userSectionFound = await navigateToUserManagement(page);
     expect(userSectionFound).toBeTruthy();
     
-    // Poczekaj na załadowanie listy użytkowników
+    // Wait for user list to load
     await page.waitForTimeout(1000);
     
-    // Sprawdź, czy istnieją filtry
+    // Check if filters exist
     const filterSelectors = [
       '[data-testid="user-filter"]',
       '.filter-options',
@@ -270,17 +270,17 @@ test.describe('Admin Panel - User Management', () => {
       }
     }
     
-    // Jeśli nie znaleziono filtrów, test jest niejasny
+    // If no filters found, test is unclear
     if (!filterFound) {
-      console.log('Nie znaleziono filtrów dla użytkowników.');
+      console.log('No filters found for users.');
       return;
     }
     
-    // Zapamiętaj pierwotną liczbę użytkowników
+    // Remember initial user count
     const userRows = page.locator('table tbody tr, .user-item, [data-testid="user-row"]');
     const initialUserCount = await userRows.count();
     
-    // Filtruj według roli (spróbuj różne selekcje)
+    // Filter by role (try different selections)
     const roleFilterSelectors = [
       'select[name="role"], select[id*="role"]',
       '[data-testid="role-filter"]',
@@ -292,14 +292,14 @@ test.describe('Admin Panel - User Management', () => {
     for (const selector of roleFilterSelectors) {
       const roleFilter = page.locator(selector).first();
       if (await roleFilter.count() > 0) {
-        // Spróbuj wybrać rolę "Seller" lub "Sprzedawca"
+        // Try to select role "Seller" or "Sprzedawca"
         try {
           await roleFilter.selectOption({label: 'Seller'});
         } catch (e) {
           try {
             await roleFilter.selectOption({label: 'Sprzedawca'});
           } catch (e2) {
-            // Spróbuj inne wartości, jeśli dostępne
+            // Try other values if available
             const options = await roleFilter.locator('option').count();
             if (options > 1) {
               await roleFilter.selectOption({index: 1});
@@ -307,21 +307,21 @@ test.describe('Admin Panel - User Management', () => {
           }
         }
         
-        // Poczekaj na aktualizację listy
+        // Wait for list to update
         await page.waitForTimeout(1000);
         
-        // Sprawdź, czy lista użytkowników się zmieniła
+        // Check if user list changed
         const filteredUserCount = await userRows.count();
         const selectedRoleText = await roleFilter.evaluate(el => {
           return el.options[el.selectedIndex].text;
         });
         
-        // Sprawdź różne warianty poprawnego filtrowania
+        // Check different variants of correct filtering
         if (filteredUserCount !== initialUserCount) {
-          // Jeśli liczba użytkowników się zmieniła, filtr został zastosowany
+          // If user count changed, filter applied
           roleFilterApplied = true;
         } else {
-          // Jeśli liczba się nie zmieniła, sprawdź czy wszyscy użytkownicy mają wybraną rolę
+          // If count didn't change, check if all users have selected role
           let allHaveRole = true;
           
           for (let i = 0; i < filteredUserCount; i++) {
@@ -335,7 +335,7 @@ test.describe('Admin Panel - User Management', () => {
           roleFilterApplied = allHaveRole;
         }
         
-        // Sprawdź, czy filtr został zastosowany poprawnie
+        // Check if filter applied correctly
         expect(roleFilterApplied).toBeTruthy();
         break;
       }
@@ -344,9 +344,9 @@ test.describe('Admin Panel - User Management', () => {
     await page.screenshot({ path: 'admin-users-filtered.png' });
   });
   
-  // Scenariusz 9: Weryfikacja dostępu do panelu admina
+  // Scenario 9: Verifying admin panel access
   test('should prevent non-admin users from accessing admin panel', async ({ page }) => {
-    // Wyloguj się najpierw
+    // Logout first
     await page.goto('/');
     
     const logoutSelectors = [
@@ -365,7 +365,7 @@ test.describe('Admin Panel - User Management', () => {
       }
     }
     
-    // Zaloguj się jako kupujący
+    // Login as buyer
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
     
@@ -384,21 +384,21 @@ test.describe('Admin Panel - User Management', () => {
       }
     }
     
-    // Próba dostępu do panelu admina jako kupujący
+    // Try accessing admin panel as buyer
     await page.goto('/admin');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
     
-    // Sprawdź, czy został przekierowany lub dostał błąd 403
+    // Check if redirected or got 403 error
     const currentUrl = page.url();
     
-    // Zrób zrzut ekranu, aby zobaczyć co się stało
+    // Take screenshot to see what happened
     await page.screenshot({ path: 'buyer-admin-access.png' });
     
-    // Sprawdź czy URL nie kończy się na /admin
+    // Check if URL doesn't end with /admin
     const buyerRedirected = !currentUrl.endsWith('/admin');
     
-    // Jeśli nie został przekierowany, sprawdź czy otrzymał komunikat o błędzie dostępu
+    // If not redirected, check if got access denied message
     let buyerAccessDenied = buyerRedirected;
     
     if (!buyerRedirected) {
@@ -421,11 +421,11 @@ test.describe('Admin Panel - User Management', () => {
       }
     }
     
-    // Sprawdź, czy kupujący nie ma dostępu
+    // Check if buyer doesn't have access
     expect(buyerAccessDenied).toBeTruthy();
     
-    // Powtórz dla sprzedawcy
-    // Wyloguj się najpierw
+    // Repeat for seller
+    // Logout first
     await page.goto('/');
     
     for (const selector of logoutSelectors) {
@@ -437,7 +437,7 @@ test.describe('Admin Panel - User Management', () => {
       }
     }
     
-    // Zaloguj się jako sprzedawca
+    // Login as seller
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
     
@@ -453,21 +453,21 @@ test.describe('Admin Panel - User Management', () => {
       }
     }
     
-    // Próba dostępu do panelu admina jako sprzedawca
+    // Try accessing admin panel as seller
     await page.goto('/admin');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
     
-    // Sprawdź, czy został przekierowany lub dostał błąd 403
+    // Check if redirected or got 403 error
     const currentUrlSeller = page.url();
     
-    // Zrób zrzut ekranu, aby zobaczyć co się stało
+    // Take screenshot to see what happened
     await page.screenshot({ path: 'seller-admin-access.png' });
     
-    // Sprawdź czy URL nie kończy się na /admin
+    // Check if URL doesn't end with /admin
     const sellerRedirected = !currentUrlSeller.endsWith('/admin');
     
-    // Jeśli nie został przekierowany, sprawdź czy otrzymał komunikat o błędzie dostępu
+    // If not redirected, check if got access denied message
     let sellerAccessDenied = sellerRedirected;
     
     if (!sellerRedirected) {
@@ -490,7 +490,7 @@ test.describe('Admin Panel - User Management', () => {
       }
     }
     
-    // Sprawdź, czy sprzedawca nie ma dostępu
+    // Check if seller doesn't have access
     expect(sellerAccessDenied).toBeTruthy();
   });
 }); 

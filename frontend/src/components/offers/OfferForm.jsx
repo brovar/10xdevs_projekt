@@ -61,31 +61,31 @@ const OfferForm = ({ onSuccess, onCancel }) => {
     <form onSubmit={handleSubmit} className="needs-validation" noValidate>
       {/* Title field */}
       <TextInput
-        label="Tytuł oferty"
+        label="Offer title"
         name="title"
         value={formData.title}
         onChange={handleInputChange}
         onBlur={() => handleBlur('title')}
         error={errors.title}
         required
-        placeholder="Wpisz tytuł oferty"
+        placeholder="Enter offer title"
       />
       
       {/* Description field */}
       <TextArea
-        label="Opis"
+        label="Description"
         name="description"
         value={formData.description}
         onChange={handleInputChange}
         onBlur={() => handleBlur('description')}
         error={errors.description}
-        placeholder="Opisz swój produkt"
+        placeholder="Describe your product"
         rows={5}
       />
       
       {/* Price field */}
       <NumberInput
-        label="Cena (PLN)"
+        label="Price (USD)"
         name="price"
         value={formData.price}
         onChange={handleInputChange}
@@ -100,7 +100,7 @@ const OfferForm = ({ onSuccess, onCancel }) => {
       
       {/* Quantity field */}
       <NumberInput
-        label="Ilość"
+        label="Quantity"
         name="quantity"
         value={formData.quantity}
         onChange={handleInputChange}
@@ -114,20 +114,20 @@ const OfferForm = ({ onSuccess, onCancel }) => {
       
       {/* Category select */}
       <SelectInput
-        label="Kategoria"
+        label="Category"
         name="categoryId"
         value={formData.categoryId}
         options={categoryOptions}
         onChange={handleInputChange}
         onBlur={() => handleBlur('categoryId')}
-        error={errors.categoryId || (categoriesError && 'Nie można załadować kategorii')}
+        error={errors.categoryId || (categoriesError && 'Cannot load categories')}
         required
-        placeholder={categoriesLoading ? 'Ładowanie kategorii...' : 'Wybierz kategorię'}
+        placeholder={categoriesLoading ? 'Loading categories...' : 'Select category'}
       />
       
       {/* Image upload */}
       <FileUploadInput
-        label="Zdjęcie produktu"
+        label="Product image"
         name="image"
         onChange={handleFileChange}
         error={errors.image}
@@ -146,11 +146,11 @@ const OfferForm = ({ onSuccess, onCancel }) => {
           onClick={handleCancel}
           disabled={isSubmitting}
         >
-          Anuluj
+          Cancel
         </button>
         
         <SubmitButton
-          label="Zapisz ofertę"
+          label="Save offer"
           isLoading={isSubmitting}
           disabled={categoriesLoading}
         />

@@ -17,14 +17,14 @@ const OrdersPage = lazy(() => import('../pages/account/OrdersPage'));
 const OrderDetailPage = lazy(() => import('../pages/orders/OrderDetailPage'));
 // Seller pages
 const MyOffersPage = lazy(() => import('../pages/seller/MyOffersPage'));
-// Poprawny import dla historii sprzedaży, używając pełnej implementacji, która już istnieje
+// Correct import for sales history, using the full implementation that already exists
 const SalesHistoryPage = lazy(() => import('../pages/seller/SellerSalesHistoryPage'));
 const CreateOfferPage = lazy(() => import('../pages/seller/CreateOfferPage'));
 // Admin pages
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'));
 const AdminUserDetailPage = lazy(() => import('../pages/admin/AdminUserDetailPage'));
 const AdminOrderDetailPage = lazy(() => import('../pages/admin/AdminOrderDetailPage'));
-// Pozostałe strony będą dodawane tutaj
+// Other pages will be added here
 
 // Layout component
 const AppLayout = () => {
@@ -32,7 +32,7 @@ const AppLayout = () => {
     <div className="d-flex flex-column min-vh-100">
       <Header />
       <main className="flex-grow-1">
-        <Suspense fallback={<LoadingSpinner message="Ładowanie zawartości..." />}>
+        <Suspense fallback={<LoadingSpinner message="Loading content..." />}>
           <Outlet />
         </Suspense>
       </main>
@@ -60,7 +60,7 @@ const RequireAuth = ({ children, requiredRole = null }) => {
   if (isLoading) {
     return (
       <div className="container py-5 text-center">
-        <p>Weryfikacja sesji użytkownika...</p>
+        <p>Verifying user session...</p>
       </div>
     );
   }
@@ -87,7 +87,7 @@ const RequireAnon = ({ children }) => {
   if (isLoading) {
     return (
       <div className="container py-5 text-center">
-        <p>Weryfikacja sesji użytkownika...</p>
+        <p>Verifying user session...</p>
       </div>
     );
   }
@@ -108,7 +108,7 @@ const router = createBrowserRouter([
       {
         index: true,
         element: (
-          <Suspense fallback={<LoadingSpinner message="Ładowanie strony głównej..." />}>
+          <Suspense fallback={<LoadingSpinner message="Loading home page..." />}>
             <OfferDiscoveryPage />
           </Suspense>
         ),
@@ -117,7 +117,7 @@ const router = createBrowserRouter([
       {
         path: 'offers',
         element: (
-          <Suspense fallback={<LoadingSpinner message="Ładowanie ofert..." />}>
+          <Suspense fallback={<LoadingSpinner message="Loading offers..." />}>
             <OfferDiscoveryPage />
           </Suspense>
         ),
@@ -126,7 +126,7 @@ const router = createBrowserRouter([
       {
         path: 'offers/:offerId',
         element: (
-          <Suspense fallback={<LoadingSpinner message="Ładowanie szczegółów oferty..." />}>
+          <Suspense fallback={<LoadingSpinner message="Loading offer details..." />}>
             <OfferDetailPage />
           </Suspense>
         ),
@@ -177,8 +177,8 @@ const router = createBrowserRouter([
         path: 'cart',
         element: (
           <div className="container py-5">
-            <h2>Koszyk</h2>
-            <p>Ta strona zostanie zaimplementowana później.</p>
+            <h2>Cart</h2>
+            <p>This page will be implemented later.</p>
           </div>
         )
       },
@@ -187,7 +187,7 @@ const router = createBrowserRouter([
         path: 'seller/offers',
         element: (
           <RequireAuth requiredRole="Seller">
-            <Suspense fallback={<LoadingSpinner message="Ładowanie ofert..." />}>
+            <Suspense fallback={<LoadingSpinner message="Loading offers..." />}>
               <MyOffersPage />
             </Suspense>
           </RequireAuth>
@@ -198,7 +198,7 @@ const router = createBrowserRouter([
         path: 'seller/offers/create',
         element: (
           <RequireAuth requiredRole="Seller">
-            <Suspense fallback={<LoadingSpinner message="Ładowanie formularza..." />}>
+            <Suspense fallback={<LoadingSpinner message="Loading form..." />}>
               <CreateOfferPage />
             </Suspense>
           </RequireAuth>
@@ -209,7 +209,7 @@ const router = createBrowserRouter([
         path: 'seller/sales',
         element: (
           <RequireAuth requiredRole="Seller">
-            <Suspense fallback={<LoadingSpinner message="Ładowanie historii sprzedaży..." />}>
+            <Suspense fallback={<LoadingSpinner message="Loading sales history..." />}>
               <SalesHistoryPage />
             </Suspense>
           </RequireAuth>
@@ -221,7 +221,7 @@ const router = createBrowserRouter([
         path: 'admin',
         element: (
           <RequireAuth requiredRole="Admin">
-            <Suspense fallback={<LoadingSpinner message="Ładowanie panelu administratora..." />}>
+            <Suspense fallback={<LoadingSpinner message="Loading admin panel..." />}>
               <AdminDashboardPage />
             </Suspense>
           </RequireAuth>
@@ -232,7 +232,7 @@ const router = createBrowserRouter([
         path: 'admin/users/:userId',
         element: (
           <RequireAuth requiredRole="Admin">
-            <Suspense fallback={<LoadingSpinner message="Ładowanie szczegółów użytkownika..." />}>
+            <Suspense fallback={<LoadingSpinner message="Loading user details..." />}>
               <AdminUserDetailPage />
             </Suspense>
           </RequireAuth>
@@ -243,7 +243,7 @@ const router = createBrowserRouter([
         path: 'admin/orders/:orderId',
         element: (
           <RequireAuth requiredRole="Admin">
-            <Suspense fallback={<LoadingSpinner message="Ładowanie szczegółów zamówienia..." />}>
+            <Suspense fallback={<LoadingSpinner message="Loading order details..." />}>
               <AdminOrderDetailPage />
             </Suspense>
           </RequireAuth>

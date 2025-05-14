@@ -14,13 +14,13 @@ const OrderDetailsPanel = ({ order }) => {
 
   return (
     <Card className="mb-4">
-      <Card.Header as="h5">Informacje o zamówieniu</Card.Header>
+      <Card.Header as="h5">Order Details</Card.Header>
       <Card.Body>
         <dl className="row mb-0">
-          <dt className="col-sm-4">Numer zamówienia:</dt>
+          <dt className="col-sm-4">Order Number:</dt>
           <dd className="col-sm-8">{order.displayId}</dd>
 
-          <dt className="col-sm-4">Data złożenia:</dt>
+          <dt className="col-sm-4">Order Date:</dt>
           <dd className="col-sm-8">{order.createdAt}</dd>
 
           <dt className="col-sm-4">Status:</dt>
@@ -28,7 +28,7 @@ const OrderDetailsPanel = ({ order }) => {
             <StatusBadge status={order.status} />
           </dd>
 
-          <dt className="col-sm-4">Łączna kwota:</dt>
+          <dt className="col-sm-4">Total Amount:</dt>
           <dd className="col-sm-8 fw-bold">{order.totalAmount}</dd>
         </dl>
       </Card.Body>

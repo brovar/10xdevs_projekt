@@ -23,7 +23,7 @@ const OfferDetailPage = () => {
   useEffect(() => {
     const loadOfferDetails = async () => {
       if (!offerId) {
-        setError('Nieprawidłowy identyfikator oferty');
+        setError('Invalid offer ID');
         setIsLoading(false);
         return;
       }
@@ -57,11 +57,11 @@ const OfferDetailPage = () => {
       } catch (err) {
         console.error('Error fetching offer details:', err);
         if (err.response?.status === 404) {
-          setError('Oferta o podanym ID nie została znaleziona.');
+          setError('Offer with the given ID was not found.');
         } else if (err.response?.status === 403) {
-          setError('Nie masz uprawnień do wyświetlenia tej oferty.');
+          setError('You do not have permission to view this offer.');
         } else {
-          setError('Wystąpił błąd podczas ładowania oferty. Spróbuj ponownie później.');
+          setError('An error occurred while loading the offer. Please try again later.');
         }
       } finally {
         setIsLoading(false);
@@ -74,11 +74,11 @@ const OfferDetailPage = () => {
   // Helper functions for mapping data
   const getStatusDisplay = (status) => {
     const statusMap = {
-      active: 'Aktywna',
-      inactive: 'Nieaktywna',
-      sold: 'Sprzedana',
-      moderated: 'Moderowana',
-      archived: 'Archiwalna'
+      active: 'Active',
+      inactive: 'Inactive',
+      sold: 'Sold',
+      moderated: 'Moderated',
+      archived: 'Archived'
     };
     return statusMap[status] || status;
   };
@@ -98,7 +98,7 @@ const OfferDetailPage = () => {
     if (seller.first_name && seller.last_name) {
       return `${seller.first_name} ${seller.last_name}`;
     }
-    return `Sprzedawca #${seller.id.substring(0, 8)}`;
+    return `Seller #${seller.id.substring(0, 8)}`;
   };
 
   // Handler for adding item to cart
@@ -112,7 +112,7 @@ const OfferDetailPage = () => {
       });
       
       // Show notification (will be replaced with a toast system later)
-      alert(`Dodano "${title}" do koszyka`);
+      alert(`Added "${title}" to cart`);
     }
   };
 
@@ -120,7 +120,7 @@ const OfferDetailPage = () => {
   if (isLoading) {
     return (
       <div className="container py-5">
-        <LoadingSpinner message="Ładowanie szczegółów oferty..." />
+        <LoadingSpinner message="Loading offer details..." />
       </div>
     );
   }
@@ -130,11 +130,11 @@ const OfferDetailPage = () => {
     return (
       <div className="container py-5">
         <div className="alert alert-danger" role="alert">
-          <h4 className="alert-heading">Wystąpił błąd!</h4>
+          <h4 className="alert-heading">An error occurred!</h4>
           <p>{error}</p>
         </div>
         <Link to="/offers" className="btn btn-primary mt-3">
-          Wróć do listy ofert
+          Return to offers list
         </Link>
       </div>
     );
@@ -145,8 +145,8 @@ const OfferDetailPage = () => {
     <div className="container py-4">
       <nav aria-label="breadcrumb" className="mb-4">
         <ol className="breadcrumb">
-          <li className="breadcrumb-item"><Link to="/">Strona główna</Link></li>
-          <li className="breadcrumb-item"><Link to="/offers">Oferty</Link></li>
+          <li className="breadcrumb-item"><Link to="/">Home</Link></li>
+          <li className="breadcrumb-item"><Link to="/offers">Offers</Link></li>
           <li className="breadcrumb-item active" aria-current="page">{offer?.title}</li>
         </ol>
       </nav>
@@ -180,7 +180,7 @@ const OfferDetailPage = () => {
 
       <div className="mt-4">
         <Link to="/offers" className="btn btn-outline-secondary">
-          &larr; Wróć do listy ofert
+          &larr; Return to offers list
         </Link>
       </div>
     </div>

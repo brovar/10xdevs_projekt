@@ -283,7 +283,7 @@ def test_get_current_user_server_error(monkeypatch):
     assert body["detail"]["error_code"] == "FETCH_FAILED"
     assert (
         body["detail"]["message"]
-        == "Wystąpił nieoczekiwany błąd podczas pobierania profilu użytkownika."
+        == "An unexpected error occurred while retrieving user profile."
     )
 
 
@@ -331,7 +331,7 @@ def test_update_profile_validation_error_no_fields():
     body = response.json()
     detail = body.get("detail", {})
     assert detail.get("error_code") == "INVALID_INPUT"
-    assert "Należy podać co najmniej jedno pole" in detail.get("message", "")
+    assert "At least one field must be provided" in detail.get("message", "")
 
 
 # Pydantic validation (e.g., field length) would also yield 422 if constraints were added
@@ -428,7 +428,7 @@ def test_update_profile_server_error(monkeypatch):
     detail = body.get("detail", {})
     assert detail.get("error_code") == "PROFILE_UPDATE_FAILED"
     assert (
-        "Wystąpił błąd podczas aktualizacji profilu użytkownika."
+        "An error occurred while updating user profile."
         in detail.get("message", "")
     )
 
@@ -450,6 +450,7 @@ def test_change_password_success():
     assert response.json().get("message") in [
         "Password updated successfully",
         "Hasło zostało zmienione pomyślnie.",
+        "Password has been changed successfully."
     ]
 
     # Ensure service was called correctly
@@ -622,9 +623,6 @@ def test_change_password_server_error(monkeypatch):
     assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
     body = response.json()
     detail = body.get("detail", {})
-    assert detail.get("error_code") == "PASSWORD_UPDATE_FAILED"
-    # Accept either English or Polish error message
-    assert any(
-        msg in detail.get("message", "")
-        for msg in ["nieoczekiwany błąd", "Wystąpił błąd podczas zmiany hasła"]
-    )
+    assert detail.get("error_code") == "PASSWORD_CHANGE_FAILED"
+    # Check the exact error message
+    assert detail.get("message") == "An error occurred while changing the password. Please try again later."

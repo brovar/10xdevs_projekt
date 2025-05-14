@@ -26,27 +26,27 @@ const UpdateProfileForm = ({ initialData, onSubmit, isSubmitting, error }) => {
 
   return (
     <Card className="mb-4">
-      <Card.Header as="h5">Edytuj dane profilu</Card.Header>
+      <Card.Header as="h5">Edit Profile Data</Card.Header>
       <Card.Body>
         {error && <Alert variant="danger">{error}</Alert>}
         
         <Form onSubmit={handleSubmit(onFormSubmit)}>
           <Form.Group className="mb-3" controlId="profile-firstName">
-            <Form.Label>Imię</Form.Label>
+            <Form.Label>First Name</Form.Label>
             <Form.Control
               type="text"
-              placeholder="Podaj imię"
+              placeholder="Enter first name"
               aria-describedby="firstNameHelpBlock"
               {...register("firstName", { 
                 maxLength: { 
                   value: 100, 
-                  message: "Imię nie może przekraczać 100 znaków" 
+                  message: "First name cannot exceed 100 characters" 
                 } 
               })}
               isInvalid={!!errors.firstName}
             />
             <Form.Text id="firstNameHelpBlock" muted>
-              Opcjonalne, maksymalnie 100 znaków.
+              Optional, maximum 100 characters.
             </Form.Text>
             {errors.firstName && (
               <Form.Control.Feedback type="invalid">
@@ -56,21 +56,21 @@ const UpdateProfileForm = ({ initialData, onSubmit, isSubmitting, error }) => {
           </Form.Group>
 
           <Form.Group className="mb-3" controlId="profile-lastName">
-            <Form.Label>Nazwisko</Form.Label>
+            <Form.Label>Last Name</Form.Label>
             <Form.Control
               type="text"
-              placeholder="Podaj nazwisko"
+              placeholder="Enter last name"
               aria-describedby="lastNameHelpBlock"
               {...register("lastName", { 
                 maxLength: { 
                   value: 100, 
-                  message: "Nazwisko nie może przekraczać 100 znaków" 
+                  message: "Last name cannot exceed 100 characters" 
                 } 
               })}
               isInvalid={!!errors.lastName}
             />
             <Form.Text id="lastNameHelpBlock" muted>
-              Opcjonalne, maksymalnie 100 znaków.
+              Optional, maximum 100 characters.
             </Form.Text>
             {errors.lastName && (
               <Form.Control.Feedback type="invalid">
@@ -88,9 +88,9 @@ const UpdateProfileForm = ({ initialData, onSubmit, isSubmitting, error }) => {
               {isSubmitting ? (
                 <>
                   <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Zapisywanie...
+                  Saving...
                 </>
-              ) : 'Zapisz zmiany'}
+              ) : 'Save Changes'}
             </Button>
           </div>
         </Form>

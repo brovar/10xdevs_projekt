@@ -284,7 +284,7 @@ def test_register_user_unexpected_error(test_app):
     data = response.json()
     assert data["error_code"] == "REGISTRATION_FAILED"
     assert (
-        "Wystąpił nieoczekiwany błąd podczas rejestracji. Spróbuj ponownie później."
+        "An unexpected error occurred during registration. Please try again later."
         in data["message"]
     )
 
@@ -397,7 +397,7 @@ def test_login_unexpected_error(test_app):
     assert response.status_code == 500
     assert response.json() == {
         "error_code": "LOGIN_FAILED",
-        "message": "Wystąpił nieoczekiwany błąd podczas logowania. Spróbuj ponownie później.",
+        "message": "An unexpected error occurred during login. Please try again later.",
     }
 
 
@@ -476,7 +476,7 @@ def test_logout_unexpected_error(test_app):
     assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
     assert response.json() == {
         "error_code": "LOGOUT_FAILED",
-        "message": "Wystąpił nieoczekiwany błąd podczas wylogowania. Spróbuj ponownie później.",
+        "message": "An unexpected error occurred during logout. Please try again later.",
     }
 
 

@@ -2,35 +2,35 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Basic application functionality', () => {
   test('application loads correctly', async ({ page }) => {
-    // Przejdź do aplikacji
+    // Navigate to the application
     await page.goto('/');
     
-    // Poczekaj na pełne załadowanie strony
+    // Wait for the page to fully load
     await page.waitForLoadState('networkidle');
     
-    // Zrób zrzut ekranu głównej strony do analizy
+    // Take a screenshot of the main page for analysis
     await page.screenshot({ path: 'home-page.png' });
     
-    // Sprawdź czy strona ma podstawową strukturę HTML
+    // Check if the page has basic HTML structure
     const title = await page.title();
-    console.log(`Tytuł strony: ${title}`);
+    console.log(`Page title: ${title}`);
     
-    // Pobierz zawartość body dla celów diagnostycznych
+    // Get body content for diagnostic purposes
     const bodyContent = await page.textContent('body');
-    console.log(`Znaleziono ${bodyContent.length} znaków na stronie głównej`);
+    console.log(`Found ${bodyContent.length} characters on the main page`);
     
-    // Test przechodzi, jeśli strona się załadowała i ma jakąś zawartość
+    // Test passes if the page loaded and has some content
     expect(bodyContent.length).toBeGreaterThan(0);
     
-    // Sprawdź, czy można znaleźć jakikolwiek element wskazujący na React
+    // Check if any React elements can be found
     const hasReactElements = await page.evaluate(() => {
       return document.querySelectorAll('[data-reactroot], [data-reactid], [class*="react"]').length > 0;
     });
     
-    console.log(`Znaleziono elementy React: ${hasReactElements}`);
+    console.log(`Found React elements: ${hasReactElements}`);
     
-    // Sprawdź czy istnieją jakieś podstawowe elementy nawigacyjne
+    // Check if there are any basic navigation elements
     const navElements = await page.locator('nav, header, .navbar, .header, .navigation').count();
-    console.log(`Znaleziono ${navElements} elementów nawigacyjnych`);
+    console.log(`Found ${navElements} navigation elements`);
   });
 }); 

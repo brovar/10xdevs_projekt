@@ -62,11 +62,11 @@ export const fetchOrderDetails = async (orderId) => {
     if (error.response) {
       const { status } = error.response;
       if (status === 403) {
-        error.message = 'Brak uprawnień do wyświetlenia tego zamówienia.';
+        error.message = 'You do not have permission to view this order.';
       } else if (status === 404) {
-        error.message = 'Zamówienie o podanym ID nie zostało znalezione.';
+        error.message = 'Order with the provided ID was not found.';
       } else if (status >= 500) {
-        error.message = 'Wystąpił błąd serwera podczas ładowania zamówienia.';
+        error.message = 'A server error occurred while loading the order.';
       }
     }
     

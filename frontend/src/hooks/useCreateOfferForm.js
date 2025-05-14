@@ -70,16 +70,16 @@ const useCreateOfferForm = () => {
     
     // Validate title (required)
     if (!formData.title.trim()) {
-      newErrors.title = 'Tytuł jest wymagany';
+      newErrors.title = 'Title is required';
     }
     
     // Validate price (required, must be a positive number)
     if (!formData.price.trim()) {
-      newErrors.price = 'Cena jest wymagana';
+      newErrors.price = 'Price is required';
     } else {
       const priceValue = parseFloat(formData.price.replace(',', '.'));
       if (isNaN(priceValue) || priceValue <= 0) {
-        newErrors.price = 'Cena musi być liczbą większą od 0';
+        newErrors.price = 'Price must be a number greater than 0';
       }
     }
     
@@ -87,13 +87,13 @@ const useCreateOfferForm = () => {
     if (formData.quantity.trim()) {
       const quantityValue = parseInt(formData.quantity, 10);
       if (isNaN(quantityValue) || quantityValue < 0) {
-        newErrors.quantity = 'Ilość musi być liczbą nieujemną';
+        newErrors.quantity = 'Quantity must be a non-negative number';
       }
     }
     
     // Validate category (required)
     if (!formData.categoryId) {
-      newErrors.categoryId = 'Kategoria jest wymagana';
+      newErrors.categoryId = 'Category is required';
     }
     
     // Update errors state
@@ -138,7 +138,7 @@ const useCreateOfferForm = () => {
       return newOffer;
     } catch (error) {
       // Handle error
-      setApiError(error.message || 'Wystąpił nieznany błąd');
+      setApiError(error.message || 'An unknown error occurred');
       return null;
     } finally {
       setIsSubmitting(false);

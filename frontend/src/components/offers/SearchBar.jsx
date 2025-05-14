@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
-const SearchBar = ({ initialSearchTerm = '', onSearch, placeholder = 'Wyszukaj...' }) => {
+const SearchBar = ({ initialSearchTerm = '', onSearch, placeholder = 'Search...' }) => {
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
 
   const handleSubmit = useCallback((e) => {
@@ -24,8 +24,8 @@ const SearchBar = ({ initialSearchTerm = '', onSearch, placeholder = 'Wyszukaj..
           value={searchTerm}
           onChange={handleChange}
         />
-        <button className="btn btn-primary" type="submit" aria-label="Szukaj">
-          <i className="bi bi-search me-1"></i> Szukaj
+        <button className="btn btn-primary" type="submit" aria-label="Search">
+          <i className="bi bi-search me-1"></i> Search
         </button>
       </div>
     </form>

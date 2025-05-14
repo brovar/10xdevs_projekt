@@ -8,8 +8,8 @@ const OfferList = ({ offers = [], isLoading = false }) => {
     return (
       <div className="row">
         <div className="col-12 text-center py-5">
-          <h3>Brak ofert spełniających wybrane kryteria.</h3>
-          <p className="text-muted">Spróbuj zmienić kryteria wyszukiwania lub filtry.</p>
+          <h3>No offers meeting the selected criteria.</h3>
+          <p className="text-muted">Try changing your search criteria or filters.</p>
         </div>
       </div>
     );

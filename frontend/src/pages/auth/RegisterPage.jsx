@@ -20,14 +20,14 @@ const RegisterPage = () => {
     try {
       const response = await registerUser(data);
       console.log('Registration successful:', response);
-      addSuccess('Rejestracja zakończona pomyślnie. Możesz się teraz zalogować.');
+      addSuccess('Registration successful. You can now log in.');
       navigate('/login');
     } catch (error) {
       console.error('Registration error:', error);
       console.error('Error response:', error.response);
       
       // Extract error details
-      const errorMessage = error.response?.data?.message || 'Wystąpił błąd podczas rejestracji. Spróbuj ponownie później.';
+      const errorMessage = error.response?.data?.message || 'An error occurred during registration. Please try again later.';
       const errorCode = error.response?.data?.error_code || 'UNKNOWN_ERROR';
       const debugInfo = error.response?.data?.debug_info;
       
@@ -51,7 +51,7 @@ const RegisterPage = () => {
         <div className="col-md-6">
           <div className="card">
             <div className="card-header">
-              <h2 className="text-center">Rejestracja</h2>
+              <h2 className="text-center">Registration</h2>
             </div>
             <div className="card-body">
               {apiError && (

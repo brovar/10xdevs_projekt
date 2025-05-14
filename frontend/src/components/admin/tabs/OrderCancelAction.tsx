@@ -21,9 +21,9 @@ const OrderCancelAction: React.FC<OrderCancelActionProps> = ({ order, onCancel }
       <Link 
         to={`/admin/orders/${order.id}`} 
         className="btn btn-sm btn-outline-primary"
-        aria-label={`Zobacz szczegóły zamówienia ${order.id}`}
+        aria-label={`View details of order ${order.id}`}
       >
-        <i className="bi bi-eye"></i> Szczegóły
+        <i className="bi bi-eye"></i> Details
       </Link>
       
       {/* Cancel button - only shown for orders that can be cancelled */}
@@ -32,9 +32,9 @@ const OrderCancelAction: React.FC<OrderCancelActionProps> = ({ order, onCancel }
           type="button"
           className="btn btn-sm btn-danger"
           onClick={() => onCancel(order.id)}
-          aria-label={`Anuluj zamówienie ${order.id}`}
+          aria-label={`Cancel order ${order.id}`}
         >
-          <i className="bi bi-x-circle"></i> Anuluj
+          <i className="bi bi-x-circle"></i> Cancel
         </button>
       )}
     </div>

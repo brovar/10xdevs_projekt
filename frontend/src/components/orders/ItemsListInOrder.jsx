@@ -13,7 +13,7 @@ const ItemsListInOrder = ({ items }) => {
   if (!items || items.length === 0) {
     return (
       <div className="alert alert-info">
-        To zamówienie nie zawiera żadnych produktów.
+        This order doesn't contain any products.
       </div>
     );
   }
@@ -22,10 +22,10 @@ const ItemsListInOrder = ({ items }) => {
     <Table responsive striped hover>
       <thead>
         <tr>
-          <th>Produkt</th>
-          <th className="text-center">Ilość</th>
-          <th className="text-end">Cena jednostkowa</th>
-          <th className="text-end">Suma pozycji</th>
+          <th>Product</th>
+          <th className="text-center">Quantity</th>
+          <th className="text-end">Unit price</th>
+          <th className="text-end">Item total</th>
         </tr>
       </thead>
       <tbody>

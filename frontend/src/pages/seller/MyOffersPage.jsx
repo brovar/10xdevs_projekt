@@ -21,8 +21,8 @@ const MyOffersPage = () => {
       setError(null);
     } catch (err) {
       console.error('Error fetching offers:', err);
-      setError('Nie udało się pobrać ofert. Spróbuj ponownie później.');
-      addError('Wystąpił błąd podczas ładowania ofert');
+      setError('Failed to fetch offers. Please try again later.');
+      addError('An error occurred while loading offers');
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +66,7 @@ const MyOffersPage = () => {
     return (
       <Container className="py-4 text-center">
         <Spinner animation="border" role="status">
-          <span className="visually-hidden">Ładowanie...</span>
+          <span className="visually-hidden">Loading...</span>
         </Spinner>
       </Container>
     );
@@ -75,14 +75,14 @@ const MyOffersPage = () => {
   return (
     <Container className="py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Moje Oferty</h1>
+        <h1>My Offers</h1>
         <Button 
           variant="primary" 
           onClick={handleCreateOffer}
           className="d-flex align-items-center"
         >
           <i className="bi bi-plus-circle me-2"></i>
-          Dodaj nową ofertę
+          Add new offer
         </Button>
       </div>
       
@@ -91,7 +91,7 @@ const MyOffersPage = () => {
       )}
       {!error && offers.length === 0 && (
         <Alert variant="info">
-          Nie masz jeszcze żadnych ofert. Dodaj swoją pierwszą ofertę, aby zacząć sprzedawać!
+          You don't have any offers yet. Add your first offer to start selling!
         </Alert>
       )}
       
@@ -108,15 +108,17 @@ const MyOffersPage = () => {
                     style={{ height: '200px', objectFit: 'cover' }}
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = 'https://via.placeholder.com/300x200?text=Brak+zdjęcia';
+                      e.target.src = 'https://via.placeholder.com/300x200?text=No+image';
                     }}
                   />
                 )}
                 <Card.Body>
                   <Card.Title>{offer.title}</Card.Title>
                   <Card.Text>
-                    <strong>Cena:</strong> {offer.price} zł<br />
-                    <strong>Ilość:</strong> {offer.quantity}<br />
+                    <div className="mb-2">
+                      <strong>Price:</strong> ${offer.price}<br />
+                    </div>
+                    <strong>Quantity:</strong> {offer.quantity}<br />
                     <strong>Status:</strong> {renderStatusBadge(offer.status)}
                   </Card.Text>
                 </Card.Body>

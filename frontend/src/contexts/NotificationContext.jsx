@@ -183,15 +183,15 @@ const getBootstrapClass = (type) => {
 const getNotificationTitle = (type) => {
   switch (type) {
     case NOTIFICATION_TYPES.SUCCESS:
-      return 'Sukces';
+      return 'Success';
     case NOTIFICATION_TYPES.ERROR:
-      return 'Błąd';
+      return 'Error';
     case NOTIFICATION_TYPES.WARNING:
-      return 'Ostrzeżenie';
+      return 'Warning';
     case NOTIFICATION_TYPES.INFO:
-      return 'Informacja';
+      return 'Information';
     default:
-      return 'Powiadomienie';
+      return 'Notification';
   }
 };
 

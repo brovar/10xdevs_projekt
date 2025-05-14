@@ -3,13 +3,13 @@ import { useSearchParams, Navigate } from 'react-router-dom';
 import { Toast, ToastContainer, Container } from 'react-bootstrap';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Importujemy wszystkie potrzebne komponenty
-// Jeśli te komponenty nie istnieją w tej strukturze katalogów, będziemy musieli je zaimplementować tu również
+// Import all required components
+// If these components don't exist in this directory structure, we'll need to implement them here as well
 import SortControls from '../../components/sales/SortControls';
 import SalesList from '../../components/sales/SalesList';
 import Pagination from '../../components/common/Pagination';
 
-// Serwis i funkcje pomocnicze
+// Service and helper functions
 import { fetchSalesHistory, updateOrderStatus } from '../../services/salesService';
 import { mapOrderSummaryToSaleItemVM } from '../../utils/orderUtils';
 
@@ -40,12 +40,12 @@ const SellerSalesHistoryPage = () => {
   // Sort options for dropdown
   const sortOptions = useMemo(() => {
     return [
-      { value: 'created_at_desc', label: 'Data utworzenia (najnowsze)' },
-      { value: 'created_at_asc', label: 'Data utworzenia (najstarsze)' },
-      { value: 'updated_at_desc', label: 'Data aktualizacji (najnowsze)' },
-      { value: 'updated_at_asc', label: 'Data aktualizacji (najstarsze)' },
-      { value: 'total_amount_desc', label: 'Kwota (od najwyższej)' },
-      { value: 'total_amount_asc', label: 'Kwota (od najniższej)' },
+      { value: 'created_at_desc', label: 'Creation date (newest)' },
+      { value: 'created_at_asc', label: 'Creation date (oldest)' },
+      { value: 'updated_at_desc', label: 'Update date (newest)' },
+      { value: 'updated_at_asc', label: 'Update date (oldest)' },
+      { value: 'total_amount_desc', label: 'Amount (highest first)' },
+      { value: 'total_amount_asc', label: 'Amount (lowest first)' },
       { value: 'status_desc', label: 'Status (Z-A)' },
       { value: 'status_asc', label: 'Status (A-Z)' }
     ];
@@ -80,10 +80,10 @@ const SellerSalesHistoryPage = () => {
         });
       } catch (err) {
         console.error('Error fetching sales data:', err);
-        setError('Nie udało się załadować historii sprzedaży.');
+        setError('Failed to load sales history.');
         setToast({
           show: true,
-          message: 'Nie udało się załadować historii sprzedaży.',
+          message: 'Failed to load sales history.',
           variant: 'danger'
         });
       } finally {
@@ -138,14 +138,14 @@ const SellerSalesHistoryPage = () => {
       // Show success message
       setToast({
         show: true,
-        message: 'Status zamówienia został zaktualizowany.',
+        message: 'Order status has been updated.',
         variant: 'success'
       });
     } catch (err) {
       console.error('Error updating order status:', err);
       setToast({
         show: true,
-        message: 'Nie udało się zmienić statusu zamówienia.',
+        message: 'Failed to change order status.',
         variant: 'danger'
       });
     } finally {
@@ -159,7 +159,7 @@ const SellerSalesHistoryPage = () => {
       <Container className="py-5">
         <div className="d-flex justify-content-center">
           <div className="spinner-border" role="status">
-            <span className="visually-hidden">Ładowanie...</span>
+            <span className="visually-hidden">Loading...</span>
           </div>
         </div>
       </Container>
@@ -173,7 +173,7 @@ const SellerSalesHistoryPage = () => {
   
   return (
     <Container className="py-4">
-      <h1 className="mb-4">Historia Sprzedaży</h1>
+      <h1 className="mb-4">Sales History</h1>
       
       {/* Toast notification */}
       <ToastContainer position="top-end" className="p-3">
@@ -186,7 +186,7 @@ const SellerSalesHistoryPage = () => {
         >
           <Toast.Header closeButton>
             <strong className="me-auto">
-              {toast.variant === 'success' ? 'Sukces' : 'Błąd'}
+              {toast.variant === 'success' ? 'Success' : 'Error'}
             </strong>
           </Toast.Header>
           <Toast.Body className={toast.variant === 'success' ? '' : 'text-white'}>
@@ -198,27 +198,25 @@ const SellerSalesHistoryPage = () => {
       {/* Sorting controls */}
       <SortControls 
         options={sortOptions}
-        currentSort={currentSort}
-        onSortChange={handleSortChange}
+        currentValue={currentSort}
+        onChange={handleSortChange}
+        label="Sort by:"
       />
-      
-      {/* Error message */}
-      {error && !isLoading && (
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
-      )}
       
       {/* Sales list */}
       <SalesList 
         sales={sales}
         isLoading={isLoading}
+        error={error}
         onStatusChange={handleStatusChange}
         updatingStatusMap={updatingStatusMap}
+        emptyMessage="No sales found for the selected criteria."
+        loadingMessage="Loading sales history..."
+        errorMessage={error || "An error occurred while loading the sales data."}
       />
       
       {/* Pagination */}
-      {paginationData && (
+      {paginationData && paginationData.totalPages > 1 && (
         <div className="d-flex justify-content-center mt-4">
           <Pagination 
             currentPage={paginationData.currentPage}

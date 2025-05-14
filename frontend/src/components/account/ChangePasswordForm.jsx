@@ -36,19 +36,19 @@ const ChangePasswordForm = ({ onSubmit, isSubmitting, error, successMessage }) =
 
   return (
     <Card className="mb-4">
-      <Card.Header as="h5">Zmień hasło</Card.Header>
+      <Card.Header as="h5">Change Password</Card.Header>
       <Card.Body>
         {error && <Alert variant="danger">{error}</Alert>}
         {successMessage && <Alert variant="success">{successMessage}</Alert>}
         
         <Form onSubmit={handleSubmit(onSubmit)}>
           <Form.Group className="mb-3" controlId="password-current">
-            <Form.Label>Aktualne hasło</Form.Label>
+            <Form.Label>Current Password</Form.Label>
             <Form.Control
               type="password"
-              placeholder="Podaj aktualne hasło"
+              placeholder="Enter current password"
               {...register("currentPassword", { 
-                required: "Aktualne hasło jest wymagane" 
+                required: "Current password is required" 
               })}
               isInvalid={!!errors.currentPassword}
             />
@@ -60,26 +60,26 @@ const ChangePasswordForm = ({ onSubmit, isSubmitting, error, successMessage }) =
           </Form.Group>
 
           <Form.Group className="mb-3" controlId="password-new">
-            <Form.Label>Nowe hasło</Form.Label>
+            <Form.Label>New Password</Form.Label>
             <Form.Control
               type="password"
-              placeholder="Podaj nowe hasło"
+              placeholder="Enter new password"
               aria-describedby="passwordHelpBlock"
               {...register("newPassword", { 
-                required: "Nowe hasło jest wymagane",
+                required: "New password is required",
                 minLength: {
                   value: 10,
-                  message: "Hasło musi mieć co najmniej 10 znaków"
+                  message: "Password must be at least 10 characters long"
                 },
                 pattern: {
                   value: passwordRegex,
-                  message: "Hasło musi zawierać dużą literę, małą literę oraz cyfrę lub znak specjalny"
+                  message: "Password must contain uppercase letter, lowercase letter, and a digit or special character"
                 }
               })}
               isInvalid={!!errors.newPassword}
             />
             <Form.Text id="passwordHelpBlock" muted>
-              Hasło musi mieć minimum 10 znaków, zawierać dużą i małą literę oraz cyfrę lub znak specjalny.
+              Password must be at least 10 characters long, contain uppercase and lowercase letters, and a digit or special character.
             </Form.Text>
             {errors.newPassword && (
               <Form.Control.Feedback type="invalid">
@@ -89,13 +89,13 @@ const ChangePasswordForm = ({ onSubmit, isSubmitting, error, successMessage }) =
           </Form.Group>
 
           <Form.Group className="mb-4" controlId="password-confirm">
-            <Form.Label>Potwierdź nowe hasło</Form.Label>
+            <Form.Label>Confirm New Password</Form.Label>
             <Form.Control
               type="password"
-              placeholder="Potwierdź nowe hasło"
+              placeholder="Confirm new password"
               {...register("confirmNewPassword", { 
-                required: "Potwierdzenie hasła jest wymagane",
-                validate: value => value === newPassword || "Hasła nie są zgodne"
+                required: "Password confirmation is required",
+                validate: value => value === newPassword || "Passwords do not match"
               })}
               isInvalid={!!errors.confirmNewPassword}
             />
@@ -115,9 +115,9 @@ const ChangePasswordForm = ({ onSubmit, isSubmitting, error, successMessage }) =
               {isSubmitting ? (
                 <>
                   <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Przetwarzanie...
+                  Processing...
                 </>
-              ) : 'Zmień hasło'}
+              ) : 'Change Password'}
             </Button>
           </div>
         </Form>

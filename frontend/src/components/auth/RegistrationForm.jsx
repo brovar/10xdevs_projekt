@@ -46,80 +46,80 @@ const RegistrationForm = ({ onSubmit, isLoading }) => {
     <form onSubmit={handleSubmit(processSubmit)}>
       <EmailInput
         name="email"
-        label="Adres email"
+        label="Email address"
         register={register}
         errors={errors}
         rules={{
-          required: 'Adres email jest wymagany',
+          required: 'Email address is required',
           pattern: {
             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-            message: 'Niepoprawny format adresu email'
+            message: 'Invalid email format'
           }
         }}
       />
 
       <PasswordInput
         name="password"
-        label="Hasło"
+        label="Password"
         register={register}
         errors={errors}
         watch={watch}
         showPolicy={true}
         rules={{
-          required: 'Hasło jest wymagane',
+          required: 'Password is required',
           minLength: {
             value: 10,
-            message: 'Hasło musi mieć co najmniej 10 znaków'
+            message: 'Password must be at least 10 characters'
           },
           validate: {
             hasUppercase: (value) => 
-              /[A-Z]/.test(value) || 'Hasło musi zawierać wielką literę',
+              /[A-Z]/.test(value) || 'Password must contain an uppercase letter',
             hasLowercase: (value) => 
-              /[a-z]/.test(value) || 'Hasło musi zawierać małą literę',
+              /[a-z]/.test(value) || 'Password must contain a lowercase letter',
             hasDigitOrSpecial: (value) => 
               /[0-9!@#$%^&*(),.?":{}|<>]/.test(value) || 
-              'Hasło musi zawierać cyfrę lub znak specjalny'
+              'Password must contain a digit or special character'
           }
         }}
       />
 
       <PasswordInput
         name="confirmPassword"
-        label="Potwierdź hasło"
+        label="Confirm password"
         register={register}
         errors={errors}
         rules={{
-          required: 'Potwierdzenie hasła jest wymagane',
+          required: 'Password confirmation is required',
           validate: {
             matchesPassword: (value) => 
-              value === getValues('password') || 'Hasła muszą być identyczne'
+              value === getValues('password') || 'Passwords must match'
           }
         }}
       />
 
       <RoleSelect
         name="role"
-        label="Typ konta"
+        label="Account type"
         register={register}
         errors={errors}
         options={[
-          { value: UserRole.BUYER, label: 'Kupujący' },
-          { value: UserRole.SELLER, label: 'Sprzedający' }
+          { value: UserRole.BUYER, label: 'Buyer' },
+          { value: UserRole.SELLER, label: 'Seller' }
         ]}
         rules={{
-          required: 'Wybór typu konta jest wymagany'
+          required: 'Account type selection is required'
         }}
       />
 
       <SubmitButton
-        label="Zarejestruj się"
+        label="Register"
         isLoading={isLoading}
         disabled={isLoading || !isValid}
       />
 
       <div className="mt-3 text-center">
         <p>
-          Masz już konto? <Link to="/login">Zaloguj się</Link>
+          Already have an account? <Link to="/login">Log in</Link>
         </p>
       </div>
     </form>

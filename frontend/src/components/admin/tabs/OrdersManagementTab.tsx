@@ -92,7 +92,7 @@ const OrdersManagementTab: React.FC = () => {
     setConfirmAction({
       type: 'cancel_order',
       id: orderId,
-      additionalInfo: `Czy na pewno chcesz anulować zamówienie ${orderId.slice(0, 8)}...?`
+      additionalInfo: `Are you sure you want to cancel order ${orderId.slice(0, 8)}...?`
     });
   }, [orders]);
 
@@ -115,7 +115,7 @@ const OrdersManagementTab: React.FC = () => {
       // Set error message for the modal
       const errorMessage = err instanceof Error 
         ? err.message 
-        : 'Wystąpił nieoczekiwany błąd podczas anulowania zamówienia';
+        : 'An unexpected error occurred while cancelling the order';
       
       setActionError(errorMessage);
       
@@ -140,7 +140,7 @@ const OrdersManagementTab: React.FC = () => {
 
   return (
     <div className="orders-management-tab">
-      <h2 className="mb-4">Zarządzanie Zamówieniami</h2>
+      <h2 className="mb-4">Orders Management</h2>
       
       {/* Filters */}
       <OrderFiltersComponent 
@@ -149,7 +149,7 @@ const OrdersManagementTab: React.FC = () => {
       />
       
       {/* Loading state */}
-      {isLoading && <LoadingSpinner text="Ładowanie zamówień..." />}
+      {isLoading && <LoadingSpinner text="Loading orders..." />}
       
       {/* Error state */}
       {error && !isLoading && (
@@ -167,7 +167,7 @@ const OrdersManagementTab: React.FC = () => {
           {/* No orders message */}
           {orders.length === 0 && !isLoading && (
             <div className="alert alert-info" role="status">
-              Brak zamówień spełniających kryteria wyszukiwania.
+              No orders matching search criteria.
             </div>
           )}
           
@@ -187,11 +187,11 @@ const OrdersManagementTab: React.FC = () => {
       {confirmAction && (
         <ConfirmationModal
           isOpen={true}
-          title="Anulowanie zamówienia"
+          title="Cancel Order"
           message={confirmAction.additionalInfo || ''}
           onConfirm={handleConfirmAction}
           onCancel={handleCancelAction}
-          confirmButtonText="Anuluj zamówienie"
+          confirmButtonText="Cancel Order"
           variant="danger"
           isProcessing={isProcessing}
           error={actionError}

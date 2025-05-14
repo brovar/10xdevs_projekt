@@ -2,6 +2,14 @@
 
 SteamBay is an e-commerce platform for digital game sales, featuring a React frontend and FastAPI backend.
 
+## Project Background
+
+In the development process of SteamBay, not a single line of code in the repository was created or modified manually by a human. The entire codebase is AI-generated.
+
+The Steambay project will be used by the startup cp.center as an application for automated testing of web application pentester skills. For this reason, certain technical simplifications were made, such as encapsulating the entire application in a single container.
+
+The choice of application type - e-commerce - was primarily due to the large variety of functionalities that can appear in such an application. The goal was to provide a realistic experience for individuals whose skills will be tested through interaction with this platform in the future.
+
 ## Project Structure
 
 - `frontend/` - React frontend application

@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 import axios from '../services/api';
 import { loginUser, logoutUser } from '../services/authService';
 
-// Tworzenie kontekstu
+// Create context
 const AuthContext = createContext();
 
-// Hook użytkowy
+// Utility hook
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -33,13 +33,13 @@ const normalizeUserData = (userData) => {
   };
 };
 
-// Dostawca kontekstu
+// Context provider
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Sprawdzenie czy użytkownik jest zalogowany przy ładowaniu strony
+  // Check if user is logged in when page loads
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
@@ -91,33 +91,33 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  // Funkcja logowania
+  // Login function
   const login = useCallback(async (email, password) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // 1. Wykonaj zapytanie logowania
+      // 1. Execute login request
       const response = await loginUser({ email, password });
       console.log('Login response:', response);
       
-      // 2. Natychmiast pobierz pełne dane użytkownika z endpointu statusu
+      // 2. Immediately fetch complete user data from status endpoint
       const statusResponse = await axios.get('/auth/status');
       console.log('Auth status after login:', statusResponse.data);
       
       if (statusResponse.data && statusResponse.data.is_authenticated) {
-        // Użyj danych użytkownika z odpowiedzi statusu
+        // Use user data from status response
         const userData = normalizeUserData(statusResponse.data.user);
         
         console.log('User data being saved:', userData);
         
-        // Zapisujemy użytkownika w stanie i localStorage
+        // Save user in state and localStorage
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
         
         return userData;
       } else {
-        // Fallback do poprzedniej logiki
+        // Fallback to previous logic
         const userData = normalizeUserData({
           ...response,
           email: response.email || email
@@ -140,35 +140,35 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Funkcja czyszczenia wszystkich stanów powiązanych z sesją
+  // Function to clear all session-related states
   const clearSessionData = useCallback(() => {
-    // Czyszczenie localStorage
+    // Clear localStorage
     localStorage.removeItem('user');
     
-    // Wywołane przez inne konteksty - obsługiwane przez event
+    // Called by other contexts - handled by event
     const logoutEvent = new CustomEvent('user-logout');
     window.dispatchEvent(logoutEvent);
     
-    // Czyszczenie stanu auth
+    // Clear auth state
     setUser(null);
     setError(null);
   }, []);
 
-  // Funkcja wylogowania
+  // Logout function
   const logout = useCallback(async () => {
     setIsLoading(true);
     
     try {
-      // Wywołanie API wylogowania
+      // Call logout API
       const response = await logoutUser();
       
-      // Czyszczenie wszystkich danych sesji
+      // Clear all session data
       clearSessionData();
       
       return response;
     } catch (error) {
-      // Jeśli błąd to 401 (Unauthorized), oznacza to, że sesja już wygasła
-      // Mimo to czyścimy dane sesji lokalnie
+      // If error is 401 (Unauthorized), it means the session already expired
+      // We still clear session data locally
       if (error.response && error.response.status === 401) {
         clearSessionData();
       }
@@ -180,14 +180,14 @@ export const AuthProvider = ({ children }) => {
     }
   }, [clearSessionData]);
 
-  // Obsługa wygaśnięcia sesji - dodanie globalnego interceptora dla axios
+  // Handle session expiration - add global interceptor for axios
   useEffect(() => {
-    // Dodajemy interceptor do obsługi odpowiedzi
+    // Add interceptor to handle responses
     const interceptorId = axios.interceptors.response.use(
       response => response, 
       error => {
-        // Jeśli serwer zwraca 401 Unauthorized, a użytkownik jest zalogowany
-        // automatycznie wylogowujemy go (sesja wygasła)
+        // If server returns 401 Unauthorized and user is logged in
+        // automatically log them out (session expired)
         if (error.response && error.response.status === 401 && user) {
           console.warn('Received 401 while user is logged in - clearing session');
           clearSessionData();
@@ -196,7 +196,7 @@ export const AuthProvider = ({ children }) => {
       }
     );
     
-    // Usuwamy interceptor przy odmontowaniu
+    // Remove interceptor on unmount
     return () => {
       axios.interceptors.response.eject(interceptorId);
     };
@@ -207,7 +207,7 @@ export const AuthProvider = ({ children }) => {
     console.log('User state changed:', user);
   }, [user]);
 
-  // Wartość kontekstu
+  // Context value
   const value = {
     user,
     isAuthenticated: !!user,

@@ -123,7 +123,7 @@ async def require_authenticated(
             status_code=401,
             detail={
                 "error_code": "NOT_AUTHENTICATED",
-                "message": "Użytkownik nie jest zalogowany.",
+                "message": "User is not logged in.",
             },
         )
 
@@ -157,7 +157,7 @@ def require_roles(allowed_roles: List[UserRole]) -> Callable:
                 status_code=403,
                 detail={
                     "error_code": "INSUFFICIENT_PERMISSIONS",
-                    "message": "Nie masz uprawnień do wykonania tej operacji.",
+                    "message": "You don't have permission to perform this operation.",
                 },
             )
 

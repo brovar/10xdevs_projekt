@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useEffect, useReducer, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
-// Akcje dla reducera
+// Actions for reducer
 const ADD_TO_CART = 'ADD_TO_CART';
 const REMOVE_FROM_CART = 'REMOVE_FROM_CART';
 const UPDATE_QUANTITY = 'UPDATE_QUANTITY';
 const CLEAR_CART = 'CLEAR_CART';
 const INIT_CART = 'INIT_CART';
 
-// Reducer do zarządzania stanem koszyka
+// Reducer for managing cart state
 const cartReducer = (state, action) => {
   switch (action.type) {
     case INIT_CART:
@@ -42,10 +42,10 @@ const cartReducer = (state, action) => {
   }
 };
 
-// Tworzenie kontekstu
+// Create context
 const CartContext = createContext();
 
-// Hook użytkowy
+// Utility hook
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
@@ -54,11 +54,11 @@ export const useCart = () => {
   return context;
 };
 
-// Komponent dostawcy (Provider)
+// Provider component
 export const CartProvider = ({ children }) => {
   const [cart, dispatch] = useReducer(cartReducer, []);
   
-  // Metody do manipulacji koszykiem
+  // Methods for cart manipulation
   const addToCart = useCallback((offerId, offer, quantity = 1) => {
     if (quantity <= 0) return;
     
@@ -91,7 +91,7 @@ export const CartProvider = ({ children }) => {
     dispatch({ type: CLEAR_CART });
   }, []);
   
-  // Ładowanie koszyka z localStorage przy inicjalizacji
+  // Load cart from localStorage on initialization
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
@@ -104,12 +104,12 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
   
-  // Zapisywanie koszyka do localStorage przy każdej zmianie
+  // Save cart to localStorage on every change
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
   
-  // Nasłuchiwanie na zdarzenie wylogowania użytkownika
+  // Listen for user logout event
   useEffect(() => {
     const handleLogout = () => {
       clearCart();
@@ -123,14 +123,14 @@ export const CartProvider = ({ children }) => {
     };
   }, [clearCart]);
   
-  // Obliczanie łącznej ilości produktów w koszyku
+  // Calculate total number of products in cart
   const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
   
-  // Obliczanie łącznej wartości koszyka
+  // Calculate total cart value
   const totalValue = cart.reduce((total, item) => 
     total + (item.offer?.price || 0) * item.quantity, 0);
   
-  // Wartość kontekstu
+  // Context value
   const value = {
     cart,
     totalItems,

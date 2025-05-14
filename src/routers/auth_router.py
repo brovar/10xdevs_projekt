@@ -40,8 +40,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
                         "INVALID_PASSWORD": {
                             "summary": "Password doesn't meet requirements",
                             "value": {
-                                "error_code": "INVALID_PASSWORD",
-                                "message": "Hasło musi zawierać co najmniej 10 znaków, wielką literę, małą literę.",
+                                "error_code": "PASSWORD_POLICY_VIOLATED",
+                                "message": "Password must contain at least 10 characters, an uppercase letter, and a lowercase letter.",
                             },
                         },
                         "INVALID_INPUT": {
@@ -151,7 +151,7 @@ async def register_user(
             status_code=500,
             content={
                 "error_code": "REGISTRATION_FAILED",
-                "message": "Wystąpił nieoczekiwany błąd podczas rejestracji. Spróbuj ponownie później.",
+                "message": "An unexpected error occurred during registration. Please try again later.",
                 "debug_info": str(e) if logger else None,
             },
         )
@@ -217,7 +217,7 @@ async def login_user(
             status_code=500,
             content={
                 "error_code": "LOGIN_FAILED",
-                "message": "Wystąpił nieoczekiwany błąd podczas logowania. Spróbuj ponownie później.",
+                "message": "An unexpected error occurred during login. Please try again later.",
             },
         )
 
@@ -285,7 +285,7 @@ async def logout_user(
             status_code=500,
             content={
                 "error_code": "LOGOUT_FAILED",
-                "message": "Wystąpił nieoczekiwany błąd podczas wylogowania. Spróbuj ponownie później.",
+                "message": "An unexpected error occurred during logout. Please try again later.",
             },
         )
 
@@ -371,7 +371,7 @@ async def auth_status(
             status_code=500,
             content={
                 "error_code": "STATUS_CHECK_FAILED",
-                "message": "Wystąpił błąd podczas sprawdzania statusu autentykacji.",
+                "message": "An error occurred while checking authentication status.",
             },
         )
 

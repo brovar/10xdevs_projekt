@@ -1,12 +1,12 @@
 from pathlib import Path
 
-# Bazowa ścieżka dla mediów
+# Base path for media files
 MEDIA_ROOT = Path("./media")
 
-# Ścieżka dla obrazów ofert
+# Path for offer images
 OFFER_IMAGES_DIR = MEDIA_ROOT / "offers"
 
-# Upewnienie się, że katalogi istnieją
+# Ensure directories exist
 MEDIA_ROOT.mkdir(exist_ok=True)
 OFFER_IMAGES_DIR.mkdir(exist_ok=True)
 

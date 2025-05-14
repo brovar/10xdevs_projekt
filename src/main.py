@@ -82,7 +82,7 @@ When authentication fails, you'll receive one of these error responses:
 ```json
 {
   "error_code": "NOT_AUTHENTICATED",
-  "message": "Użytkownik nie jest zalogowany."
+  "message": "User is not logged in."
 }
 ```
 This means you need to log in before accessing this resource.
@@ -91,7 +91,7 @@ This means you need to log in before accessing this resource.
 ```json
 {
   "error_code": "INSUFFICIENT_PERMISSIONS",
-  "message": "Nie masz uprawnień do wykonania tej operacji."
+  "message": "You don't have permission to perform this operation."
 }
 ```
 This means your account doesn't have the required role to access this resource.

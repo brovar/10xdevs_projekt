@@ -8,9 +8,9 @@ const OfferInfoPanel = ({ offer }) => {
 
   // Format the creation date
   const formatDate = (dateString) => {
-    if (!dateString) return '';
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL');
+    return date.toLocaleDateString('en-US');
   };
 
   return (
@@ -23,38 +23,38 @@ const OfferInfoPanel = ({ offer }) => {
       <p className="h3 text-primary my-3">{offer.priceFormatted}</p>
       
       <div className="mb-4">
-        <h4 className="mb-2">Opis produktu</h4>
+        <h4 className="mb-2">Product Description</h4>
         <p className="mb-4">
-          {offer.description || 'Brak opisu dla tego produktu.'}
+          {offer.description || 'No description available for this product.'}
         </p>
       </div>
       
       <div className="mb-3">
-        <h5>Szczegóły</h5>
+        <h5>Details</h5>
         <ul className="list-group list-group-flush">
           <li className="list-group-item d-flex justify-content-between align-items-center">
-            <span>Kategoria:</span>
+            <span>Category:</span>
             <span className="fw-bold">{offer.categoryName}</span>
           </li>
           
           <li className="list-group-item d-flex justify-content-between align-items-center">
-            <span>Sprzedawca:</span>
+            <span>Seller:</span>
             <SellerInfoBadge sellerName={offer.sellerName} />
           </li>
           
           <li className="list-group-item d-flex justify-content-between align-items-center">
-            <span>Dostępna ilość:</span>
+            <span>Available Quantity:</span>
             <span 
               className={`fw-bold ${offer.quantity > 0 ? 'text-success' : 'text-danger'}`}
-              aria-label={`Dostępna ilość: ${offer.quantity}`}
+              aria-label={`Available Quantity: ${offer.quantity}`}
             >
-              {offer.quantity} szt.
+              {offer.quantity} pcs.
             </span>
           </li>
           
           {offer.createdAt && (
             <li className="list-group-item d-flex justify-content-between align-items-center">
-              <span>Data dodania:</span>
+              <span>Date Added:</span>
               <span>{formatDate(offer.createdAt)}</span>
             </li>
           )}

@@ -39,7 +39,7 @@ function useAdminData<TQueryParams, TResponse, TItem>({
     } catch (err) {
       const errorMessage = err instanceof Error 
         ? err.message 
-        : 'Wystąpił błąd podczas pobierania danych';
+        : 'An error occurred while fetching data';
       setError(errorMessage);
       console.error('Error fetching admin data:', err);
     } finally {

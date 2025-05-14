@@ -192,7 +192,7 @@ async def get_user_details(
                 "application/json": {
                     "example": {
                         "error_code": "NOT_AUTHENTICATED",
-                        "message": "Użytkownik nie jest zalogowany.",
+                        "message": "User is not logged in.",
                     }
                 }
             },
@@ -361,7 +361,7 @@ async def block_user(
                 "application/json": {
                     "example": {
                         "error_code": "NOT_AUTHENTICATED",
-                        "message": "Użytkownik nie jest zalogowany.",
+                        "message": "User is not logged in.",
                     }
                 }
             },
@@ -1041,7 +1041,7 @@ async def cancel_order(
                 "application/json": {
                     "example": {
                         "error_code": "NOT_AUTHENTICATED",
-                        "message": "Authentication required",
+                        "message": "User is not logged in.",
                     }
                 }
             },

@@ -17,10 +17,10 @@ const LoginPage = () => {
     
     try {
       await login(credentials.email, credentials.password);
-      addSuccess('Logowanie zakończone pomyślnie.');
+      addSuccess('Login successful.');
       navigate('/');
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Wystąpił błąd podczas logowania. Spróbuj ponownie później.';
+      const errorMessage = error.response?.data?.message || 'An error occurred during login. Please try again later.';
       
       setApiError(errorMessage);
       addError(errorMessage);
@@ -35,7 +35,7 @@ const LoginPage = () => {
         <div className="col-md-6">
           <div className="card">
             <div className="card-header">
-              <h2 className="text-center">Logowanie</h2>
+              <h2 className="text-center">Login</h2>
             </div>
             <div className="card-body">
               {apiError && (

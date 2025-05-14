@@ -16,7 +16,7 @@ const AdminOrderListTable: React.FC<AdminOrderListTableProps> = ({
   const formatDate = useMemo(() => {
     return (dateString: string) => {
       const date = new Date(dateString);
-      return new Intl.DateTimeFormat('pl-PL', {
+      return new Intl.DateTimeFormat('en-US', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -29,9 +29,9 @@ const AdminOrderListTable: React.FC<AdminOrderListTableProps> = ({
   // Format price - memoized to avoid unnecessary recalculations
   const formatPrice = useMemo(() => {
     return (price: string) => {
-      return new Intl.NumberFormat('pl-PL', {
+      return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'PLN'
+        currency: 'USD'
       }).format(parseFloat(price));
     };
   }, []);
@@ -39,7 +39,7 @@ const AdminOrderListTable: React.FC<AdminOrderListTableProps> = ({
   if (orders.length === 0) {
     return (
       <div className="alert alert-info">
-        Brak zamówień spełniających kryteria wyszukiwania.
+        No orders matching search criteria.
       </div>
     );
   }
@@ -51,10 +51,10 @@ const AdminOrderListTable: React.FC<AdminOrderListTableProps> = ({
           <tr>
             <th scope="col">ID</th>
             <th scope="col">Status</th>
-            <th scope="col">Kwota</th>
-            <th scope="col">Data utworzenia</th>
-            <th scope="col">Data aktualizacji</th>
-            <th scope="col">Akcje</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Created at</th>
+            <th scope="col">Updated at</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>

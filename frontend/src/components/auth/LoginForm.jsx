@@ -22,37 +22,37 @@ const LoginForm = ({ onSubmit, isLoading }) => {
     <form onSubmit={handleSubmit(onSubmit)}>
       <EmailInput
         name="email"
-        label="Adres email"
+        label="Email address"
         register={register}
         errors={errors}
         rules={{
-          required: 'Adres email jest wymagany',
+          required: 'Email address is required',
           pattern: {
             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-            message: 'Niepoprawny format adresu email'
+            message: 'Invalid email format'
           }
         }}
       />
 
       <PasswordInput
         name="password"
-        label="Hasło"
+        label="Password"
         register={register}
         errors={errors}
         rules={{
-          required: 'Hasło jest wymagane'
+          required: 'Password is required'
         }}
       />
 
       <SubmitButton
-        label="Zaloguj się"
+        label="Log in"
         isLoading={isLoading}
         disabled={isLoading || !isValid}
       />
 
       <div className="mt-3 text-center">
         <p>
-          Nie masz konta? <Link to="/register">Zarejestruj się</Link>
+          Don't have an account? <Link to="/register">Register</Link>
         </p>
       </div>
     </form>

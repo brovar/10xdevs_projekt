@@ -50,13 +50,13 @@ const AccountPage = () => {
         status: data.status,
         firstName: data.first_name || '',
         lastName: data.last_name || '',
-        createdAt: new Date(data.created_at).toLocaleDateString('pl-PL')
+        createdAt: new Date(data.created_at).toLocaleDateString('en-US')
       };
       
       setUserData(userVM);
     } catch (error) {
       console.error('Failed to fetch user data:', error);
-      setError('Nie udało się załadować danych konta. Spróbuj odświeżyć stronę.');
+      setError('Failed to load account data. Please try refreshing the page.');
     } finally {
       setIsLoading(false);
     }
@@ -83,12 +83,12 @@ const AccountPage = () => {
       };
       
       setUserData(updatedUserVM);
-      toast.success('Profil zaktualizowany pomyślnie.');
+      toast.success('Profile updated successfully.');
     } catch (error) {
       console.error('Failed to update profile:', error);
       
       // Extract error message from API response or use a default
-      const errorMessage = error.response?.data?.message || 'Nie udało się zaktualizować profilu. Spróbuj ponownie później.';
+      const errorMessage = error.response?.data?.message || 'Failed to update profile. Please try again later.';
       setUpdateProfileError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -112,13 +112,13 @@ const AccountPage = () => {
       // Call the API - fixed unused variable
       await changePassword(passwordData);
       
-      setChangePasswordSuccess('Hasło zmienione pomyślnie.');
-      toast.success('Hasło zmienione pomyślnie.');
+      setChangePasswordSuccess('Password changed successfully.');
+      toast.success('Password changed successfully.');
     } catch (error) {
       console.error('Failed to change password:', error);
       
       // Extract error message from API response or use a default
-      const errorMessage = error.response?.data?.message || 'Nie udało się zmienić hasła. Spróbuj ponownie później.';
+      const errorMessage = error.response?.data?.message || 'Failed to change password. Please try again later.';
       setChangePasswordError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -130,14 +130,14 @@ const AccountPage = () => {
     <Container className="py-5">
       <ToastContainer position="top-right" autoClose={5000} />
       
-      <h1 className="mb-4">Moje Konto</h1>
+      <h1 className="mb-4">My Account</h1>
       
       {isLoading ? (
         <div className="text-center py-5">
           <Spinner animation="border" role="status" variant="primary">
-            <span className="visually-hidden">Ładowanie...</span>
+            <span className="visually-hidden">Loading...</span>
           </Spinner>
-          <p className="mt-3">Ładowanie danych konta...</p>
+          <p className="mt-3">Loading account data...</p>
         </div>
       ) : error ? (
         <Alert variant="danger" className="mb-4">

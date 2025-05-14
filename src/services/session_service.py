@@ -172,6 +172,6 @@ class SessionService:
                 status_code=401,
                 detail={
                     "error_code": "NOT_AUTHENTICATED",
-                    "message": "Użytkownik nie jest zalogowany.",
+                    "message": "User is not logged in.",
                 },
             )

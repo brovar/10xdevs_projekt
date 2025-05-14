@@ -8,10 +8,10 @@ const AdminDashboardPage = () => {
   
   // Define tabs
   const tabs = [
-    { key: 'users', title: 'Użytkownicy', component: UsersManagementTab },
-    { key: 'offers', title: 'Oferty' },
-    { key: 'orders', title: 'Zamówienia' },
-    { key: 'logs', title: 'Logi systemowe' }
+    { key: 'users', title: 'Users', component: UsersManagementTab },
+    { key: 'offers', title: 'Offers' },
+    { key: 'orders', title: 'Orders' },
+    { key: 'logs', title: 'System Logs' }
   ];
   
   // Handle tab selection
@@ -26,8 +26,8 @@ const AdminDashboardPage = () => {
     <div className="container py-4">
       <div className="row mb-4">
         <div className="col">
-          <h1>Panel Administratora</h1>
-          <p className="text-muted">Zarządzaj użytkownikami, ofertami, zamówieniami i przeglądaj logi systemowe.</p>
+          <h1>Admin Dashboard</h1>
+          <p className="text-muted">Manage users, offers, orders, and view system logs.</p>
         </div>
       </div>
       
@@ -52,7 +52,7 @@ const AdminDashboardPage = () => {
           <activeTabData.component />
         ) : (
           <div className="alert alert-info">
-            Implementacja zakładki {activeTabData.title} jest w trakcie rozwoju.
+            Implementation of the {activeTabData.title} tab is under development.
           </div>
         )}
       </div>

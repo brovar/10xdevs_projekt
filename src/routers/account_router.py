@@ -24,7 +24,7 @@ router = APIRouter(tags=["account"])
                 "application/json": {
                     "example": {
                         "error_code": "NOT_AUTHENTICATED",
-                        "message": "Użytkownik nie jest zalogowany.",
+                        "message": "User is not logged in.",
                     }
                 }
             },
@@ -35,7 +35,7 @@ router = APIRouter(tags=["account"])
                 "application/json": {
                     "example": {
                         "error_code": "USER_NOT_FOUND",
-                        "message": "Nie znaleziono użytkownika.",
+                        "message": "User not found.",
                     }
                 }
             },
@@ -46,7 +46,7 @@ router = APIRouter(tags=["account"])
                 "application/json": {
                     "example": {
                         "error_code": "FETCH_FAILED",
-                        "message": "Wystąpił błąd podczas pobierania danych użytkownika.",
+                        "message": "An error occurred while retrieving user data.",
                     }
                 }
             },
@@ -98,7 +98,7 @@ async def get_current_user(
                     status_code=500,
                     detail={
                         "error_code": "INVALID_SESSION_DATA",
-                        "message": "Sesja zawiera nieprawidłowe dane. Wyloguj się i zaloguj ponownie.",
+                        "message": "Session contains invalid data. Please log out and log in again.",
                     },
                 )
         else:
@@ -115,7 +115,7 @@ async def get_current_user(
             status_code=500,
             detail={
                 "error_code": "FETCH_FAILED",
-                "message": "Wystąpił nieoczekiwany błąd podczas pobierania profilu użytkownika.",
+                "message": "An unexpected error occurred while retrieving user profile.",
             },
         )
 
@@ -131,7 +131,7 @@ async def get_current_user(
                 "application/json": {
                     "example": {
                         "error_code": "INVALID_INPUT",
-                        "message": "Należy podać co najmniej jedno pole do aktualizacji.",
+                        "message": "At least one field must be provided for update.",
                     }
                 }
             },
@@ -142,7 +142,7 @@ async def get_current_user(
                 "application/json": {
                     "example": {
                         "error_code": "NOT_AUTHENTICATED",
-                        "message": "Użytkownik nie jest zalogowany.",
+                        "message": "User is not logged in.",
                     }
                 }
             },
@@ -164,7 +164,7 @@ async def get_current_user(
                 "application/json": {
                     "example": {
                         "error_code": "USER_NOT_FOUND",
-                        "message": "Nie znaleziono użytkownika.",
+                        "message": "User not found.",
                     }
                 }
             },
@@ -175,7 +175,7 @@ async def get_current_user(
                 "application/json": {
                     "example": {
                         "error_code": "PROFILE_UPDATE_FAILED",
-                        "message": "Wystąpił błąd podczas aktualizacji profilu użytkownika.",
+                        "message": "An error occurred while updating user profile.",
                     }
                 }
             },
@@ -238,7 +238,7 @@ async def update_current_user_profile(
                 status_code=400,
                 detail={
                     "error_code": "INVALID_INPUT",
-                    "message": "Należy podać co najmniej jedno pole do aktualizacji.",
+                    "message": "At least one field must be provided for update.",
                 },
             )
 
@@ -255,7 +255,7 @@ async def update_current_user_profile(
                     status_code=500,
                     detail={
                         "error_code": "INVALID_SESSION_DATA",
-                        "message": "Sesja zawiera nieprawidłowe dane. Wyloguj się i zaloguj ponownie.",
+                        "message": "Session contains invalid data. Please log out and log in again.",
                     },
                 )
         else:
@@ -274,7 +274,7 @@ async def update_current_user_profile(
             status_code=500,
             detail={
                 "error_code": "PROFILE_UPDATE_FAILED",
-                "message": "Wystąpił błąd podczas aktualizacji profilu użytkownika.",
+                "message": "An error occurred while updating user profile.",
             },
         )
 
@@ -316,14 +316,14 @@ async def update_current_user_profile(
                             "summary": "User not authenticated",
                             "value": {
                                 "error_code": "NOT_AUTHENTICATED",
-                                "message": "Użytkownik nie jest zalogowany.",
+                                "message": "User is not logged in.",
                             },
                         },
                         "INVALID_PASSWORD": {
                             "summary": "Invalid current password",
                             "value": {
                                 "error_code": "INVALID_CURRENT_PASSWORD",
-                                "message": "Aktualne hasło jest nieprawidłowe.",
+                                "message": "Current password is incorrect.",
                             },
                         },
                     }
@@ -346,8 +346,8 @@ async def update_current_user_profile(
             "content": {
                 "application/json": {
                     "example": {
-                        "error_code": "PASSWORD_UPDATE_FAILED",
-                        "message": "Wystąpił błąd podczas aktualizacji hasła. Spróbuj ponownie później.",
+                        "error_code": "PASSWORD_CHANGE_FAILED",
+                        "message": "An error occurred while changing the password. Please try again later.",
                     }
                 }
             },
@@ -389,7 +389,7 @@ async def change_current_user_password(
     - INVALID_CURRENT_PASSWORD: Current password verification failed
     - INVALID_CSRF: CSRF token missing or invalid
     - USER_NOT_FOUND: User account doesn't exist in the database
-    - PASSWORD_UPDATE_FAILED: Server error occurred during password update
+    - PASSWORD_CHANGE_FAILED: Server error occurred during password change
     """
     try:
         # Verify CSRF token
@@ -427,7 +427,7 @@ async def change_current_user_password(
                     status_code=500,
                     detail={
                         "error_code": "INVALID_SESSION_DATA",
-                        "message": "Sesja zawiera nieprawidłowe dane. Wyloguj się i zaloguj ponownie.",
+                        "message": "Session contains invalid data. Please log out and log in again.",
                     },
                 )
         else:
@@ -437,7 +437,7 @@ async def change_current_user_password(
             )
 
         if success:
-            return {"message": "Hasło zostało zmienione pomyślnie."}
+            return {"message": "Password has been changed successfully."}
         else:
             # This should not happen normally, because change_password should raise an exception on failure
             logger.warning(
@@ -446,8 +446,8 @@ async def change_current_user_password(
             raise HTTPException(
                 status_code=500,
                 detail={
-                    "error_code": "PASSWORD_UPDATE_FAILED",
-                    "message": "Nie udało się zmienić hasła. Spróbuj ponownie później.",
+                    "error_code": "PASSWORD_CHANGE_FAILED",
+                    "message": "An error occurred while changing the password. Please try again later.",
                 },
             )
     except HTTPException:
@@ -458,7 +458,7 @@ async def change_current_user_password(
         raise HTTPException(
             status_code=500,
             detail={
-                "error_code": "PASSWORD_UPDATE_FAILED",
-                "message": "Wystąpił błąd podczas zmiany hasła. Spróbuj ponownie później.",
+                "error_code": "PASSWORD_CHANGE_FAILED",
+                "message": "An error occurred while changing the password. Please try again later.",
             },
         )

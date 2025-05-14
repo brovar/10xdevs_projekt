@@ -112,18 +112,18 @@ class ValidationService:
         messages = []
 
         if not validation["is_long_enough"]:
-            messages.append("co najmniej 10 znaków")
+            messages.append("at least 10 characters")
 
         if not validation["has_uppercase"]:
-            messages.append("wielką literę")
+            messages.append("an uppercase letter")
 
         if not validation["has_lowercase"]:
-            messages.append("małą literę")
+            messages.append("a lowercase letter")
 
         if not (validation["has_digit"] or validation["has_special"]):
-            messages.append("cyfrę lub znak specjalny")
+            messages.append("a digit or special character")
 
         if not messages:
-            return "Hasło nie spełnia wymagań bezpieczeństwa."
+            return "Password does not meet security requirements."
 
-        return f"Hasło musi zawierać {', '.join(messages)}."
+        return f"Password must contain {', '.join(messages)}."

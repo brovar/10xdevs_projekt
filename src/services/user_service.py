@@ -52,7 +52,7 @@ class UserService:
                     status_code=404,
                     detail={
                         "error_code": "USER_NOT_FOUND",
-                        "message": "Nie znaleziono użytkownika.",
+                        "message": "User not found.",
                     },
                 )
 
@@ -76,7 +76,7 @@ class UserService:
                 status_code=500,
                 detail={
                     "error_code": "FETCH_FAILED",
-                    "message": "Wystąpił błąd podczas pobierania danych użytkownika.",
+                    "message": "An error occurred while retrieving user data.",
                 },
             )
 
@@ -115,7 +115,7 @@ class UserService:
                     status_code=404,
                     detail={
                         "error_code": "USER_NOT_FOUND",
-                        "message": "Nie znaleziono użytkownika.",
+                        "message": "User not found.",
                     },
                 )
 
@@ -172,7 +172,7 @@ class UserService:
                 status_code=500,
                 detail={
                     "error_code": "PROFILE_UPDATE_FAILED",
-                    "message": "Wystąpił błąd podczas aktualizacji profilu użytkownika.",
+                    "message": "An error occurred while updating user profile.",
                 },
             )
 
@@ -215,7 +215,7 @@ class UserService:
                     status_code=404,
                     detail={
                         "error_code": "USER_NOT_FOUND",
-                        "message": "Nie znaleziono użytkownika.",
+                        "message": "User not found.",
                     },
                 )
 
@@ -281,7 +281,7 @@ class UserService:
                 status_code=500,
                 detail={
                     "error_code": "PASSWORD_UPDATE_FAILED",
-                    "message": "Wystąpił błąd podczas aktualizacji hasła. Spróbuj ponownie później.",
+                    "message": "An error occurred while updating password. Please try again later.",
                 },
             )
 

@@ -55,9 +55,9 @@ const OfferModerationActions: React.FC<OfferModerationActionsProps> = ({
           type="button"
           className="btn btn-sm btn-outline-secondary"
           disabled
-          aria-label="Nie można moderować tej oferty"
+          aria-label="Cannot moderate this offer"
         >
-          Brak akcji
+          No actions
         </button>
       )}
     </div>

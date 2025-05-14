@@ -187,20 +187,20 @@ const ConfirmLogoutModal = ({ isOpen, onConfirm, onCancel }) => {
         ref={modalRef}
       >
         <div style={styles.header}>
-          <h5 style={styles.title}>Potwierdzenie wylogowania</h5>
+          <h5 style={styles.title}>Logout Confirmation</h5>
           <button
             style={styles.closeButton}
             onClick={onCancel}
-            aria-label="Zamknij"
+            aria-label="Close"
           >
             &times;
           </button>
         </div>
         
         <div style={styles.body}>
-          <p>Czy na pewno chcesz się wylogować z systemu?</p>
+          <p>Are you sure you want to log out of the system?</p>
           <p style={styles.mutedText}>
-            Po wylogowaniu konieczne będzie ponowne zalogowanie, aby uzyskać dostęp do systemu.
+            After logging out, you will need to log in again to access the system.
           </p>
         </div>
         
@@ -209,14 +209,14 @@ const ConfirmLogoutModal = ({ isOpen, onConfirm, onCancel }) => {
             style={styles.cancelButton}
             onClick={onCancel}
           >
-            Anuluj
+            Cancel
           </button>
           <button
             style={styles.confirmButton}
             onClick={onConfirm}
             ref={confirmButtonRef}
           >
-            Wyloguj
+            Logout
           </button>
         </div>
       </div>

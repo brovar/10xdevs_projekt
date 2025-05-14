@@ -17,7 +17,7 @@ const CreateOfferPage = () => {
       state: { 
         notification: {
           type: 'success',
-          message: 'Oferta została pomyślnie utworzona'
+          message: 'Offer has been successfully created'
         }
       }
     });
@@ -32,7 +32,7 @@ const CreateOfferPage = () => {
     <div className="container py-4">
       <div className="row">
         <div className="col-12">
-          <h1 className="mb-4">Dodaj nową ofertę</h1>
+          <h1 className="mb-4">Add new offer</h1>
           
           <div className="card shadow-sm">
             <div className="card-body p-4">
@@ -45,7 +45,7 @@ const CreateOfferPage = () => {
           
           <div className="mt-4">
             <small className="text-muted">
-              * Pola oznaczone gwiazdką są wymagane
+              * Fields marked with an asterisk are required
             </small>
           </div>
         </div>

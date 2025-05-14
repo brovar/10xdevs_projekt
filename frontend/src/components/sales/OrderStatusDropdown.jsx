@@ -26,7 +26,7 @@ const OrderStatusDropdown = React.memo(({
 
   // If there are no next status options or the dropdown is loading, show an appropriate message
   if (nextStatusOptions.length === 0) {
-    return <span className="text-muted">Brak dostępnych akcji</span>;
+    return <span className="text-muted">No available actions</span>;
   }
 
   return (

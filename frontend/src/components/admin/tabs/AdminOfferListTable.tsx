@@ -18,7 +18,7 @@ const AdminOfferListTable: React.FC<AdminOfferListTableProps> = ({
   const formatDate = useMemo(() => {
     return (dateString: string) => {
       const date = new Date(dateString);
-      return new Intl.DateTimeFormat('pl-PL', {
+      return new Intl.DateTimeFormat('en-US', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -31,9 +31,9 @@ const AdminOfferListTable: React.FC<AdminOfferListTableProps> = ({
   // Format price - memoized to avoid unnecessary recalculations
   const formatPrice = useMemo(() => {
     return (price: string) => {
-      return new Intl.NumberFormat('pl-PL', {
+      return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'PLN'
+        currency: 'USD'
       }).format(parseFloat(price));
     };
   }, []);
@@ -41,7 +41,7 @@ const AdminOfferListTable: React.FC<AdminOfferListTableProps> = ({
   if (offers.length === 0) {
     return (
       <div className="alert alert-info">
-        Brak ofert spełniających kryteria wyszukiwania.
+        No offers matching the search criteria.
       </div>
     );
   }
@@ -52,13 +52,13 @@ const AdminOfferListTable: React.FC<AdminOfferListTableProps> = ({
         <thead className="table-light">
           <tr>
             <th scope="col">ID</th>
-            <th scope="col">Tytuł</th>
-            <th scope="col">Cena</th>
-            <th scope="col">Ilość</th>
-            <th scope="col">Kategoria</th>
+            <th scope="col">Title</th>
+            <th scope="col">Price</th>
+            <th scope="col">Quantity</th>
+            <th scope="col">Category</th>
             <th scope="col">Status</th>
-            <th scope="col">Data utworzenia</th>
-            <th scope="col">Akcje</th>
+            <th scope="col">Creation date</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>

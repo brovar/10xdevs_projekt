@@ -14,10 +14,10 @@ const AddToCartButton = ({ offerId, offerTitle, isDisabled, onClick }) => {
       className="btn btn-primary btn-lg d-flex align-items-center justify-content-center w-100"
       onClick={handleClick}
       disabled={isDisabled}
-      aria-label={`Dodaj ${offerTitle} do koszyka`}
+      aria-label={`Add ${offerTitle} to cart`}
     >
       <i className="bi bi-cart-plus-fill me-2"></i>
-      Dodaj do koszyka
+      Add to cart
     </button>
   );
 };

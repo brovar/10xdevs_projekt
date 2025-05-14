@@ -87,7 +87,7 @@ class AuthService:
             if existing_user:
                 raise AuthServiceError(
                     error_code="EMAIL_ALREADY_EXISTS",
-                    message="Użytkownik o podanym adresie email już istnieje.",
+                    message="User with this email already exists.",
                     status_code=400,
                 )
 
@@ -135,7 +135,7 @@ class AuthService:
                 )
                 raise AuthServiceError(
                     error_code="EMAIL_ALREADY_EXISTS",
-                    message="Użytkownik o podanym adresie email już istnieje.",
+                    message="User with this email already exists.",
                     status_code=400,
                 )
             except Exception as e:
@@ -146,7 +146,7 @@ class AuthService:
                 self.logger.debug(traceback.format_exc())
                 raise AuthServiceError(
                     error_code="REGISTRATION_FAILED",
-                    message="Wystąpił błąd podczas rejestracji. Spróbuj ponownie później.",
+                    message="An error occurred during registration. Please try again later.",
                     status_code=500,
                 )
 
@@ -160,7 +160,7 @@ class AuthService:
             self.logger.debug(traceback.format_exc())
             raise AuthServiceError(
                 error_code="REGISTRATION_FAILED",
-                message="Wystąpił nieoczekiwany błąd podczas rejestracji. Spróbuj ponownie później.",
+                message="An unexpected error occurred during registration. Please try again later.",
                 status_code=500,
             )
 
@@ -213,7 +213,7 @@ class AuthService:
 
                 raise AuthServiceError(
                     error_code="INVALID_CREDENTIALS",
-                    message="Nieprawidłowe dane logowania.",
+                    message="Invalid login credentials.",
                     status_code=401,
                 )
 
@@ -233,7 +233,7 @@ class AuthService:
 
                 raise AuthServiceError(
                     error_code="INVALID_CREDENTIALS",
-                    message="Nieprawidłowe dane logowania.",
+                    message="Invalid login credentials.",
                     status_code=401,
                 )
 
@@ -245,7 +245,7 @@ class AuthService:
 
                 raise AuthServiceError(
                     error_code="USER_INACTIVE",
-                    message="Konto użytkownika jest nieaktywne.",
+                    message="User account is inactive.",
                     status_code=401,
                 )
 
@@ -261,7 +261,7 @@ class AuthService:
                     )
                     raise AuthServiceError(
                         error_code="SESSION_CREATION_FAILED",
-                        message="Wystąpił błąd podczas tworzenia sesji. Spróbuj ponownie później.",
+                        message="An error occurred while creating the session. Please try again later.",
                         status_code=500,
                     )
 
@@ -274,7 +274,7 @@ class AuthService:
                     )
                     raise AuthServiceError(
                         error_code="SESSION_CREATION_FAILED",
-                        message="Wystąpił błąd podczas tworzenia sesji. Spróbuj ponownie później.",
+                        message="An error occurred while creating the session. Please try again later.",
                         status_code=500,
                     )
 
@@ -304,7 +304,7 @@ class AuthService:
                     )
                     raise AuthServiceError(
                         error_code="SESSION_CREATION_FAILED",
-                        message="Wystąpił błąd podczas tworzenia sesji. Spróbuj ponownie później.",
+                        message="An error occurred while creating the session. Please try again later.",
                         status_code=500,
                     )
 
@@ -319,7 +319,7 @@ class AuthService:
                 self.logger.debug(traceback.format_exc())
                 raise AuthServiceError(
                     error_code="SESSION_CREATION_FAILED",
-                    message="Wystąpił błąd podczas tworzenia sesji. Spróbuj ponownie później.",
+                    message="An error occurred while creating the session. Please try again later.",
                     status_code=500,
                 )
         except AuthServiceError:
@@ -330,7 +330,7 @@ class AuthService:
             self.logger.debug(traceback.format_exc())
             raise AuthServiceError(
                 error_code="LOGIN_FAILED",
-                message="Wystąpił nieoczekiwany błąd podczas logowania. Spróbuj ponownie później.",
+                message="An unexpected error occurred during login. Please try again later.",
                 status_code=500,
             )
 
@@ -404,6 +404,6 @@ class AuthService:
             self.logger.debug(traceback.format_exc())
             raise AuthServiceError(
                 error_code="LOGOUT_FAILED",
-                message="Wystąpił błąd podczas wylogowania. Spróbuj ponownie później.",
+                message="An error occurred during logout. Please try again later.",
                 status_code=500,
             )

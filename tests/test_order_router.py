@@ -579,18 +579,16 @@ def test_create_order_unauthorized(no_auth):
 
 def test_create_order_forbidden_role(seller_auth):
     # Test creating an order with an unauthorized role (Seller).#
-    payload = {"items": [{"offer_id": str(MOCK_OFFER_ID_1), "quantity": 1}]}
-    response = client.post("/orders", json=payload)
+    response = client.post(
+        "/orders",
+        json={"items": [{"offer_id": str(MOCK_OFFER_ID_1), "quantity": 2}]},
+    )
 
-    # Expect 403 FORBIDDEN (raised by original require_roles based on data from patched SessionService.get_session)
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert (
-        response.json()["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
-    )
-    assert (
-        response.json()["detail"]["message"]
-        == "Nie masz uprawnień do wykonania tej operacji."
-    )
+    body = response.json()
+    assert "detail" in body
+    assert body["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
+    assert body["detail"]["message"] == "You don't have permission to perform this operation."
     assert StubOrderService._call_count.get("create_order", 0) == 0
     assert not StubLogService.logs
 
@@ -714,16 +712,12 @@ def test_list_buyer_orders_unauthorized(no_auth):
 def test_list_buyer_orders_forbidden_role(seller_auth):
     # Test listing orders with an unauthorized role (Seller).#
     response = client.get("/orders")
-    # Expect 403 FORBIDDEN
+
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    # Check the error code and message from the original dependency
-    assert (
-        response.json()["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
-    )
-    assert (
-        response.json()["detail"]["message"]
-        == "Nie masz uprawnień do wykonania tej operacji."
-    )
+    body = response.json()
+    assert "detail" in body
+    assert body["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
+    assert body["detail"]["message"] == "You don't have permission to perform this operation."
     assert StubOrderService._call_count.get("get_buyer_orders", 0) == 0
     assert not StubLogService.logs
 
@@ -967,18 +961,13 @@ def test_ship_order_unauthorized(no_auth):
 def test_ship_order_forbidden_role():
     # Test shipping an order with an unauthorized role (Buyer).#
     # Buyer is the default user
-    order_id = str(MOCK_ORDER_ID)
-    response = client.post(f"/orders/{order_id}/ship")
-    # Expect 403 FORBIDDEN
+    response = client.post(f"/orders/{MOCK_ORDER_ID}/ship")
+
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    # Check the error code and message from the original dependency
-    assert (
-        response.json()["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
-    )
-    assert (
-        response.json()["detail"]["message"]
-        == "Nie masz uprawnień do wykonania tej operacji."
-    )
+    body = response.json()
+    assert "detail" in body
+    assert body["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
+    assert body["detail"]["message"] == "You don't have permission to perform this operation."
     assert StubOrderService._call_count.get("ship_order", 0) == 0
     assert not StubLogService.logs
 
@@ -1151,18 +1140,13 @@ def test_deliver_order_unauthorized(no_auth):
 def test_deliver_order_forbidden_role():
     # Test delivering an order with an unauthorized role (Buyer).#
     # Buyer is the default user
-    order_id = str(MOCK_ORDER_ID)
-    response = client.post(f"/orders/{order_id}/deliver")
-    # Expect 403 FORBIDDEN
+    response = client.post(f"/orders/{MOCK_ORDER_ID}/deliver")
+
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    # Check the error code and message from the original dependency
-    assert (
-        response.json()["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
-    )
-    assert (
-        response.json()["detail"]["message"]
-        == "Nie masz uprawnień do wykonania tej operacji."
-    )
+    body = response.json()
+    assert "detail" in body
+    assert body["detail"]["error_code"] == "INSUFFICIENT_PERMISSIONS"
+    assert body["detail"]["message"] == "You don't have permission to perform this operation."
     assert StubOrderService._call_count.get("deliver_order", 0) == 0
     assert not StubLogService.logs
 

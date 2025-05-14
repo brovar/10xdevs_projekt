@@ -23,9 +23,9 @@ const OrderItem = ({ order }) => {
         <Link 
           to={order.detailsLink} 
           className="btn btn-sm btn-outline-primary"
-          aria-label={`Zobacz szczegóły zamówienia ${order.displayId}`}
+          aria-label={`View details of order ${order.displayId}`}
         >
-          Szczegóły
+          Details
         </Link>
       </td>
     </tr>

@@ -18,7 +18,7 @@ const SalesList = React.memo(({ sales, isLoading, onStatusChange, updatingStatus
   if (!isLoading && (!sales || sales.length === 0)) {
     return (
       <div className="alert alert-info" role="alert">
-        Brak historii sprzedaży.
+        No sales history.
       </div>
     );
   }
@@ -28,11 +28,11 @@ const SalesList = React.memo(({ sales, isLoading, onStatusChange, updatingStatus
       <Table striped hover responsive>
         <thead className="table-light">
           <tr>
-            <th>ID Zamówienia</th>
-            <th>Data</th>
+            <th>Order ID</th>
+            <th>Date</th>
             <th>Status</th>
-            <th>Kwota</th>
-            <th>Akcje</th>
+            <th>Amount</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>

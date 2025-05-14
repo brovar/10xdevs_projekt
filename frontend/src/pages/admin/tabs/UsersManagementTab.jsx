@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { adminUsersApi } from '../../../services/adminService.js';
 
@@ -60,26 +60,26 @@ const UserFiltersComponent = ({ filters, onFilterChange }) => {
   return (
     <div className="card mb-4">
       <div className="card-header bg-light">
-        <h5 className="mb-0">Filtry</h5>
+        <h5 className="mb-0">Filters</h5>
       </div>
       <div className="card-body">
         <form onSubmit={handleSubmit}>
           <div className="row g-3">
             <div className="col-md-4">
-              <label htmlFor="search" className="form-label">Wyszukaj</label>
+              <label htmlFor="search" className="form-label">Search</label>
               <input
                 type="text"
                 className="form-control"
                 id="search"
                 name="search"
-                placeholder="Email, imię lub nazwisko"
+                placeholder="Email, first name or last name"
                 value={localFilters.search || ''}
                 onChange={handleInputChange}
               />
             </div>
             
             <div className="col-md-3">
-              <label htmlFor="role" className="form-label">Rola</label>
+              <label htmlFor="role" className="form-label">Role</label>
               <select
                 className="form-select"
                 id="role"
@@ -87,9 +87,9 @@ const UserFiltersComponent = ({ filters, onFilterChange }) => {
                 value={localFilters.role || ''}
                 onChange={handleInputChange}
               >
-                <option value="">Wszystkie role</option>
-                <option value="Buyer">Kupujący</option>
-                <option value="Seller">Sprzedający</option>
+                <option value="">All roles</option>
+                <option value="Buyer">Buyer</option>
+                <option value="Seller">Seller</option>
                 <option value="Admin">Administrator</option>
               </select>
             </div>
@@ -103,20 +103,20 @@ const UserFiltersComponent = ({ filters, onFilterChange }) => {
                 value={localFilters.status || ''}
                 onChange={handleInputChange}
               >
-                <option value="">Wszystkie statusy</option>
-                <option value="Active">Aktywny</option>
-                <option value="Inactive">Nieaktywny</option>
-                <option value="Deleted">Usunięty</option>
+                <option value="">All statuses</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Deleted">Deleted</option>
               </select>
             </div>
             
             <div className="col-md-2 d-flex align-items-end">
               <div className="d-grid gap-2 w-100">
                 <button type="submit" className="btn btn-primary">
-                  <i className="bi bi-search"></i> Filtruj
+                  <i className="bi bi-search"></i> Filter
                 </button>
                 <button type="button" className="btn btn-outline-secondary" onClick={handleReset}>
-                  Resetuj
+                  Reset
                 </button>
               </div>
             </div>
@@ -155,16 +155,16 @@ const UserActionsComponent = ({ user, onBlock, onUnblock }) => {
   return (
     <div className="d-flex gap-2">
       <Link to={`/admin/users/${user.id}`} className="btn btn-sm btn-outline-primary">
-        <i className="bi bi-info-circle"></i> Szczegóły
+        <i className="bi bi-info-circle"></i> Details
       </Link>
       
       {user.status === 'Active' && (
         <button 
           className="btn btn-sm btn-warning" 
           onClick={() => onBlock(user.id)}
-          aria-label={`Zablokuj użytkownika ${user.email}`}
+          aria-label={`Block user ${user.email}`}
         >
-          <i className="bi bi-lock"></i> Blokuj
+          <i className="bi bi-lock"></i> Block
         </button>
       )}
       
@@ -172,9 +172,9 @@ const UserActionsComponent = ({ user, onBlock, onUnblock }) => {
         <button 
           className="btn btn-sm btn-success" 
           onClick={() => onUnblock(user.id)}
-          aria-label={`Odblokuj użytkownika ${user.email}`}
+          aria-label={`Unblock user ${user.email}`}
         >
-          <i className="bi bi-unlock"></i> Odblokuj
+          <i className="bi bi-unlock"></i> Unblock
         </button>
       )}
     </div>
@@ -185,7 +185,7 @@ const UserListTable = ({ users, onBlock, onUnblock }) => {
   if (!users || users.length === 0) {
     return (
       <div className="alert alert-info" role="alert">
-        Brak użytkowników spełniających kryteria wyszukiwania.
+        No users matching search criteria found.
       </div>
     );
   }
@@ -193,7 +193,7 @@ const UserListTable = ({ users, onBlock, onUnblock }) => {
   const formatDate = (dateString) => {
     if (!dateString) return null;
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pl-PL', {
+    return new Intl.DateTimeFormat('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -208,11 +208,11 @@ const UserListTable = ({ users, onBlock, onUnblock }) => {
         <thead className="table-light">
           <tr>
             <th scope="col">Email</th>
-            <th scope="col">Imię i Nazwisko</th>
-            <th scope="col">Rola</th>
+            <th scope="col">Full Name</th>
+            <th scope="col">Role</th>
             <th scope="col">Status</th>
-            <th scope="col">Data utworzenia</th>
-            <th scope="col">Akcje</th>
+            <th scope="col">Created At</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -288,16 +288,16 @@ const PaginationComponent = ({ paginationInfo, onPageChange }) => {
   const pages = getPageNumbers();
   
   return (
-    <nav aria-label="Nawigacja stronicowania użytkowników">
+    <nav aria-label="User pagination navigation">
       <ul className="pagination justify-content-center">
         <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
           <button 
             className="page-link" 
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            aria-label="Poprzednia strona"
+            aria-label="Previous page"
           >
-            &laquo; Poprzednia
+            &laquo; Previous
           </button>
         </li>
         
@@ -321,14 +321,14 @@ const PaginationComponent = ({ paginationInfo, onPageChange }) => {
             className="page-link" 
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            aria-label="Następna strona"
+            aria-label="Next page"
           >
-            Następna &raquo;
+            Next &raquo;
           </button>
         </li>
       </ul>
       <div className="text-center text-muted small">
-        Wyświetlanie strony {currentPage} z {totalPages}
+        Showing page {currentPage} of {totalPages}
       </div>
     </nav>
   );
@@ -343,7 +343,7 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, confir
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">{title}</h5>
-            <button type="button" className="btn-close" onClick={onCancel} aria-label="Zamknij"></button>
+            <button type="button" className="btn-close" onClick={onCancel} aria-label="Close"></button>
           </div>
           <div className="modal-body">
             <p>{message}</p>
@@ -355,7 +355,7 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, confir
               onClick={onCancel}
               disabled={isProcessing}
             >
-              Anuluj
+              Cancel
             </button>
             <button 
               type="button" 
@@ -366,7 +366,7 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, confir
               {isProcessing ? (
                 <>
                   <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Przetwarzanie...
+                  Processing...
                 </>
               ) : (
                 confirmButtonText
@@ -388,15 +388,15 @@ const ErrorMessageDisplay = ({ error, className = '', onRetry = null }) => {
       <div className="d-flex align-items-center">
         <div className="flex-grow-1">
           <i className="bi bi-exclamation-triangle-fill me-2"></i>
-          {typeof error === 'string' ? error : 'Wystąpił błąd podczas wykonywania operacji.'}
+          {typeof error === 'string' ? error : 'An error occurred during the operation.'}
         </div>
         {onRetry && (
           <button 
             className="btn btn-sm btn-outline-danger ms-3" 
             onClick={onRetry}
-            aria-label="Spróbuj ponownie"
+            aria-label="Try again"
           >
-            <i className="bi bi-arrow-clockwise"></i> Ponów
+            <i className="bi bi-arrow-clockwise"></i> Retry
           </button>
         )}
       </div>
@@ -404,11 +404,11 @@ const ErrorMessageDisplay = ({ error, className = '', onRetry = null }) => {
   );
 };
 
-const LoadingSpinner = ({ text = 'Ładowanie danych...' }) => {
+const LoadingSpinner = ({ text = 'Loading data...' }) => {
   return (
     <div className="d-flex flex-column align-items-center justify-content-center p-4">
       <div className="spinner-border text-primary mb-2" role="status">
-        <span className="visually-hidden">Ładowanie...</span>
+        <span className="visually-hidden">Loading...</span>
       </div>
       {text && <div>{text}</div>}
     </div>
@@ -440,7 +440,7 @@ const UsersManagementTab = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Fetch users based on current filters
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -454,17 +454,17 @@ const UsersManagementTab = () => {
         limit: response.limit
       });
     } catch (err) {
-      setError(err.message || 'Wystąpił błąd podczas pobierania listy użytkowników.');
+      setError(err.message || 'An error occurred while fetching the users list.');
       console.error('Error fetching users:', err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters]);
   
   // Initial fetch
   useEffect(() => {
     fetchUsers();
-  }, [filters]);
+  }, [fetchUsers]);
   
   // Handle filter changes
   const handleFilterChange = (newFilters) => {
@@ -491,7 +491,7 @@ const UsersManagementTab = () => {
     setConfirmAction({
       type: 'block',
       userId,
-      message: `Czy na pewno chcesz zablokować użytkownika ${user.email}?`
+      message: `Are you sure you want to block user ${user.email}?`
     });
   };
   
@@ -503,7 +503,7 @@ const UsersManagementTab = () => {
     setConfirmAction({
       type: 'unblock',
       userId,
-      message: `Czy na pewno chcesz odblokować użytkownika ${user.email}?`
+      message: `Are you sure you want to unblock user ${user.email}?`
     });
   };
   
@@ -526,7 +526,7 @@ const UsersManagementTab = () => {
       // Close modal
       setConfirmAction(null);
     } catch (err) {
-      setError(err.message || `Wystąpił błąd podczas ${confirmAction.type === 'block' ? 'blokowania' : 'odblokowywania'} użytkownika.`);
+      setError(err.message || `An error occurred while ${confirmAction.type === 'block' ? 'blocking' : 'unblocking'} the user.`);
       console.error('Error processing action:', err);
     } finally {
       setIsProcessing(false);
@@ -535,7 +535,7 @@ const UsersManagementTab = () => {
   
   return (
     <div className="users-management-tab">
-      <h2 className="mb-4">Zarządzanie Użytkownikami</h2>
+      <h2 className="mb-4">User Management</h2>
       
       {/* Filters */}
       <UserFiltersComponent 
@@ -553,7 +553,7 @@ const UsersManagementTab = () => {
       )}
       
       {/* Loading state */}
-      {isLoading && <LoadingSpinner text="Ładowanie użytkowników..." />}
+      {isLoading && <LoadingSpinner text="Loading users..." />}
       
       {/* Users table */}
       {!isLoading && !error && (
@@ -579,11 +579,11 @@ const UsersManagementTab = () => {
       {/* Confirmation Modal */}
       <ConfirmationModal 
         isOpen={confirmAction !== null}
-        title={confirmAction?.type === 'block' ? 'Blokowanie użytkownika' : 'Odblokowywanie użytkownika'}
+        title={confirmAction?.type === 'block' ? 'Block User' : 'Unblock User'}
         message={confirmAction?.message || ''}
         onConfirm={handleConfirmAction}
         onCancel={() => setConfirmAction(null)}
-        confirmButtonText={confirmAction?.type === 'block' ? 'Zablokuj' : 'Odblokuj'}
+        confirmButtonText={confirmAction?.type === 'block' ? 'Block' : 'Unblock'}
         variant={confirmAction?.type === 'block' ? 'warning' : 'success'}
         isProcessing={isProcessing}
       />

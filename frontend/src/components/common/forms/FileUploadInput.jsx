@@ -93,19 +93,19 @@ const FileUploadInput = ({
               className="btn btn-outline-primary"
               onClick={handleButtonClick}
             >
-              Wybierz plik
+              Choose file
             </button>
             <span className="form-control text-truncate">
-              {preview ? 'Plik wybrany' : 'Nie wybrano pliku'}
+              {preview ? 'File selected' : 'No file selected'}
             </span>
             {preview && (
               <button 
                 type="button"
                 className="btn btn-outline-danger"
                 onClick={handleRemove}
-                aria-label="Usuń plik"
+                aria-label="Remove file"
               >
-                Usuń
+                Remove
               </button>
             )}
           </div>
@@ -115,7 +115,7 @@ const FileUploadInput = ({
             <div className="mt-2 border rounded p-2 text-center">
               <img 
                 src={preview} 
-                alt="Podgląd" 
+                alt="Preview" 
                 className="img-fluid"
                 style={{ maxHeight: '200px' }} 
               />
@@ -136,7 +136,7 @@ const FileUploadInput = ({
       </div>
       
       <small className="text-muted d-block mt-1">
-        Dozwolone formaty: PNG, JPEG, WebP. Maksymalny rozmiar: {Math.round(maxSize / 1024 / 1024)} MB.
+        Allowed formats: PNG, JPEG, WebP. Maximum size: {Math.round(maxSize / 1024 / 1024)} MB.
       </small>
     </div>
   );

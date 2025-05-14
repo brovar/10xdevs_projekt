@@ -22,7 +22,7 @@ const RoleSelect = ({
         aria-invalid={errors[name] ? 'true' : 'false'}
         {...register(name, rules)}
       >
-        <option value="" disabled>Wybierz typ konta</option>
+        <option value="" disabled>Choose account type</option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

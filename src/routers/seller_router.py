@@ -123,7 +123,7 @@ async def get_offer_stats(
                 "application/json": {
                     "example": {
                         "error_code": "NOT_AUTHENTICATED",
-                        "message": "Użytkownik nie jest zalogowany.",
+                        "message": "User is not logged in.",
                     }
                 }
             },
@@ -134,7 +134,7 @@ async def get_offer_stats(
                 "application/json": {
                     "example": {
                         "error_code": "INSUFFICIENT_PERMISSIONS",
-                        "message": "Nie masz uprawnień do wykonania tej operacji.",
+                        "message": "You don't have permission to perform this operation.",
                     }
                 }
             },
@@ -232,7 +232,7 @@ async def list_seller_sales(
                 "application/json": {
                     "example": {
                         "error_code": "NOT_AUTHENTICATED",
-                        "message": "Użytkownik nie jest zalogowany.",
+                        "message": "User is not logged in.",
                     }
                 }
             },
@@ -243,7 +243,7 @@ async def list_seller_sales(
                 "application/json": {
                     "example": {
                         "error_code": "INSUFFICIENT_PERMISSIONS",
-                        "message": "Nie masz uprawnień do wykonania tej operacji.",
+                        "message": "You don't have permission to perform this operation.",
                     }
                 }
             },
